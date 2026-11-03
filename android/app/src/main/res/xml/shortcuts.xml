@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="new_story"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_new_story_short"
+        android:shortcutLongLabel="@string/shortcut_new_story_long">
+        <intent
+            android:action="com.esbpowerline.studio.phone.action.NEW_STORY"
+            android:targetPackage="com.esbpowerline.studio.phone"
+            android:targetClass="com.esbpowerline.studio.phone.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="paste_link"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_paste_link_short"
+        android:shortcutLongLabel="@string/shortcut_paste_link_long">
+        <intent
+            android:action="com.esbpowerline.studio.phone.action.PASTE_LINK"
+            android:targetPackage="com.esbpowerline.studio.phone"
+            android:targetClass="com.esbpowerline.studio.phone.MainActivity" />
+    </shortcut>
+</shortcuts>

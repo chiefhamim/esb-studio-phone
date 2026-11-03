@@ -95,7 +95,7 @@
 .ed-pread { cursor: text; }
 .ed-empty { color: var(--text-disabled); }
 [lang='bn'] .ed-ptext, .ed-col-src .ed-ptext { font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif; line-height: 1.6; font-size: 18px; }
-.ed-ptools { display: flex; gap: var(--s-3); overflow-x: auto; padding: var(--s-2) var(--s-2) var(--s-3); scrollbar-width: none; }
+.ed-ptools { display: flex; flex-wrap: wrap; gap: var(--s-3); padding: var(--s-2) var(--s-2) var(--s-3); }
 .ed-para-job { display: grid; gap: var(--s-4); padding: var(--s-5); border-radius: var(--r-3); background: var(--surface-panel); border: 1px solid var(--border-default); }
 .ed-en { margin: 0; font: 17px/1.6 Inter, var(--font-ui); white-space: pre-wrap; }
 .ed-count-line { text-align: right; }
@@ -216,7 +216,7 @@
 .ed-saved { display: inline-flex; align-items: center; font: 500 11px/16px var(--font-ui); color: var(--text-tertiary); white-space: nowrap; }
 .ed-saved i { display: inline-block; width: 6px; height: 6px; margin-right: var(--s-3); border-radius: 50%; background: var(--success); }
 .ed-seg { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-1); padding: var(--s-1); border-radius: var(--r-2); background: var(--fill); }
-.ed-seg button { display: inline-flex; align-items: center; justify-content: center; gap: var(--s-3); min-height: 40px; border: 0; border-radius: 6px; background: transparent; color: var(--text-secondary); font: 500 13px/20px var(--font-ui); cursor: pointer; transition: background var(--t-hover) var(--ease), color var(--t-hover) var(--ease); }
+.ed-seg button { display: inline-flex; align-items: center; justify-content: center; gap: var(--s-3); min-height: 44px; border: 0; border-radius: 6px; background: transparent; color: var(--text-secondary); font: 500 13px/20px var(--font-ui); cursor: pointer; transition: background var(--t-hover) var(--ease), color var(--t-hover) var(--ease); }
 .ed-seg button[aria-pressed='true'] { background: var(--raised); color: var(--text-primary); box-shadow: var(--raised-shadow); font-weight: 700; }
 .ed-seg em { font: 700 11px/16px var(--font-ui); font-style: normal; color: var(--text-tertiary); }
 .ed-flash { border-radius: var(--r-2); background: var(--surface-panel); box-shadow: var(--card-shadow); font: 500 13px/20px var(--font-ui); padding: var(--s-4) var(--s-5); }
@@ -272,10 +272,10 @@
 .ed-snippet, .ed-sugg { background: var(--surface-sunken); }
 
 /* ---- bottom action bar: one 48 px row ---- */
-.ed-actions, .ed[data-wide='1'] .ed-actions { position: sticky; bottom: var(--s-3); z-index: 6; display: grid; grid-template-columns: 40px 1.5fr 1fr 1fr; gap: var(--s-3); align-items: center; padding: var(--s-2); border-radius: var(--r-3); background: var(--surface-panel); box-shadow: var(--shadow-2); }
+.ed-actions, .ed[data-wide='1'] .ed-actions { position: sticky; bottom: var(--s-3); z-index: 6; display: grid; grid-template-columns: 44px 1.5fr 1fr 1fr; gap: var(--s-3); align-items: center; padding: var(--s-2); border-radius: var(--r-3); background: var(--surface-panel); box-shadow: var(--shadow-2); }
 .ed-actions .ed-btn { min-height: 48px; padding: 0 var(--s-3); font-weight: 700; }
 .ed-actions .ed-btn:not(.ed-btn-primary) { box-shadow: none; background: var(--fill); border-color: transparent; }
-.ed-ready { width: 40px; height: 48px; border-radius: var(--r-2); }
+.ed-ready { width: 44px; height: 48px; border-radius: var(--r-2); }
 .ed-ring-n { font-size: 10px; }
 .ed-actions .ed-actions-note { display: none; }
 
@@ -293,3 +293,10 @@
 .ed-findbar .ed-row-between { flex-wrap: wrap; row-gap: var(--s-2); }
 .ed-findbar .ed-row-between > .ed-note { flex: 1 1 100%; }
 .ed-findbar { grid-template-columns: minmax(0, 1fr); } .ed-findbar .ed-btn { padding: 0 var(--s-4); }
+
+/* ---- QA pass: short landscape (891x411). The tools row scrolls away instead of eating a third of the screen; the next-step bar is compact. ---- */
+@media (orientation: landscape) and (max-height: 520px) {
+  .ed-top { position: static; }
+  .ed-actions, .ed[data-wide='1'] .ed-actions { bottom: var(--s-2); padding: var(--s-1); }
+  .ed-actions .ed-btn { min-height: 44px; }
+}

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { App as CapApp } from '@capacitor/app'
-import { listenForShares } from './shareIntent'
-import { newDraft, useDrafts, type Draft } from './drafts'
+import { listenForIncoming } from './native/shareIn'
+import LockScreen from './native/LockScreen'
+import { warn } from './native/haptics'
+import { isBlankDraft, newDraft, useDrafts, type Draft } from './drafts'
 import Stories from './Stories'
 import Edit from './Edit'
 import Settings from './Settings'
@@ -10,6 +12,7 @@ import Banner from './banner/Banner'
 import Publish from './publish/Publish'
 import Header from './shell/Header'
 import Nav, { type Tab } from './shell/Nav'
+import { parseShared } from './shareIntent'
 import Desk from './home/Desk'
 import StatusBar from './home/StatusBar'
 import { useStatus, wordCount } from './home/useStatus'
@@ -30,9 +33,19 @@ export default function App() {
   const open = (d: Draft) => { setDesk(false); setCurrentId(d.id); setTab('edit') }
   const create = (d: Draft) => { upsert(d); open(d) }
   /** Graphics tile: a blank story that opens on the Banner tab */
-  const newGraphic = () => { const d = newDraft(); upsert(d); setDesk(false); setCurrentId(d.id); setTab('banner') }
+  const newGraphic = () => {
+    const blank = drafts.find(isBlankDraft)
+    const d = blank ?? newDraft()
+    if (!blank) upsert(d)
+    setDesk(false); setCurrentId(d.id); setTab('banner')
+  }
   const goTab = (t: Tab) => { setDesk(false); setTab(t) }
-  useEffect(() => listenForShares((s) => create({ ...newDraft(s.url, s.text) })), []) // eslint-disable-line
+  useEffect(() => listenForIncoming((inc) => {
+    if (inc.action === 'new-story' || inc.action === 'paste-link') { setDesk(true); setTab('stories'); return }
+    const s = parseShared(inc.text ?? '')
+    if (s) { create({ ...newDraft(s.url, s.text) }); return }
+    if (inc.files.length) warn() // shared pictures/PDFs: intake is Planned
+  }), []) // eslint-disable-line
 
   useBackClose(settings, () => setSettings(false))
   useBackClose(desk, () => setDesk(false))
@@ -76,6 +89,7 @@ export default function App() {
           </main>
         )}
       </div>
+      <LockScreen />
       {settings && <Settings onClose={() => setSettings(false)} />}
     </div>
   )

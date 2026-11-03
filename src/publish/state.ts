@@ -9,6 +9,9 @@ export interface SentRecord {
   status?: 'DRAFT' | 'PUBLISHED'
   liveUrl?: string | null
   fbUrl?: string
+  /** the picture link and credit the site already holds for an article opened from the Published list */
+  imageUrl?: string | null
+  imageCredit?: string
 }
 
 function readAll(): Record<string, SentRecord> {

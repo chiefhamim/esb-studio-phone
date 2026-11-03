@@ -2,13 +2,14 @@ import { useState, type ReactNode } from 'react'
 import { fetchArticle } from '../fetchArticle'
 import { newDraft, type Draft } from '../drafts'
 import { parseShared } from '../shareIntent'
+import PublishedList from './PublishedList'
 import { IconClipboard, IconGlobe, IconInbox, IconLink, IconNewspaper, IconPencilSquare, IconSparkle, IconUpload } from '../shell/icons'
 
 type Mode = 'link' | 'text' | 'published' | 'wire'
 const TABS: { id: Mode; label: string; icon: ReactNode; planned?: boolean }[] = [
   { id: 'link', label: 'Paste Story Link', icon: <IconLink /> },
   { id: 'text', label: 'Paste Text or File', icon: <IconPencilSquare /> },
-  { id: 'published', label: 'Published', icon: <IconGlobe />, planned: true },
+  { id: 'published', label: 'Published', icon: <IconGlobe /> },
   { id: 'wire', label: 'Wire', icon: <IconInbox />, planned: true },
 ]
 
@@ -103,6 +104,8 @@ export default function Desk({ onCreate }: { onCreate: (d: Draft) => void }) {
             {msg && <p className="hm-msg" role="status">{msg}</p>}
           </div>
         )}
+
+        {mode === 'published' && <PublishedList onOpen={onCreate} />}
 
         {planned && (
           <div className="hm-planned">

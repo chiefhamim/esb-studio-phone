@@ -76,7 +76,7 @@
 /* the desktop's segmented control: filled strip, raised white pill for the active item */
 .bn-seg { padding: var(--s-1); gap: var(--s-1); border-radius: var(--r-2); background: var(--fill); }
 .bn-modebar .bn-seg { flex: 1; min-width: 0; }
-.bn-seg button { display: inline-flex; align-items: center; justify-content: center; gap: var(--s-3); min-height: 40px; padding: 0 var(--s-4); border-radius: 6px; font: 500 13px/20px var(--font-ui); color: var(--text-secondary); white-space: nowrap; }
+.bn-seg button { display: inline-flex; align-items: center; justify-content: center; gap: var(--s-3); min-height: 44px; padding: 0 var(--s-4); border-radius: 6px; font: 500 13px/20px var(--font-ui); color: var(--text-secondary); white-space: nowrap; }
 .bn-seg button.on { background: var(--raised); color: var(--text-primary); box-shadow: var(--raised-shadow); font-weight: 700; }
 .bn-ghost { min-height: 44px; padding: 0 var(--s-5); border-radius: var(--r-2); border: 1px solid var(--border-default); background: var(--surface-raised); box-shadow: var(--shadow-1); font: 500 13px/20px var(--font-ui); color: var(--text-primary); }
 

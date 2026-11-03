@@ -7,6 +7,7 @@ export default function Launcher({ onEditorial, onGraphics }: { onEditorial: () 
       <header className="hm-hero">
         <h1 className="hm-title" aria-label="ESB Power Line Ai Studio">
           <img className="hm-mark" src="/brand/esb-logo.png" alt="" aria-hidden width="291" height="101" decoding="async" />
+          <span className="hm-typed" aria-hidden><b>ESB</b><span className="hm-pl"><span>POWER</span><span>LINE</span></span></span>
           <span className="hm-stick" aria-hidden />
           <span className="hm-name"><span className="hm-ai">Ai</span> <span className="hm-studio">Studio</span></span>
         </h1>

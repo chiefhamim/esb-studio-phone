@@ -109,6 +109,12 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
     setNotes(r.notes)
     setSelEn(null)
   })
+  // The translation card sits at the top of the page: bring it into view when a run starts or ends, so errors are never off screen.
+  const jobPhase = job.state.phase
+  useEffect(() => {
+    if (jobPhase === 'idle') return
+    document.querySelector('.ed-job')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [job.running ? 'running' : jobPhase]) // eslint-disable-line react-hooks/exhaustive-deps
   const hasEnglish = !!(d.headline.trim() || d.deck.trim() || d.body.trim())
   const runTranslate = () => { setNotes([]); setSheet(null); void job.start(draftRef.current.source, draftRef.current.sourceUrl) }
   const onTranslate = () => {

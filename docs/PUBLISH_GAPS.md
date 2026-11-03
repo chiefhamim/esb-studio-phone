@@ -1,5 +1,7 @@
 # Publish: what esbpowerline.com cannot do for the phone yet
 
+> Update 2026-11-03: the site-side fix for Gaps 1 and 2 (and a staff article-fetch route) is on the local site branch `phone-bearer-api`, and the phone already probes for it. See `docs/SITE_CONNECTIVITY.md`.
+
 Written 2026-11-03 from reading the desktop app (`esb-banner-studio` `electron/site-upload.cjs`, `src/editorial/siteApi.ts`) and the site (`esbpowerline` `app/api/upload/route.ts`, `app/api/cms/revalidate/route.ts`, `utils/supabase/server.ts`).
 
 ## What works with a bearer token

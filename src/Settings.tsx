@@ -7,9 +7,34 @@ import { errorMessage, testGeminiKey } from './aiProviders'
 import { loadFacebook, verifyFacebook } from './publish/facebook'
 import { loadSession, signIn, signOut } from './publish/site'
 import type { StaffSession } from './publish/site'
+import { checkConnection, CONNECTION_LABEL } from './sync/connection'
+import type { Connection } from './sync/connection'
+import { probeFeature } from './sync/endpoints'
+import type { Availability, Feature } from './sync/endpoints'
 import { applyTheme, readTheme } from './theme'
 import type { ThemeChoice } from './theme'
+import { isAppLockEnabled, isBiometricAvailable, setAppLockEnabled } from './native/biometric'
 import './ui/settings.css'
+
+function AppLock() {
+  const [on, setOn] = useState(isAppLockEnabled())
+  const [can, setCan] = useState<boolean | null>(null)
+  const [msg, setMsg] = useState('')
+  useEffect(() => { void isBiometricAvailable().then((a) => setCan(a.available)).catch(() => setCan(false)) }, [])
+  async function toggle() {
+    setMsg('')
+    const next = await setAppLockEnabled(!on)
+    setOn(next)
+    if (!on && !next) setMsg('Could not turn it on. Check that a fingerprint, face or screen lock is set up on this phone.')
+  }
+  return (
+    <div className="card">
+      <button type="button" className="secondary" role="switch" aria-checked={on} disabled={can === false} onClick={() => void toggle()}>{on ? 'App lock: on. Tap to turn off' : 'Turn on app lock'}</button>
+      <p className="note">{can === false ? 'This phone has no fingerprint, face or screen lock available to this app.' : 'Asks for your fingerprint, face or screen lock when the app opens and after 30 seconds in the background.'}</p>
+      {msg && <p className="note" role="status">{msg}</p>}
+    </div>
+  )
+}
 
 type Status = 'loading' | 'saved' | 'unset'
 
@@ -81,13 +106,26 @@ function FacebookCheck() {
   )
 }
 
+function featWord(a: Availability | undefined): string {
+  return a === 'available' ? 'works' : a === 'unavailable' ? 'Planned (the site has not been updated for it yet)' : a === 'unknown' ? 'could not check' : 'checking'
+}
+
 function SiteAccount() {
   const [session, setSession] = useState<StaffSession | null | undefined>(undefined)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const [conn, setConn] = useState<Connection | 'checking'>('checking')
+  const [feat, setFeat] = useState<Partial<Record<Feature, Availability>>>({})
   useEffect(() => { void loadSession().then(setSession).catch(() => setSession(null)) }, [])
+  useEffect(() => {
+    let live = true
+    setConn('checking')
+    void checkConnection().then((c) => { if (live) setConn(c) }).catch(() => { if (live) setConn('offline') })
+    if (session) for (const k of ['upload', 'revalidate', 'fetchArticle'] as const) void probeFeature(k, { force: true }).then((a) => { if (live) setFeat((o) => ({ ...o, [k]: a })) })
+    return () => { live = false }
+  }, [session])
   const login = async (e: React.FormEvent) => {
     e.preventDefault()
     setBusy(true); setMsg('')
@@ -101,8 +139,16 @@ function SiteAccount() {
     <div className="card">
       {session ? (
         <>
-          <p className="st-pill st-saved" role="status">Signed in</p>
+          <p className={`st-pill ${conn === 'connected' ? 'st-saved' : 'st-unset'}`} role="status">{conn === 'checking' ? 'Checking...' : CONNECTION_LABEL[conn]}</p>
+          {conn === 'expired' && <p className="note">The site ended this sign-in. Sign out, then sign in again below.</p>}
+          {conn === 'offline' && <p className="note">The site cannot be reached right now. Your sign-in is kept.</p>}
           <p className="note">{session.name} ({session.email}){session.role ? `, ${session.role.toLowerCase()}` : ''}. The sign-in is kept in secure storage; the password is not.</p>
+          <ul className="note" aria-label="Site features">
+            <li>Save and publish stories: works</li>
+            <li>Picture upload: {featWord(feat.upload)}</li>
+            <li>Refresh public pages after publishing: {featWord(feat.revalidate)}</li>
+            <li>Fetch a pasted news link: {featWord(feat.fetchArticle)}</li>
+          </ul>
           <button type="button" className="secondary" onClick={() => { void signOut().then(() => setSession(null)) }}>Sign out</button>
         </>
       ) : (
@@ -180,6 +226,10 @@ export default function Settings({ onClose }: { onClose: () => void }) {
             ))}
           </div>
           <p className="note">Auto follows the phone's light or dark setting. Light and Dark override it on this phone.</p>
+        </Group>
+
+        <Group id="lock" title="Privacy">
+          <AppLock />
         </Group>
 
         <Group id="about" title="About">

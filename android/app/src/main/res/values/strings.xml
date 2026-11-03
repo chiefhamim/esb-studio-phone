@@ -1,7 +1,12 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ESB Studio</string>
     <string name="title_activity_main">ESB Studio</string>
     <string name="package_name">com.esbpowerline.studio.phone</string>
     <string name="custom_url_scheme">com.esbpowerline.studio.phone</string>
+    <string name="shortcut_new_story_short">New story</string>
+    <string name="shortcut_new_story_long">Start a new story</string>
+    <string name="shortcut_paste_link_short">Paste link</string>
+    <string name="shortcut_paste_link_long">Paste a story link</string>
+    <string name="process_text_label">Send to ESB Studio</string>
 </resources>

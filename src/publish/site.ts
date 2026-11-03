@@ -5,8 +5,8 @@
 //    setSecret('site-session', ...). The password is used for one request and never stored.
 //  - every call is a plain fetch with `Authorization: Bearer <token>` and the public `apikey`; there is no cookie.
 //  - saving defaults to DRAFT. PUBLISHED needs a one-time Confirmation from the confirmation sheet (confirm.ts).
-// Not possible from the phone yet (the site accepts a cookie only): picture upload and cache refresh. See
-// docs/PUBLISH_GAPS.md.
+// Picture upload, cache refresh and article fetch need the site's bearer-token branch (src/sync/endpoints.ts probes for it).
+// See docs/SITE_CONNECTIVITY.md.
 
 import type { Draft } from '../drafts'
 import { deleteSecret, getSecret, setSecret } from '../secure'
@@ -88,14 +88,14 @@ interface TokenResponse {
   message?: string
 }
 
-async function authFetch(path: string, body: unknown, f: Fetch): Promise<{ ok: boolean; data: TokenResponse }> {
+async function authFetch(path: string, body: unknown, f: Fetch): Promise<{ ok: boolean; status: number; data: TokenResponse }> {
   const res = await f(`${SUPABASE_URL}/auth/v1/${path}`, {
     method: 'POST',
     headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
   const data = (await res.json().catch(() => ({}))) as TokenResponse
-  return { ok: res.ok, data }
+  return { ok: res.ok, status: res.status, data }
 }
 
 async function sessionFromTokens(t: TokenResponse, fallbackEmail: string, f: Fetch): Promise<{ session?: StaffSession; error?: string }> {
@@ -161,26 +161,41 @@ export async function signIn(email: string, password: string, f: Fetch = fetch):
  * A session good for at least five more minutes. A Supabase refresh token is SINGLE USE: refresh from the newest stored
  * copy, one refresh at a time (a second caller shares the first's result), and store the new tokens at once.
  */
-let refreshing: Promise<StaffSession | null> | null = null
-export async function ensureFreshSession(f: Fetch = fetch): Promise<StaffSession | null> {
+export type RefreshOutcome =
+  | { state: 'ok'; session: StaffSession }
+  | { state: 'none' }
+  /** the site refused the refresh token: the sign-in has ended and the editor must sign in again */
+  | { state: 'expired' }
+  /** the network or the auth service failed: the sign-in may still be good */
+  | { state: 'unavailable' }
+
+let refreshing: Promise<RefreshOutcome> | null = null
+export async function refreshSession(f: Fetch = fetch): Promise<RefreshOutcome> {
   const session = await loadSession()
-  if (!session) return null
-  if (session.expiresAt - Date.now() / 1000 > 300) return session
+  if (!session) return { state: 'none' }
+  if (session.expiresAt - Date.now() / 1000 > 300) return { state: 'ok', session }
   if (refreshing) return refreshing
-  refreshing = (async () => {
+  refreshing = (async (): Promise<RefreshOutcome> => {
     try {
-      const { ok, data } = await authFetch('token?grant_type=refresh_token', { refresh_token: session.refreshToken }, f)
-      if (!ok) return null
+      const { ok, status, data } = await authFetch('token?grant_type=refresh_token', { refresh_token: session.refreshToken }, f)
+      if (!ok) return status === 429 || status >= 500 ? { state: 'unavailable' } : { state: 'expired' }
       const next = await sessionFromTokens(data, session.email, f)
-      if (next.session) await storeSession(next.session)
-      return next.session ?? null
+      if (!next.session) return next.error ? { state: 'expired' } : { state: 'unavailable' }
+      await storeSession(next.session)
+      return { state: 'ok', session: next.session }
     } catch {
-      return null
+      return { state: 'unavailable' }
     } finally {
       refreshing = null
     }
   })()
   return refreshing
+}
+
+/** A session good for at least five more minutes, or null (signed out, ended, or the network is down). */
+export async function ensureFreshSession(f: Fetch = fetch): Promise<StaffSession | null> {
+  const r = await refreshSession(f)
+  return r.state === 'ok' ? r.session : null
 }
 
 export async function signOut(f: Fetch = fetch): Promise<void> {

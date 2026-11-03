@@ -64,7 +64,7 @@
 .sh-search input::placeholder { color: var(--text-tertiary); }
 .sh-chips { display: flex; gap: var(--s-4); overflow-x: auto; scrollbar-width: none; margin: 0 calc(-1 * var(--s-6)); padding: 0 var(--s-6); }
 .sh-chips::-webkit-scrollbar { display: none; }
-.sh-fchip { flex: none; display: inline-flex; align-items: center; gap: var(--s-3); min-height: 40px; padding: 0 var(--s-5); border: 1px solid var(--border-default); border-radius: var(--r-pill); background: var(--surface-panel); color: var(--text-primary); font: 600 14px/20px var(--font-ui); cursor: pointer; transition: background var(--t-state) var(--ease), color var(--t-state) var(--ease), transform var(--t-hover) var(--ease); }
+.sh-fchip { flex: none; display: inline-flex; align-items: center; gap: var(--s-3); min-height: 44px; padding: 0 var(--s-5); border: 1px solid var(--border-default); border-radius: var(--r-pill); background: var(--surface-panel); color: var(--text-primary); font: 600 14px/20px var(--font-ui); cursor: pointer; transition: background var(--t-state) var(--ease), color var(--t-state) var(--ease), transform var(--t-hover) var(--ease); }
 .sh-fchip b { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
 .sh-fchip:active { transform: scale(.96); }
 .sh-fchip[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }

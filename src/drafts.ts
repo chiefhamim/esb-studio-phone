@@ -36,6 +36,11 @@ export function newDraft(sourceUrl = '', source = ''): Draft {
   return { id: `d${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, sourceUrl, source, headline: '', deck: '', body: '', category: '', slug: '', translated: false, updatedAt: Date.now() }
 }
 
+/** A draft nothing has been typed into (no link, source, English or category). Starting a new graphic reuses one instead of piling up empties. */
+export function isBlankDraft(d: Draft): boolean {
+  return !d.sourceUrl.trim() && !d.source.trim() && !d.headline.trim() && !d.deck.trim() && !d.body.trim() && !d.category.trim() && !d.slug.trim()
+}
+
 /** Drafts list that writes through to storage on every change. */
 export function useDrafts() {
   const [drafts, setDrafts] = useState<Draft[]>(loadDrafts)

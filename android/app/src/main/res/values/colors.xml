@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Match surface-app token in src/ui/tokens.css (light #e9e9eb, dark #0d0d0f). -->
+    <color name="surface_app">#E9E9EB</color>
+    <color name="colorPrimary">#18181B</color>
+    <color name="colorPrimaryDark">#18181B</color>
+    <color name="colorAccent">#1F9D55</color>
+</resources>

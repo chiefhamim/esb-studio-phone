@@ -13,6 +13,8 @@ import { loadFacebook, postToFacebook } from './facebook'
 import type { FacebookConfig } from './facebook'
 import { buildReadiness, facebookBlockers, slugFromHeadline } from './readiness'
 import { loadSession, saveArticle, signIn, signOut } from './site'
+import { cachedAvailability, probeFeature, revalidateSlugs, uploadPicture } from '../sync/endpoints'
+import type { Availability } from '../sync/endpoints'
 import type { StaffSession } from './site'
 import { getSent, setSent } from './state'
 import { analyzeFacebook } from './socialChecks'
@@ -59,8 +61,10 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
   const [reviewed, setReviewed] = useState(false)
   const [photo, setPhoto] = useState<Blob | null>(null)
   const [photoName, setPhotoName] = useState('')
-  const [photoUrl, setPhotoUrl] = useState('')
-  const [credit, setCredit] = useState('')
+  const [photoUrl, setPhotoUrl] = useState(() => getSent(draft.id).imageUrl ?? '')
+  const [credit, setCredit] = useState(() => getSent(draft.id).imageCredit ?? '')
+  const [uploadAvail, setUploadAvail] = useState<Availability>(() => cachedAvailability('upload'))
+  const [uploading, setUploading] = useState(false)
   const [caption, setCaption] = useState(() => defaultCaption(draft.headline))
   const [linkComment, setLinkComment] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -73,6 +77,8 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
   const draftId = draft.id
 
   useEffect(() => { void loadSession().then(setSession); void loadFacebook().then(setFb) }, [])
+  // is picture upload live on the site yet? (remembered probe; nothing is uploaded)
+  useEffect(() => { if (session) { void probeFeature('upload').then(setUploadAvail); void probeFeature('revalidate') } }, [session])
   const preview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo])
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
   useEffect(() => { if (pending) cancelRef.current?.focus() }, [pending])
@@ -110,6 +116,15 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
     } else setOutcome({ tone: 'bad', text: r.error })
   }
 
+  async function uploadToSite() {
+    if (!photo) return
+    setUploading(true); setPictureNote('')
+    const r = await uploadPicture(photo, photoName || 'picture.jpg')
+    setUploading(false)
+    if (r.ok) { setPhotoUrl(r.data.url); setPictureNote('Uploaded to the site media library. The link is filled in above; it is used when you save or publish the story.') }
+    else setPictureNote(r.error)
+  }
+
   function askLive(kind: 'site' | 'facebook') {
     setOutcome(null)
     setPending(kind === 'site'
@@ -128,7 +143,9 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
       setBusy(false)
       if (r.ok) {
         remember({ articleId: r.articleId, slug: r.slug, status: 'PUBLISHED', liveUrl: r.liveUrl })
-        setOutcome({ tone: 'ok', text: 'The site accepted it and it is published. The public pages can take a few minutes to refresh (see docs/PUBLISH_GAPS.md).', link: r.liveUrl ?? undefined })
+        // best effort: ask the site to refresh its cached public pages (only when the route is proved live)
+        const refreshed = cachedAvailability('revalidate') === 'available' ? (await revalidateSlugs([r.slug])).ok : false
+        setOutcome({ tone: 'ok', text: refreshed ? 'The site accepted it and it is published. The public pages were asked to refresh.' : 'The site accepted it and it is published. The public pages can take a few minutes to refresh (see docs/SITE_CONNECTIVITY.md).', link: r.liveUrl ?? undefined })
       } else setOutcome({ tone: 'bad', text: r.error })
     } else {
       if (!fb || !photo) { setBusy(false); setOutcome({ tone: 'bad', text: 'Facebook is not ready. Nothing was sent.' }); return }
@@ -220,7 +237,9 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
             <input id="pub-url" type="url" inputMode="url" value={photoUrl} placeholder="https://" onChange={(e) => setPhotoUrl(e.target.value)} />
             <label htmlFor="pub-credit">Photo credit</label>
             <input id="pub-credit" value={credit} onChange={(e) => setCredit(e.target.value)} />
-            <button type="button" className="secondary" disabled aria-disabled="true">Upload picture to the site: Planned</button>
+            {uploadAvail === 'available'
+              ? <button type="button" className="secondary" disabled={!photo || uploading} onClick={() => { void uploadToSite() }}>{uploading ? 'Uploading...' : 'Upload the chosen picture to the site'}</button>
+              : <button type="button" className="secondary" disabled aria-disabled="true">Upload picture to the site: {uploadAvail === 'unknown' ? 'sign in to check' : 'Planned'}</button>}
           </section>
 
           <section className="card" aria-labelledby="pb-site-h">
