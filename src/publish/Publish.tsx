@@ -1,9 +1,11 @@
-// Publish screen: review, save to esbpowerline.com as a draft, publish live, post to the Facebook Page.
-// Every live action opens a confirmation sheet that names what goes out and needs a second tap; Cancel has focus.
+// Publish desk, three steps: Check (is the story ready), Review (picture, site page, Facebook post), Send (account and the
+// live actions). Every live action opens a confirmation sheet that names what goes out and needs a second tap; Cancel has
+// focus. The gate is unchanged from the first build: the network functions refuse to run without the sheet's confirmation.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Draft } from '../drafts'
-import { defaultCaption, sanitizeFacebook } from './caption'
+import '../ui/publish.css'
+import { defaultCaption, sanitizeFacebook, CAPTION_TEXT_LIMIT } from './caption'
 import { ESB_CATEGORIES } from './categories'
 import { issueConfirmation } from './confirm'
 import type { LivePlan } from './confirm'
@@ -13,6 +15,12 @@ import { buildReadiness, facebookBlockers, slugFromHeadline } from './readiness'
 import { loadSession, saveArticle, signIn, signOut } from './site'
 import type { StaffSession } from './site'
 import { getSent, setSent } from './state'
+import { analyzeFacebook } from './socialChecks'
+import { STEPS, ringStats, stepAt, stepIndex } from './steps'
+import type { StepId } from './steps'
+import { FacebookPreviewCard, SitePreviewCard } from './Previews'
+import { formatArticleDate } from './steps'
+import { renderDraftBanner } from '../banner/compose'
 
 type Outcome = { tone: 'ok' | 'bad'; text: string; link?: string } | null
 
@@ -22,13 +30,27 @@ export default function Publish({ draft, onChange }: { draft: Draft | null; onCh
   return <PublishFor key={draft.id} draft={draft} onChange={onChange} />
 }
 
+function Ring({ done, total, fraction }: { done: number; total: number; fraction: number }) {
+  const r = 28
+  const c = 2 * Math.PI * r
+  return (
+    <svg className="pb-ring" viewBox="0 0 72 72" role="img" aria-label={`${done} of ${total} required checks passed`}>
+      <circle cx="36" cy="36" r={r} className="pb-ring-bg" />
+      <circle cx="36" cy="36" r={r} className="pb-ring-fg" strokeDasharray={c} strokeDashoffset={c * (1 - fraction)} transform="rotate(-90 36 36)" />
+      <text x="36" y="41" textAnchor="middle" className="pb-ring-t">{done}/{total}</text>
+    </svg>
+  )
+}
+
 function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) => void }) {
+  const [step, setStep] = useState<StepId>('check')
   const [session, setSession] = useState<StaffSession | null>(null)
   const [fb, setFb] = useState<FacebookConfig | null>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [reviewed, setReviewed] = useState(false)
-  const [photo, setPhoto] = useState<File | null>(null)
+  const [photo, setPhoto] = useState<Blob | null>(null)
+  const [photoName, setPhotoName] = useState('')
   const [photoUrl, setPhotoUrl] = useState('')
   const [credit, setCredit] = useState('')
   const [caption, setCaption] = useState(() => defaultCaption(draft.headline))
@@ -36,8 +58,10 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
   const [busy, setBusy] = useState(false)
   const [pending, setPending] = useState<LivePlan | null>(null)
   const [outcome, setOutcome] = useState<Outcome>(null)
+  const [pictureNote, setPictureNote] = useState('')
+  const [dateLine] = useState(() => formatArticleDate(new Date()))
   const [sent, setSentState] = useState(() => getSent(draft.id))
-    const cancelRef = useRef<HTMLButtonElement>(null)
+  const cancelRef = useRef<HTMLButtonElement>(null)
   const draftId = draft.id
 
   useEffect(() => { void loadSession().then(setSession); void loadFacebook().then(setFb) }, [])
@@ -53,6 +77,10 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
   const set = (patch: Partial<Draft>) => onChange({ ...draft, ...patch })
   const isLive = sent.status === 'PUBLISHED'
   const pictureWords = hasUrl ? `picture link ${photoUrl.trim()}` : 'none (no picture is sent to the site)'
+  const ring = ringStats(ready)
+  const finalCaption = sanitizeFacebook(caption, draft.headline)
+  const social = useMemo(() => analyzeFacebook(caption), [caption])
+  const heroUrl = hasUrl ? photoUrl.trim() : preview
 
   async function doSignIn(e: React.FormEvent) {
     e.preventDefault()
@@ -78,7 +106,7 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
     setOutcome(null)
     setPending(kind === 'site'
       ? { kind, title: draft.headline.trim(), slug: draft.slug.trim().toLowerCase(), destination: `esbpowerline.com/articles/${draft.slug.trim().toLowerCase()} (public, ${isLive ? 'updates the live article' : 'goes live now'})`, picture: pictureWords }
-      : { kind, title: draft.headline.trim(), destination: 'the ESB Power Line Facebook Page (public post)', picture: photo ? `${photo.name} (${Math.round(photo.size / 1024)} KB)` : 'none' })
+      : { kind, title: draft.headline.trim(), destination: 'the ESB Power Line Facebook Page (public post)', picture: photo ? `${photoName || 'picture'} (${Math.round(photo.size / 1024)} KB)` : 'none' })
   }
 
   async function confirmLive() {
@@ -106,87 +134,156 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
     }
   }
 
+  async function attachBanner() {
+    setPictureNote('Making the banner from your Banner settings...')
+    try {
+      const blob = await renderDraftBanner(draft, 1)
+      setPhoto(blob); setPhotoName('banner.png')
+      setPictureNote('The banner is now the Facebook picture. It is only attached here; nothing was sent.')
+    } catch (e) {
+      setPictureNote(e instanceof Error ? e.message : 'The banner could not be made.')
+    }
+  }
+
   const mark = (s: string) => (s === 'ok' ? 'OK' : s === 'warn' ? 'Check' : 'Fix')
+  const idx = stepIndex(step)
+  const stepWhy = step === 'check' && ready.blockers.length ? `${ready.blockers.length} thing${ready.blockers.length === 1 ? '' : 's'} to fix before you can publish.` : ''
 
   return (
     <div className="pub">
       <h1>Publish</h1>
-      <p className="note">Nothing leaves this phone until you tap a button below. Going live always asks twice.</p>
+      <ol className="pb-steps" aria-label="Publish steps">
+        {STEPS.map((s, i) => (
+          <li key={s.id}>
+            <button type="button" className={`pb-step${i === idx ? ' on' : ''}${i < idx ? ' done' : ''}`} aria-current={i === idx ? 'step' : undefined} onClick={() => setStep(s.id)}>
+              <span className="pb-step-n" aria-hidden="true">{i + 1}</span>{s.label}
+            </button>
+          </li>
+        ))}
+      </ol>
+      <p className="note">Nothing leaves this phone until you tap a button in the Send step. Going live always asks twice.</p>
 
-      <section className="card" aria-labelledby="pub-ready">
-        <h2 id="pub-ready">Ready to publish?</h2>
-        <ul className="pub-checks">
-          {ready.checks.map((c) => (
-            <li key={c.id} className={`pub-check pub-${c.status}`}>
-              <span className="pub-mark" aria-hidden="true">{mark(c.status)}</span>
-              <span><b>{c.label}.</b> <span className="sr-only">{c.status === 'ok' ? 'Done. ' : c.status === 'warn' ? 'Worth checking. ' : 'Must fix. '}</span>{c.detail}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="note" role="status">{ready.blockers.length ? `${ready.blockers.length} thing${ready.blockers.length === 1 ? '' : 's'} to fix before you can publish.` : 'Everything required is in place.'}</p>
-      </section>
+      {step === 'check' && (
+        <>
+          <section className="card pb-ready" aria-labelledby="pub-ready">
+            <div className="pb-ready-head">
+              <Ring {...ring} />
+              <div>
+                <h2 id="pub-ready">Ready to publish?</h2>
+                <p className="note" role="status">{ready.blockers.length ? `${ready.blockers.length} thing${ready.blockers.length === 1 ? '' : 's'} to fix before you can publish.` : 'Everything required is in place.'}</p>
+              </div>
+            </div>
+            <ul className="pub-checks">
+              {ready.checks.map((c) => (
+                <li key={c.id} className={`pub-check pub-${c.status}`}>
+                  <span className="pub-mark" aria-hidden="true">{mark(c.status)}</span>
+                  <span><b>{c.label}.</b> <span className="sr-only">{c.status === 'ok' ? 'Done. ' : c.status === 'warn' ? 'Worth checking. ' : 'Must fix. '}</span>{c.detail}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
 
-      <section className="card" aria-labelledby="pub-details">
-        <h2 id="pub-details">Details</h2>
-        <label htmlFor="pub-cat">Category</label>
-        <select id="pub-cat" value={draft.category} onChange={(e) => set({ category: e.target.value })}>
-          <option value="">Choose a category</option>
-          {Object.keys(ESB_CATEGORIES).map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <label htmlFor="pub-slug">Web address (slug)</label>
-        <input id="pub-slug" value={draft.slug} autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={(e) => set({ slug: e.target.value.toLowerCase() })} />
-        <button type="button" className="secondary" onClick={() => set({ slug: slugFromHeadline(draft.headline) })} disabled={!draft.headline.trim()}>Make from headline</button>
-        {draft.translated && (
-          <label className="pub-tick"><input type="checkbox" checked={reviewed} onChange={(e) => setReviewed(e.target.checked)} /> I have read the translated English through and it is right.</label>
-        )}
-      </section>
+          <section className="card" aria-labelledby="pub-details">
+            <h2 id="pub-details">Details</h2>
+            <label htmlFor="pub-cat">Category</label>
+            <select id="pub-cat" value={draft.category} onChange={(e) => set({ category: e.target.value })}>
+              <option value="">Choose a category</option>
+              {Object.keys(ESB_CATEGORIES).map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <label htmlFor="pub-slug">Web address (slug)</label>
+            <input id="pub-slug" value={draft.slug} autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={(e) => set({ slug: e.target.value.toLowerCase() })} />
+            <button type="button" className="secondary" onClick={() => set({ slug: slugFromHeadline(draft.headline) })} disabled={!draft.headline.trim()}>Make from headline</button>
+            {draft.translated && (
+              <label className="pub-tick"><input type="checkbox" checked={reviewed} onChange={(e) => setReviewed(e.target.checked)} /> I have read the translated English through and it is right.</label>
+            )}
+          </section>
+        </>
+      )}
 
-      <section className="card" aria-labelledby="pub-pic">
-        <h2 id="pub-pic">Picture</h2>
-        <label htmlFor="pub-file">Choose from the phone (used for Facebook)</label>
-        <input id="pub-file" type="file" accept="image/jpeg,image/png" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />
-        {preview && <img className="pub-preview" src={preview} alt="Chosen picture preview" />}
-        <label htmlFor="pub-url">Picture link for the site (https, already hosted)</label>
-        <input id="pub-url" type="url" inputMode="url" value={photoUrl} placeholder="https://" onChange={(e) => setPhotoUrl(e.target.value)} />
-        <label htmlFor="pub-credit">Photo credit</label>
-        <input id="pub-credit" value={credit} onChange={(e) => setCredit(e.target.value)} />
-        <button type="button" className="secondary" disabled aria-disabled="true">Upload picture to the site: Planned</button>
-      </section>
+      {step === 'review' && (
+        <>
+          <section className="card" aria-labelledby="pub-pic">
+            <h2 id="pub-pic">Picture</h2>
+            <button type="button" className="secondary" onClick={() => { void attachBanner() }}>Use this story's banner for Facebook</button>
+            {pictureNote && <p className="note" role="status">{pictureNote}</p>}
+            <label htmlFor="pub-file">Or choose from the phone (used for Facebook)</label>
+            <input id="pub-file" type="file" accept="image/jpeg,image/png" onChange={(e) => { const f = e.target.files?.[0] ?? null; setPhoto(f); setPhotoName(f?.name ?? ''); setPictureNote('') }} />
+            <label htmlFor="pub-url">Picture link for the site (https, already hosted)</label>
+            <input id="pub-url" type="url" inputMode="url" value={photoUrl} placeholder="https://" onChange={(e) => setPhotoUrl(e.target.value)} />
+            <label htmlFor="pub-credit">Photo credit</label>
+            <input id="pub-credit" value={credit} onChange={(e) => setCredit(e.target.value)} />
+            <button type="button" className="secondary" disabled aria-disabled="true">Upload picture to the site: Planned</button>
+          </section>
 
-      <section className="card" aria-labelledby="pub-acct">
-        <h2 id="pub-acct">esbpowerline.com account</h2>
-        {session ? (
-          <>
-            <p className="note" role="status">Signed in as {session.name} ({session.email}){session.role ? `, ${session.role.toLowerCase()}` : ''}.</p>
-            <button type="button" className="secondary" disabled={busy} onClick={() => { void signOut().then(() => setSession(null)) }}>Sign out</button>
-          </>
-        ) : (
-          <form onSubmit={(e) => { void doSignIn(e) }}>
-            <label htmlFor="pub-email">Email</label>
-            <input id="pub-email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <label htmlFor="pub-pass">Password (not stored)</label>
-            <input id="pub-pass" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <button type="submit" className="primary" disabled={busy || !email || !password}>Sign in</button>
-          </form>
-        )}
-      </section>
+          <section className="card" aria-labelledby="pb-site-h">
+            <h2 id="pb-site-h">Website page</h2>
+            <SitePreviewCard title={draft.headline} deck={draft.deck} slug={draft.slug} category={draft.category} author={session?.name ?? null} body={draft.body} heroUrl={heroUrl} credit={credit} dateLine={dateLine} />
+            <p className="note">An approximation drawn by the phone. The live page uses the site's own styles; the picture shown is the link if you set one, otherwise the chosen file (the site only receives a link).</p>
+          </section>
 
-      <section className="card" aria-labelledby="pub-fb">
-        <h2 id="pub-fb">Facebook caption</h2>
-        <label htmlFor="pub-cap">Caption (no link; about 125 characters plus hashtags)</label>
-        <textarea id="pub-cap" rows={4} value={caption} onChange={(e) => setCaption(e.target.value)} />
-        <p className="count">Will post as: {sanitizeFacebook(caption, draft.headline) || '(empty)'}</p>
-        <label className="pub-tick"><input type="checkbox" checked={linkComment} onChange={(e) => setLinkComment(e.target.checked)} /> Add the article link as the first comment (only once the story is live)</label>
-        {fbProblems.length > 0 && <ul className="pub-why">{fbProblems.map((p) => <li key={p}>{p}</li>)}</ul>}
-      </section>
+          <section className="card" aria-labelledby="pub-fb">
+            <h2 id="pub-fb">Facebook post</h2>
+            <label htmlFor="pub-cap">Caption (no link; about {CAPTION_TEXT_LIMIT} characters plus hashtags)</label>
+            <textarea id="pub-cap" rows={4} value={caption} onChange={(e) => setCaption(e.target.value)} />
+            <button type="button" className="secondary" onClick={() => setCaption(defaultCaption(draft.headline))} disabled={!draft.headline.trim()}>Reset to the headline</button>
+            <FacebookPreviewCard caption={finalCaption} imageUrl={preview} />
+            <p className="count">Will post as the text above (links are removed, at most two lines, one hashtag line).</p>
+            <label className="pub-tick"><input type="checkbox" checked={linkComment} onChange={(e) => setLinkComment(e.target.checked)} /> Add the article link as the first comment (only once the story is live)</label>
+            {fbProblems.length > 0 && <ul className="pub-why">{fbProblems.map((p) => <li key={p}>{p}</li>)}</ul>}
+            <h3 className="pb-sub">Caption checks</h3>
+            <ul className="pub-checks">
+              {social.map((c) => (
+                <li key={c.id} className={`pub-check pub-${c.status === 'good' ? 'ok' : c.status === 'bad' ? 'bad' : 'warn'}`}>
+                  <span className="pub-mark" aria-hidden="true">{c.status === 'good' ? 'OK' : c.status === 'bad' ? 'Fix' : 'Check'}</span>
+                  <span><b>{c.label}.</b> <span className="sr-only">{c.status === 'good' ? 'Done. ' : 'Worth checking. '}</span>{c.detail}{c.status !== 'good' && <small className="pb-why"> {c.why}</small>}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="note">These are practice notes, not Facebook rules. They never block a post; the blockers above do.</p>
+          </section>
+        </>
+      )}
 
-      <section className="pub-actions" aria-label="Actions">
-        <button type="button" className="secondary" disabled={busy || !!ready.blockers.length || !session || isLive} onClick={() => { void saveDraft() }}>Save to site as draft</button>
-        <button type="button" className="primary pub-live" disabled={busy || !!ready.blockers.length || !session} onClick={() => askLive('site')}>{isLive ? 'Update live article' : 'Publish live'}</button>
-        <button type="button" className="primary pub-live" disabled={busy || !!fbProblems.length || !!ready.blockers.length} onClick={() => askLive('facebook')}>Post to Facebook</button>
-        {isLive && <p className="note">This story is live, so "Save as draft" is off: it would take it down.</p>}
-        {!session && <p className="note">Sign in above to save or publish to the site.</p>}
-      </section>
+      {step === 'send' && (
+        <>
+          <section className="card" aria-labelledby="pub-acct">
+            <h2 id="pub-acct">esbpowerline.com account</h2>
+            {session ? (
+              <>
+                <p className="note" role="status">Signed in as {session.name} ({session.email}){session.role ? `, ${session.role.toLowerCase()}` : ''}.</p>
+                <button type="button" className="secondary" disabled={busy} onClick={() => { void signOut().then(() => setSession(null)) }}>Sign out</button>
+              </>
+            ) : (
+              <form onSubmit={(e) => { void doSignIn(e) }}>
+                <label htmlFor="pub-email">Email</label>
+                <input id="pub-email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <label htmlFor="pub-pass">Password (not stored)</label>
+                <input id="pub-pass" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <button type="submit" className="primary" disabled={busy || !email || !password}>Sign in</button>
+              </form>
+            )}
+          </section>
+
+          <section className="card" aria-labelledby="pb-sum">
+            <h2 id="pb-sum">What each button does</h2>
+            <ul className="pub-why">
+              <li>Save to site as draft: stores the story on the site, not visible to readers.</li>
+              <li>{isLive ? 'Update live article' : 'Publish live'}: public on esbpowerline.com, after a second tap.</li>
+              <li>Post to Facebook: public post on the Page, after a second tap.</li>
+            </ul>
+            {stepWhy && <p className="note">{stepWhy}</p>}
+          </section>
+
+          <section className="pub-actions" aria-label="Actions">
+            <button type="button" className="secondary" disabled={busy || !!ready.blockers.length || !session || isLive} onClick={() => { void saveDraft() }}>Save to site as draft</button>
+            <button type="button" className="primary pub-live" disabled={busy || !!ready.blockers.length || !session} onClick={() => askLive('site')}>{isLive ? 'Update live article' : 'Publish live'}</button>
+            <button type="button" className="primary pub-live" disabled={busy || !!fbProblems.length || !!ready.blockers.length} onClick={() => askLive('facebook')}>Post to Facebook</button>
+            {isLive && <p className="note">This story is live, so "Save as draft" is off: it would take it down.</p>}
+            {!session && <p className="note">Sign in above to save or publish to the site.</p>}
+            {!!ready.blockers.length && <p className="note">Go back to Check: {ready.blockers.length} thing{ready.blockers.length === 1 ? '' : 's'} to fix.</p>}
+          </section>
+        </>
+      )}
 
       <div aria-live="polite">
         {busy && <p className="note" role="status">Working. Waiting for the real answer...</p>}
@@ -195,6 +292,11 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
             {outcome.text}{outcome.link && <> <a href={outcome.link} target="_blank" rel="noreferrer">{outcome.link}</a></>}
           </p>
         )}
+      </div>
+
+      <div className="pb-nav">
+        <button type="button" className="secondary" disabled={idx === 0} onClick={() => setStep(stepAt(idx - 1))}>Back</button>
+        {idx < STEPS.length - 1 && <button type="button" className="primary" onClick={() => setStep(stepAt(idx + 1))}>Next: {STEPS[idx + 1].label}</button>}
       </div>
 
       {pending && (

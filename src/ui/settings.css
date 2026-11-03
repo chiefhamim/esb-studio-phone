@@ -1,0 +1,20 @@
+/* Settings sheet (src/Settings.tsx). Prefix st- (set- kept from the first build). Shared tokens, 4 px grid. */
+.settings { position: fixed; inset: 0; z-index: 50; display: grid; grid-template-rows: auto 1fr; background: var(--surface-app); color: var(--text-primary); }
+.settings-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-5); padding: max(var(--s-5), env(safe-area-inset-top)) max(var(--s-6), env(safe-area-inset-right)) var(--s-5) max(var(--s-6), env(safe-area-inset-left)); border-bottom: 1px solid var(--border-default); background: var(--surface-panel); }
+.settings-head h1 { margin: 0; font: var(--t-hero); }
+.settings-head button.secondary { width: auto; min-width: 88px; margin: 0; }
+.settings-body { overflow: auto; max-width: 640px; width: 100%; margin: 0 auto; padding: var(--s-4) max(var(--s-6), env(safe-area-inset-right)) max(var(--s-8), env(safe-area-inset-bottom)) max(var(--s-6), env(safe-area-inset-left)); }
+.st-group { margin-top: var(--s-7); }
+.st-group h2 { margin: 0 0 var(--s-4); font: var(--t-caption); letter-spacing: .06em; text-transform: uppercase; color: var(--text-secondary); }
+.settings .card { background: var(--surface-raised); border-color: var(--border-default); border-radius: var(--r-3); }
+.set-row { display: flex; flex-wrap: wrap; gap: var(--s-4); }
+.set-row button { flex: 1 1 96px; width: auto; margin: 0; min-height: 48px; }
+.set-test.set-ok { color: var(--success); font-weight: 600; }
+.set-test.set-fail { color: var(--danger); font-weight: 600; }
+.set-where { margin-top: var(--s-7); line-height: 1.5; }
+.st-pill { justify-self: start; margin: 0; padding: var(--s-1) var(--s-4); border-radius: var(--r-pill); font: var(--t-caption); background: var(--fill); color: var(--text-secondary); }
+.st-pill.st-saved { background: var(--success-soft); color: var(--success); }
+.st-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-2); padding: var(--s-2); border-radius: var(--r-3); background: var(--fill); }
+.st-seg button { min-height: 48px; border: 0; border-radius: var(--r-2); background: transparent; color: var(--text-secondary); font: var(--t-title); cursor: pointer; }
+.st-seg button.on { background: var(--surface-raised); color: var(--text-primary); box-shadow: var(--raised-shadow); }
+.settings button:focus-visible, .settings input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
