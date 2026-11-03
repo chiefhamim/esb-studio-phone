@@ -4,8 +4,9 @@ import { countByFilter, FILTERS, visibleStories, type QueueFilter } from './shel
 import StoryCard from './shell/StoryCard'
 import Launcher from './home/Launcher'
 import Snackbar, { type Toast } from './shell/Snackbar'
-import { IconFolder, IconSearch } from './shell/icons'
+import { IconFolder, IconPlus, IconSearch } from './shell/icons'
 import { useBackClose } from './shell/back'
+import { ExtendedFAB } from './ui/kit/ExtendedFAB'
 
 interface Props {
   drafts: Draft[]
@@ -24,6 +25,7 @@ interface Props {
 export default function Stories({ drafts, currentId, onOpen, onAdd, onRemove, onEditorial, onGraphics }: Props) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<QueueFilter>('all')
+  const [searchOpen, setSearchOpen] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
   const [toast, setToast] = useState<Toast | null>(null)
   useBackClose(openId !== null, () => setOpenId(null))
@@ -45,6 +47,8 @@ export default function Stories({ drafts, currentId, onOpen, onAdd, onRemove, on
     say('Story duplicated (the banner photo is not copied)')
   }
 
+  const showSearchTools = drafts.length > 0 && (searchOpen || query.trim() !== '' || filter !== 'all')
+
   return (
     <div className="hm-home" onClick={(e) => { if (e.target === e.currentTarget) setOpenId(null) }}>
       <Launcher onEditorial={onEditorial} onGraphics={onGraphics} />
@@ -52,23 +56,53 @@ export default function Stories({ drafts, currentId, onOpen, onAdd, onRemove, on
       <section className="hm-section" aria-labelledby="hm-recent-h">
         <div className="hm-sec-head">
           <h2 className="hm-sec-title" id="hm-recent-h">Recent stories</h2>
-          {drafts.length > 0 && <span className="hm-sec-count">{counts.all}</span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
+            {drafts.length > 0 && <span className="hm-sec-count">{counts.all}</span>}
+            {drafts.length > 0 && (
+              <button
+                type="button"
+                className="kit-iconbtn"
+                style={{ width: 36, height: 36 }}
+                onClick={() => setSearchOpen(!searchOpen)}
+                aria-label="Toggle search and filters"
+              >
+                <IconSearch />
+              </button>
+            )}
+          </div>
         </div>
-        {drafts.length > 0 && (
+
+        {showSearchTools && (
           <div className="hm-tools">
             <label className="sh-search">
               <IconSearch />
-              <input type="search" enterKeyHint="search" autoComplete="off" placeholder="Search headline or text" aria-label="Search stories" value={query} onChange={(e) => setQuery(e.target.value)} />
+              <input
+                type="search"
+                enterKeyHint="search"
+                autoComplete="off"
+                placeholder="Search headline or text"
+                aria-label="Search stories"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                autoFocus={searchOpen}
+              />
             </label>
             <div className="sh-chips" role="group" aria-label="Filter stories">
               {FILTERS.map((f) => (
-                <button key={f.id} type="button" className="sh-fchip" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
+                <button
+                  key={f.id}
+                  type="button"
+                  className="sh-fchip"
+                  aria-pressed={filter === f.id}
+                  onClick={() => setFilter(f.id)}
+                >
                   {f.label}<b>{counts[f.id]}</b>
                 </button>
               ))}
             </div>
           </div>
         )}
+
         {drafts.length === 0 ? (
           <div className="hm-empty">
             <IconFolder />
@@ -79,10 +113,10 @@ export default function Stories({ drafts, currentId, onOpen, onAdd, onRemove, on
           <div className="hm-empty">
             <strong>Nothing matches</strong>
             <span>{query ? `No story contains “${query}”` : 'No stories with this status'}{filter !== 'all' && query ? ' in this filter' : ''}.</span>
-            <button type="button" className="sh-btn" onClick={() => { setQuery(''); setFilter('all') }}>Show all stories</button>
+            <button type="button" className="sh-btn" onClick={() => { setQuery(''); setFilter('all'); setSearchOpen(false) }}>Show all stories</button>
           </div>
         ) : (
-          <ul className="sh-list">
+          <ul className="sh-list" style={{ paddingBottom: 'calc(var(--sp-9) + var(--sp-4))' }}>
             {list.map((d) => (
               <StoryCard key={d.id} draft={d} now={now} current={d.id === currentId} open={openId === d.id}
                 onOpenChange={(o) => setOpenId(o ? d.id : (openId === d.id ? null : openId))}
@@ -91,6 +125,12 @@ export default function Stories({ drafts, currentId, onOpen, onAdd, onRemove, on
           </ul>
         )}
       </section>
+
+      <ExtendedFAB
+        icon={<IconPlus />}
+        label="New story"
+        onClick={onEditorial}
+      />
 
       <Snackbar toast={toast} onDone={() => setToast(null)} />
     </div>

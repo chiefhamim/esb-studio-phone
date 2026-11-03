@@ -35,12 +35,12 @@
 /* ---- wide / landscape: the bar becomes a left rail ---- */
 .sh-panes { grid-row: 2; }
 .hm-status { grid-row: 3; }
-.sh-nav { grid-row: 4; }
+.sh-nav, .kit-bottomnav { grid-row: 4; }
 @media (min-width: 720px), (orientation: landscape) and (min-width: 560px) {
   .sh-app { max-width: none; grid-template-columns: 88px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; }
   .hm-status { grid-row: 3; grid-column: 1 / -1; }
-  .sh-head { grid-column: 1 / -1; padding-right: max(var(--s-4), env(safe-area-inset-right)); }
-  .sh-nav { grid-row: 2; grid-column: 1; grid-template-columns: 1fr; align-content: start; grid-auto-rows: 72px; border-top: 0; border-right: 1px solid var(--border-subtle); padding: var(--s-4) var(--s-2) var(--s-4) max(var(--s-2), env(safe-area-inset-left)); }
+  .sh-head, .kit-topbar { grid-column: 1 / -1; padding-right: max(var(--s-4), env(safe-area-inset-right)); }
+  .sh-nav, .kit-bottomnav { grid-row: 2; grid-column: 1; grid-template-columns: 1fr; align-content: start; grid-auto-rows: 72px; border-top: 0; border-right: 1px solid var(--border-subtle); padding: var(--s-4) var(--s-2) var(--s-4) max(var(--s-2), env(safe-area-inset-left)); }
   .sh-nav-ind { top: var(--s-4); left: auto; right: 0; width: 4px; height: 72px; transform: translate3d(0, calc(var(--i) * 72px), 0); }
   .sh-nav-ind::after { width: 4px; height: 28px; border-radius: var(--r-pill) 0 0 var(--r-pill); }
   .sh-nav-btn { min-height: 72px; }
