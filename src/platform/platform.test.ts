@@ -28,6 +28,12 @@ describe('link fetching', () => {
     expect(r.ok).toBe(true)
     expect(r.html).toContain('খবর')
   })
+  it('ignores the native HTTP interceptor address but still checks a real redirect', async () => {
+    const intercepted = vi.fn(async () => { const r = new Response('<p>ok</p>', { status: 200, headers: { 'content-type': 'text/html' } }); Object.defineProperty(r, 'url', { value: 'https://localhost/_capacitor_http_interceptor_?u=x' }); return r })
+    expect((await directFetchUrl('https://esbpowerline.com/feed', {}, intercepted as unknown as typeof fetch)).ok).toBe(true)
+    const toLan = vi.fn(async () => { const r = new Response('<p>x</p>', { status: 200, headers: { 'content-type': 'text/html' } }); Object.defineProperty(r, 'url', { value: 'https://192.168.1.1/admin' }); return r })
+    expect((await directFetchUrl('https://example.com/a', {}, toLan as unknown as typeof fetch)).code).toBe('private_address')
+  })
   it('refuses a non-page content type and an HTTP error', async () => {
     const pdf = vi.fn(async () => new Response('x', { status: 200, headers: { 'content-type': 'application/pdf' } }))
     expect((await directFetchUrl('https://example.com/a.pdf', {}, pdf as unknown as typeof fetch)).code).toBe('bad_type')

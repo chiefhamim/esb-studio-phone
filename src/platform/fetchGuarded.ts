@@ -15,6 +15,12 @@ const MODE_KEY = 'esb-phone/link-fetch-mode'
 export function getLinkFetchMode(): LinkFetchMode { try { return localStorage.getItem(MODE_KEY) === 'device' ? 'device' : 'site' } catch { return 'site' } }
 export function setLinkFetchMode(m: LinkFetchMode) { try { localStorage.setItem(MODE_KEY, m) } catch { /* ignore */ } }
 
+/** The page's own address after redirects, or '' when the response does not tell it (CapacitorHttp's interceptor). */
+export function realUrl(u: string | null | undefined): string {
+  if (!u) return ''
+  try { const x = new URL(u); return x.hostname === 'localhost' || x.pathname.includes('_capacitor_') ? '' : u } catch { return '' }
+}
+
 const SITE_HOSTS = new Set(['esbpowerline.com', 'www.esbpowerline.com'])
 
 type Fetch = typeof fetch
@@ -43,15 +49,18 @@ export async function directFetchUrl(raw: string, opts: { timeoutMs?: number; al
   const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 20000)
   try {
     const res = await f(g.url.toString(), { signal: ctrl.signal, redirect: 'follow', headers: { Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' } })
-    if (!res.ok) return { ok: false, code: 'http_error', error: `HTTP ${res.status}`, url: res.url || g.url.toString() }
+    if (!res.ok) return { ok: false, code: 'http_error', error: `HTTP ${res.status}`, url: realUrl(res.url) || g.url.toString() }
     // a redirect may have landed somewhere local: check the final address too
-    if (res.url) { const again = checkPublicUrl(res.url); if (!again.ok) return { ok: false, code: again.code, error: again.error } }
+    // (CapacitorHttp reports its own https://localhost/_capacitor_http_interceptor_ address here: that is the app, not
+    // the page, so only a real redirect target is checked)
+    const finalUrl = realUrl(res.url)
+    if (finalUrl) { const again = checkPublicUrl(finalUrl); if (!again.ok) return { ok: false, code: again.code, error: again.error } }
     const ct = res.headers.get('content-type')
     if (!typeAllowed(ct, opts.allowedTypes ?? ALLOWED_HTML_TYPES)) return { ok: false, code: 'bad_type', error: `That link is not a web page (${ct}).` }
     const buf = await readCapped(res, MAX_HTML_BYTES)
     if (!buf) return { ok: false, code: 'too_large', error: 'The page is larger than 5 MB.' }
     const html = decodeHtml(buf, ct)
-    return { ok: true, html, body: html, url: res.url || g.url.toString() }
+    return { ok: true, html, body: html, url: realUrl(res.url) || g.url.toString() }
   } catch (e) {
     const aborted = (e as Error)?.name === 'AbortError'
     return { ok: false, code: aborted ? 'timeout' : 'network_error', error: aborted ? 'The page took too long to answer.' : 'Could not reach that site. Check the connection.' }
