@@ -10,7 +10,7 @@
 
 /* ---- header ---- */
 .sh-head { display: flex; align-items: center; gap: var(--s-3); min-height: 52px; padding: max(var(--s-4), env(safe-area-inset-top)) max(var(--s-4), env(safe-area-inset-right)) var(--s-4) max(var(--s-6), env(safe-area-inset-left)); background: var(--surface-panel); border-bottom: 1px solid var(--border-subtle); }
-.sh-logo { display: grid; place-items: center; padding: var(--s-2) var(--s-4); background: #fff; border-radius: var(--r-3); box-shadow: var(--ctl-shadow); } /* white plate keeps the logo artwork unchanged in dark mode */
+.sh-logo { display: grid; place-items: center; } /* the logo artwork as is: no plate, glow, filter or shadow in any theme */
 .sh-logo img { display: block; height: 28px; width: auto; }
 .sh-grow { flex: 1; }
 .sh-sync { display: inline-flex; align-items: center; gap: var(--s-3); padding: 0 var(--s-3); min-height: 32px; font: var(--t-caption); color: var(--text-secondary); }
@@ -143,7 +143,3 @@
 .sh-sheet-actions { display: grid; gap: var(--s-4); }
 .sh-sheet-actions .sh-btn { width: 100%; }
 
-/* Dark mode: no white plate behind the logo. The artwork is untouched; a soft white halo (a glow, not a box) keeps its black lettering legible. */
-:root[data-theme=dark] .sh-logo { background: none; box-shadow: none; padding: 0; }
-:root[data-theme=dark] .sh-logo img { filter: drop-shadow(0 0 3px rgba(255, 255, 255, .95)) drop-shadow(0 0 10px rgba(255, 255, 255, .7)); }
-:root[data-theme=dark] .sh-logo img { filter: none; border-radius: 10px; background: rgba(255, 255, 255, .92); box-shadow: 0 0 8px 5px rgba(255, 255, 255, .92), 0 0 18px 8px rgba(255, 255, 255, .4); }

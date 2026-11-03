@@ -21,15 +21,7 @@
 /* hero: wordmark (protected logo, unchanged) | stripe | "Ai Studio", then the tagline */
 .hm-hero { display: grid; justify-items: center; gap: 14px; padding-top: clamp(8px, 4vh, 40px); text-align: center; }
 .hm-title { margin: 0; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 42px; line-height: 1.15; letter-spacing: -.028em; font-weight: 700; }
-.hm-mark { display: block; height: 40px; width: auto; border-radius: 6px; }
-/* dark: the logo artwork is drawn for a light ground, so the dark Home types the name instead (as the PC Home does); no plate */
-.hm-typed { display: none; }
-:root[data-theme=dark] .hm-mark { background: #fff; padding: 3px 6px; box-sizing: content-box; }
-:root[data-theme=dark] .hm-typed { display: none; align-items: center; align-items: center; gap: 6px; font-family: Inter, var(--font-ui); line-height: 1; }
-.hm-typed b { font-size: 42px; font-weight: 800; letter-spacing: -.04em; color: #fff; }
-.hm-pl { display: inline-grid; gap: 4px; font-size: 19px; font-weight: 800; letter-spacing: .01em; line-height: .8; text-align: left; }
-.hm-pl > span:first-child { color: #ff5359; }
-.hm-pl > span:last-child { color: #2fe58f; }
+.hm-mark { display: block; height: 40px; width: auto; }
 .hm-stick { flex: none; width: 3px; height: 34px; border-radius: 2px; background: linear-gradient(180deg, #1f9d57 0 33.3%, #e53935 33.3% 66.6%, #f0953a 66.6%); }
 .hm-name { white-space: nowrap; }
 .hm-ai, .hm-studio { color: transparent; -webkit-text-fill-color: transparent; -webkit-background-clip: text; background-clip: text; background-size: 220% 100%; padding-bottom: .08em; }
@@ -136,8 +128,6 @@
 .hm-ta { width: 100%; min-height: 220px; padding: 12px 14px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); color: var(--text-primary); font: 500 16px/1.6 'Hind Siliguri', 'Noto Sans Bengali', var(--font-ui); resize: vertical; text-align: left; }
 .hm-ta:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .hm-ta::placeholder { color: var(--text-tertiary); }
-.hm-planned { display: grid; justify-items: center; gap: 6px; padding: 36px 16px; border: 1.5px dashed color-mix(in srgb, var(--text-primary) 16%, transparent); border-radius: 14px; background: var(--fill); text-align: center; }
-.hm-planned strong { font: 600 15px/20px var(--font-ui); }
 
 /* Parse -> Polish -> Publish */
 .hm-pipe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 12px; margin: 0; padding: 14px 12px; list-style: none; border: 1.5px dashed color-mix(in srgb, var(--text-primary) 24%, transparent); border-radius: 14px; }
@@ -173,6 +163,3 @@
 .lk p { margin: 0; color: var(--text-secondary); }
 .lk-btn { min-height: 48px; padding: 0 28px; border: 0; border-radius: 12px; background: var(--accent); color: var(--on-accent); font: 700 15px/1 inherit; cursor: pointer; }
 
-/* Dark Home: same logo, no plate; soft white halo only */
-:root[data-theme=dark] .hm-mark { background: none; padding: 0; border-radius: 0; filter: drop-shadow(0 0 3px rgba(255, 255, 255, .95)) drop-shadow(0 0 12px rgba(255, 255, 255, .7)); }
-:root[data-theme=dark] .hm-mark { filter: none; box-shadow: 0 0 14px 10px rgba(255, 255, 255, .92), 0 0 30px 18px rgba(255, 255, 255, .45); border-radius: 12px; background: rgba(255, 255, 255, .92); }
