@@ -1,0 +1,201 @@
+/* The PC's selection colour (studio.css sets it on :root / .app, which the scoped copy cannot reach): the category's
+   accent in light, softened toward the surface in dark, exactly as the PC defines it. */
+:root { --sel: var(--cat, var(--ink)); --sel-ink: var(--cat-ink, var(--on-ink)); --sel-text: var(--cat, var(--text)); }
+:root[data-theme=dark] { --sel: color-mix(in oklab, var(--cat, #d4d4d8) 62%, #c9c9d1); --sel-ink: #111114; --sel-text: color-mix(in oklab, var(--cat, #d4d4d8) 55%, #f2f2f5); }
+
+/* Graphics screen: phone layout around the PC Stage and PC panels. Only PC/phone tokens; geometry, never new colours. */
+
+.gx { flex: 1; display: flex; flex-direction: column; min-height: 0; background: var(--surface-app); }
+.gx .m-topbar-title { padding-inline: var(--s-4) 0; }
+
+/* ---------------------------------------------------------------- format + category strip */
+.gx-strip, .gx-strip.m-chips.is-scroll { flex: none; align-items: center; gap: var(--s-4); margin-inline: 0; padding-inline: calc(var(--m-margin) + var(--m-safe-left)) calc(var(--m-margin) + var(--m-safe-right)); border-bottom: 1px solid var(--border-subtle); }
+.gx-strip .m-chip { margin-block: 8px; }
+.gx-catchip .m-chip-dot { width: 12px; height: 12px; }
+.gx-catchip span:nth-child(2) { max-width: 30vw; overflow: hidden; text-overflow: ellipsis; }
+.gx-strip-sep { flex: none; width: 1px; height: 24px; background: var(--border-subtle); }
+
+/* ---------------------------------------------------------------- canvas */
+.gx-body { flex: 1; min-height: 0; display: flex; }
+.gx-main { position: relative; flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
+.gx-stagehost { position: absolute; inset: 0; }
+.gx-canvas { position: absolute; inset: 0; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; overscroll-behavior: none; }
+/* the PC fits the banner inside a 40 px margin; on a phone that margin is reclaimed (the scroller reaches 32 px past
+   the visible edge, so the banner sits 8 px from it and the scrollbars are off-screen) */
+.pc-host .gx-canvas .stage-area:not(.with-rulers) .stage-scroll { inset: -32px; }
+.pc-host .gx-canvas .stage-scroll { scrollbar-width: none; }
+/* handles: the PC's 9 px squares keep their look; the hit area grows to 45 px */
+.pc-host.pc-touch .gx-canvas .handle::after { inset: -18px; border-radius: 50%; }
+.pc-host.pc-touch .gx-canvas .handle.edge-h::after { inset: -20px -15px; }
+.pc-host.pc-touch .gx-canvas .handle.edge-v::after { inset: -15px -20px; }
+.pc-host.pc-touch .gx-canvas .handle.corner { width: 12px; height: 12px; margin: -6px 0 0 -6px; }
+.pc-host.pc-touch .gx-canvas .el-tag { position: absolute; }
+.pc-host.pc-touch .gx-canvas .el-tag::after { content: ''; position: absolute; inset: -12px -8px; }
+.pc-host.pc-touch .gx-canvas .ug::before { content: ''; position: absolute; inset: -16px; }
+
+.gx-loading { position: absolute; inset: 0; display: flex; flex-direction: column; gap: var(--s-6); padding: var(--s-8) var(--m-margin); }
+.gx-skel-art { flex: 1; max-height: 60%; border-radius: var(--r-2); background: var(--fill-active); animation: m-pulse 1.2s ease-in-out infinite; }
+.gx-main .m-empty-error { position: absolute; inset: 0; justify-content: center; }
+
+.gx-empty { flex: none; display: flex; align-items: center; gap: var(--s-4); min-height: 56px; padding: var(--s-2) calc(var(--s-4) + var(--m-safe-right)) var(--s-2) calc(var(--m-margin) + var(--m-safe-left)); background: var(--surface-panel); border-top: 1px solid var(--border-subtle); }
+.gx-empty-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gx-empty-text b { font: var(--m-t-body-strong); }
+.gx-empty-text small { font: var(--m-t-caption); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------------------------------------------------------------- side inspector (medium toggle, expanded always) */
+.gx-side { flex: none; width: 340px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; border-left: 1px solid var(--border-subtle); background: var(--surface-panel); padding: var(--s-4) var(--s-4) calc(var(--s-8) + var(--m-safe-right)); }
+.gx[data-size='expanded'] .gx-side { width: 380px; }
+.gx[data-size='medium'] .gx-side { width: 320px; }
+.gx-side { overflow-x: hidden; }
+
+/* ---------------------------------------------------------------- zoom + export, dock */
+.gx-tools { flex: none; display: flex; align-items: center; gap: var(--s-2); min-height: 56px; padding: var(--s-2) calc(var(--m-margin) + var(--m-safe-right)) var(--s-2) calc(var(--s-2) + var(--m-safe-left)); background: var(--surface-panel); border-top: 1px solid var(--border-subtle); }
+.gx-tools .m-spacer { flex: 1; }
+.gx-zoom { min-width: 88px; min-height: var(--m-touch); padding: 0 var(--s-4); border: 0; border-radius: var(--r-pill); background: transparent; font: var(--m-t-label); font-variant-numeric: tabular-nums; cursor: pointer; }
+.gx-zoom:active { background: var(--fill-active); }
+.gx-zoom:disabled { color: var(--text-disabled); }
+
+.gx-dock { flex: none; display: flex; height: var(--m-navbar); padding-inline: var(--m-safe-left) var(--m-safe-right); background: var(--surface-panel); border-top: 1px solid var(--border-subtle); }
+.gx-dock-item { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: var(--m-touch); border: 0; background: none; color: var(--text-secondary); cursor: pointer; padding: var(--s-2) 0; }
+.gx-dock-item:disabled { color: var(--text-disabled); }
+.gx-dock-pill { position: relative; display: grid; place-items: center; width: 56px; height: 32px; border-radius: 16px; transition: background var(--m-dur) var(--m-ease); }
+.gx-dock-pill .m-badge { top: -4px; right: 4px; }
+.gx-dock-item.is-on { color: var(--text-primary); }
+.gx-dock-item.is-on .gx-dock-pill { background: var(--fill-active); }
+.gx-dock-label { font: var(--m-t-caption); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+html.kb-open .gx-dock, html.kb-open .gx-tools { display: none; }
+@media (min-width: 600px) {
+  .gx-dock { justify-content: center; }
+  .gx-dock-item { flex: 0 1 112px; }
+}
+
+/* ---------------------------------------------------------------- sheets with PC panels */
+.gx-help { margin: var(--s-2) 0 var(--s-4); font: var(--m-t-body); font-size: 14px; color: var(--text-secondary); }
+.gx-sheet-count { font: var(--m-t-caption); color: var(--text-secondary); padding-inline: var(--s-4); }
+.gx-photo-actions { display: flex; gap: var(--s-4); flex-wrap: wrap; }
+.gx-photo-actions .m-btn { flex: 1 1 140px; }
+.gx-panel { min-width: 0; }
+/* PC panel controls at touch size (geometry only) */
+.pc-host.pc-touch.gx-panel .icon-btn, .pc-host.pc-touch .gx-panel .icon-btn,
+.pc-host.pc-touch.gx-panel .layer .icon-btn { min-width: 44px; min-height: 44px; }
+.pc-host.pc-touch.gx-panel .layer, .pc-host.pc-touch.gx-panel .el-row { min-height: 48px; }
+.pc-host.pc-touch.gx-panel .el-group { min-height: 44px; }
+.pc-host.pc-touch.gx-panel .dock { position: static; height: auto !important; max-height: none; border: 0; background: none; }
+.pc-host.pc-touch.gx-panel .dock-body { overflow: visible; max-height: none; height: auto; }
+.pc-host.pc-touch.gx-panel .dock-tabs { min-height: 48px; }
+.pc-host.pc-touch.gx-panel .dock-tabs button[role=tab] { min-height: 44px; }
+.pc-host.pc-touch.gx-panel .layer .grip { display: none; }
+.pc-host.pc-touch.gx-panel .thumb-actions { opacity: 1; }
+.pc-host.pc-touch.gx-panel .thumb-actions button { min-width: 36px; min-height: 36px; }
+.pc-host.pc-touch.gx-panel .slot { min-height: 56px; }
+.pc-host.pc-touch.gx-panel .collage-btn { min-height: 48px; }
+.pc-host.pc-touch.gx-panel .search input { min-height: 44px; }
+
+/* layers arrange bar */
+.gx-arrange { display: flex; flex-direction: column; gap: var(--s-2); padding-bottom: var(--s-4); margin-bottom: var(--s-4); border-bottom: 1px solid var(--border-subtle); }
+.gx-arrange-head { display: flex; align-items: center; gap: var(--s-4); min-height: 32px; font: var(--m-t-body-strong); }
+.gx-arrange-head b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gx-arrange-row { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.gx-arrange-row .m-btn { flex: 1 1 140px; }
+
+/* category sheet */
+.gx-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--s-2); }
+.gx-cat { display: flex; align-items: center; gap: var(--s-6); min-height: var(--m-row-dense); padding: var(--s-2) var(--s-4); border: 1px solid transparent; border-radius: var(--r-2); background: none; text-align: left; cursor: pointer; }
+.gx-cat.is-on { background: var(--fill-active); }
+.gx-cat-dot { flex: none; width: 20px; height: 20px; border-radius: 50%; }
+.gx-cat-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gx-cat-text b { font: var(--m-t-body-strong); }
+.gx-cat-text small { font: var(--m-t-caption); color: var(--text-secondary); }
+
+/* more sheet */
+.gx-more-sec { margin-bottom: var(--s-6); }
+.gx-more-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); column-gap: var(--s-4); }
+.gx-more-item { display: flex; align-items: center; gap: var(--s-6); min-height: var(--m-touch); padding: var(--s-2) var(--s-4); border: 0; border-radius: var(--r-2); background: none; text-align: left; font: var(--m-t-body); cursor: pointer; color: var(--text-primary); }
+.gx-more-item:active { background: var(--fill-active); }
+.gx-more-item:disabled { color: var(--text-disabled); }
+.gx-more-item.is-danger { color: var(--danger); }
+.gx-more-item.is-on { background: var(--fill); }
+.gx-more-text { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.gx-more-text small { font: var(--m-t-caption); color: var(--text-secondary); }
+
+/* ---------------------------------------------------------------- export dialog */
+.gx-export { display: flex; flex-direction: column; gap: var(--s-2); padding-top: var(--s-4); max-width: 760px; }
+.gx-ex-sec { display: flex; flex-direction: column; gap: var(--s-4); padding-block: var(--s-6); border-bottom: 1px solid var(--border-subtle); }
+.gx-ex-title { display: flex; align-items: baseline; gap: var(--s-4); flex-wrap: wrap; margin: 0; font: var(--m-t-title); }
+.gx-ex-title small { font: var(--m-t-caption); color: var(--text-secondary); }
+.gx-ex-presets, .gx-ex-formats { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--s-4); }
+.gx-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: var(--m-row-dense); padding: var(--s-4) var(--s-6); border: 1px solid var(--border-strong); border-radius: var(--r-2); background: transparent; text-align: left; cursor: pointer; color: var(--text-primary); }
+.gx-card b { font: var(--m-t-body-strong); }
+.gx-card small { font: var(--m-t-caption); color: var(--text-secondary); }
+.gx-card.is-on { background: var(--fill-active); border-color: var(--text-primary); }
+.gx-fcard { flex-direction: row; align-items: center; gap: var(--s-6); }
+.gx-fcard-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gx-ratio { flex: none; width: 28px; max-height: 36px; border: 1.5px solid currentColor; border-radius: 3px; opacity: .7; }
+.gx-ex-row { display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap; }
+.gx-ex-row .m-btn-outlined { width: var(--m-touch); padding: 0; }
+.gx-num { min-width: 48px; text-align: center; font: var(--m-t-label); font-variant-numeric: tabular-nums; }
+.gx-range { display: flex; flex-direction: column; gap: var(--s-2); font: var(--m-t-label); }
+.gx-range input, .gx input[type=range] { width: 100%; min-height: var(--m-touch); accent-color: var(--accent); }
+.gx-mono { font-family: var(--font-mono, ui-monospace, monospace); }
+.gx-stack { display: flex; flex-direction: column; gap: var(--s-4); }
+.gx-ex-files, .gx-ex-results { display: flex; flex-direction: column; }
+.gx-ex-file, .gx-ex-result { display: flex; align-items: center; gap: var(--s-4); min-height: var(--m-row-dense); border-bottom: 1px solid var(--border-subtle); }
+.gx-ex-file > span, .gx-ex-rtext { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gx-ex-file b, .gx-ex-rtext b { font: var(--m-t-body-strong); font-size: 14px; overflow-wrap: anywhere; }
+.gx-ex-file small, .gx-ex-rtext small { font: var(--m-t-caption); color: var(--text-secondary); overflow-wrap: anywhere; }
+.gx-ex-result .m-btn-text { padding-inline: var(--s-4); min-width: var(--m-touch); }
+.gx-ex-state { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--fill); }
+.gx-ex-state.is-saved { background: var(--success-soft); color: var(--success); }
+.gx-ex-state.is-failed { background: var(--danger-soft); color: var(--danger); }
+.gx-progress { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--s-2); }
+.gx-progress small { font: var(--m-t-caption); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gx-progress-bar { height: 6px; border-radius: 3px; background: var(--fill-active); overflow: hidden; }
+.gx-progress-bar i { display: block; height: 100%; background: var(--accent); transition: width var(--m-dur) var(--m-ease); }
+
+/* switch row (export ZIP) */
+.gx-switch-row { display: flex; align-items: center; gap: var(--s-6); width: 100%; min-height: var(--m-row-dense); padding: 0; border: 0; background: none; text-align: left; cursor: pointer; color: var(--text-primary); }
+.gx-switch-text { flex: 1; min-width: 0; display: flex; flex-direction: column; font: var(--m-t-body); }
+.gx-switch-text small { font: var(--m-t-caption); color: var(--text-secondary); }
+.gx-switch { flex: none; position: relative; width: 52px; height: 32px; border-radius: 16px; border: 2px solid var(--border-strong); background: var(--fill); transition: background var(--m-dur) var(--m-ease); }
+.gx-switch i { position: absolute; top: 50%; left: 6px; width: 16px; height: 16px; margin-top: -8px; border-radius: 50%; background: var(--text-secondary); transition: transform var(--m-dur) var(--m-ease), background var(--m-dur); }
+.gx-switch.is-on { background: var(--accent); border-color: var(--accent); }
+.gx-switch.is-on i { transform: translateX(20px); background: var(--on-accent); }
+
+/* preview */
+.gx-preview { display: flex; flex-direction: column; gap: var(--s-4); padding-top: var(--s-4); }
+.gx-preview-box { display: flex; justify-content: center; overflow: hidden; padding: var(--s-4) 0; }
+
+/* PC popovers marked as hosts (parts.tsx usePcPortals): keep them inside the screen */
+.gx-portal.popover { max-width: calc(100vw - 16px); }
+
+/* the PC's floating layer toolbar (Quickbar) is ~400 px wide: on the phone it is pinned to the top of the canvas,
+   full width, and scrolls sideways */
+.gx-stagehost { contain: layout paint; }
+.pc-host .gx-canvas .qbar-anchor { position: fixed; left: 8px !important; right: 8px; top: 8px !important; bottom: auto; transform: none; display: flex; justify-content: center; z-index: 7; }
+.pc-host .gx-canvas .qbar { max-width: 100%; height: 48px; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; scrollbar-width: none; overscroll-behavior: contain; }
+.pc-host .gx-canvas .qbar > *, .pc-host .gx-canvas .qbar .qb-hl-split > * { flex: none; }
+.pc-host .gx-canvas .qb-text { white-space: nowrap; }
+.pc-host.pc-touch .gx-canvas .qbar .qb-i, .pc-host.pc-touch .gx-canvas .qbar .qb-text { height: 40px; min-height: 40px; }
+.pc-host.pc-touch .gx-canvas .qbar .qb-i { width: 40px; }
+.gx-empty-text b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 419px) { .gx-empty-text small { display: none; } }
+.pc-host.pc-touch.gx-panel .align-bar { flex-wrap: wrap; max-width: 100%; }
+/* PC switches keep their shape (pcHost.css gives every PC button a 40 px min-height); the hit area grows instead */
+.pc-host.pc-touch.gx-panel .tgl { min-height: 0; position: relative; flex: none; }
+.pc-host.pc-touch.gx-panel .tgl::before { content: ''; position: absolute; inset: -14px -10px; }
+.pc-host.pc-touch .slot-choose-btn { height: 48px; min-height: 48px; min-width: 48px; padding-inline: 20px; }
+
+/* Short windows (phone landscape, split screen): the banner gets the height. The dock becomes a vertical column on
+   the right, the "No photo yet" row folds away (Photos in the dock does the same), the top bar drops its second line. */
+@media (max-height: 520px) and (min-width: 560px) {
+  .m-screen.gx { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto minmax(0, 1fr) auto; }
+  .m-screen.gx > .m-topbar, .m-screen.gx > .gx-strip { grid-column: 1 / -1; }
+  .m-screen.gx > .gx-body { grid-column: 1; grid-row: 3; }
+  .m-screen.gx > .gx-tools { grid-column: 1; grid-row: 4; min-height: 52px; }
+  .m-screen.gx > .gx-dock { grid-column: 2; grid-row: 3 / 5; flex-direction: column; height: auto; width: 88px; padding: 0 var(--m-safe-right) 0 0; border-top: 0; border-left: 1px solid var(--border-subtle); }
+  .m-screen.gx > .gx-dock .gx-dock-item { flex: 1; min-height: var(--m-touch); }
+  .m-screen.gx > .gx-empty { display: none; }
+  .m-screen.gx .m-topbar-sub { display: none; }
+  .m-screen.gx .m-topbar-row { height: 48px; }
+  .m-screen.gx .gx-side { width: 300px; }
+}

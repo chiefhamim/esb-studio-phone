@@ -23,6 +23,25 @@ const SCREENS = {
   settings: async (p) => { await p.locator('button[aria-label="Settings"]').first().click(); await p.waitForSelector('.m-fulldialog') },
   editorial: async (p) => { await p.locator('.m-nav-item', { hasText: 'Editorial' }).click() },
   graphics: async (p) => { await p.locator('.m-nav-item', { hasText: 'Graphics' }).click() },
+  // deeper states: each Graphics dock sheet, More, Export; an open story on every Editorial tab, the readiness sheet, Publish
+  ...Object.fromEntries(['Story', 'Photos', 'Elements', 'Layers', 'Inspector'].map((t) => [`graphics-${t.toLowerCase()}`, async (p) => {
+    await p.locator('.m-nav-item', { hasText: 'Graphics' }).click()
+    const b = p.locator('.gx-dock-item', { hasText: t })
+    if (!(await b.count())) throw new Error('skip: no ' + t + ' in the dock at this size')
+    await b.first().click(); await p.waitForSelector('.m-sheet')
+  }])),
+  'graphics-more': async (p) => { await p.locator('.m-nav-item', { hasText: 'Graphics' }).click(); await p.locator('button[aria-label="More options"], button[aria-label="More"]').last().click(); await p.waitForSelector('.m-sheet, .m-menu') },
+  'graphics-export': async (p) => { await p.locator('.m-nav-item', { hasText: 'Graphics' }).click(); await p.locator('.gx-tools button', { hasText: 'Export' }).click(); await p.waitForSelector('.m-fulldialog') },
+  ...Object.fromEntries(['Story', 'Details', 'SEO', 'Social', 'Preview'].map((t) => [`story-${t.toLowerCase()}`, async (p) => {
+    await openStory(p)
+    await p.locator('.me-tabs [role=tab]', { hasText: t }).first().click()
+  }])),
+  'story-ready': async (p) => { await openStory(p); await p.locator('.me-ready').first().click(); await p.waitForSelector('.m-sheet') },
+  'story-publish': async (p) => { await openStory(p); await p.locator('.m-actionbar button', { hasText: /^(Publish|Update)$/ }).first().click(); await p.waitForSelector('.m-fulldialog, .m-sheet') },
+}
+async function openStory(p) {
+  await p.locator('.m-home .m-row', { hasText: 'Grid operator' }).first().click()
+  await p.waitForSelector('.me-tabs')
 }
 
 // ------------------------------------------------------------------ in-page audit
@@ -55,7 +74,7 @@ function audit({ safe, w, h }) {
   if (se.scrollWidth > w + 1) issues.push(['overflow', `page scrolls sideways: ${se.scrollWidth}px > ${w}px`])
   for (const el of document.querySelectorAll('body *')) {
     const r = vis(el); if (!r) continue
-    if ((r.right > w + 1 || r.left < -1) && !inScroller(el) && !clippedBy(el, r) && !el.closest('.m-canvas-area, canvas, .pc-stage')) { issues.push(['overflow', `off the side: ${label(el)} (${Math.round(r.left)}..${Math.round(r.right)})`]); break }
+    if ((r.right > w + 1 || r.left < -1) && !inScroller(el) && !clippedBy(el, r) && !el.closest('.gx-canvas, canvas')) { issues.push(['overflow', `off the side: ${label(el)} (${Math.round(r.left)}..${Math.round(r.right)})`]); break }
   }
 
   // 2. clipped text (cut without an ellipsis or line clamp)
@@ -135,9 +154,16 @@ for (const [w, h] of SIZES) for (const theme of THEMES) {
   for (const name of only) {
     const page = await ctx.newPage()
     await page.addInitScript(({ t, b }) => { document.addEventListener('DOMContentLoaded', () => { const s = document.documentElement.style; s.setProperty('--safe-area-inset-top', t + 'px'); s.setProperty('--safe-area-inset-bottom', b + 'px') }) }, { t: SAFE.top, b: SAFE.bottom })
+    // the phone's OLD draft format: the boot migration turns these into PC queue stories
+    await page.addInitScript(() => {
+      if (localStorage.getItem('esb-phone-drafts-v1')) return
+      localStorage.setItem('esb-phone-drafts-v1', JSON.stringify([
+        { id: 'g1', sourceUrl: 'https://www.prothomalo.com/x', source: 'খুলনায় ২৩০ কেভি লাইন উন্নয়নের পরিকল্পনা করছে পিজিসিবি।', headline: 'Grid operator plans 230 kV line upgrade in Khulna', deck: 'PGCB says the work will finish by June.', body: 'Power Grid Company of Bangladesh (PGCB) plans to upgrade the 230 kV line in Khulna, officials said on Tuesday.', category: 'Grid & Transmission', slug: 'grid-operator-230kv-khulna', translated: true, updatedAt: Date.now() - 3600e3 },
+      ]))
+    })
     await page.goto(URL)
     await page.waitForSelector('.m-app', { timeout: 20000 })
-    try { await SCREENS[name](page) } catch (e) { summary.push(`${name} ${w}x${h} ${theme}: could not open (${e.message.split('\n')[0]})`); failures++; await page.close(); continue }
+    try { await SCREENS[name](page) } catch (e) { if (String(e.message).startsWith('skip:')) { summary.push(`skip ${name} ${w}x${h} ${theme}`); await page.close(); continue } summary.push(`${name} ${w}x${h} ${theme}: could not open (${e.message.split('\n')[0]})`); failures++; await page.close(); continue }
     await page.waitForTimeout(500)
     const tag = `${name} ${w}x${h} ${theme}`
     const base = await page.evaluate(audit, { safe: SAFE, w, h })

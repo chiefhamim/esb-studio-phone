@@ -2,7 +2,7 @@
 // queue entry, so a banner survives the app being killed and comes back with its story. The project is the PC's own
 // .esb format (serializeProject / applyProject); it lives in IndexedDB under graphics:<storyId>.
 // (The PC itself starts every launch with a clean banner; on a phone the OS kills apps, so the phone restores it.)
-import { useStore } from '../../pc/store'
+import { normalizeDoc, useStore } from '../../pc/store'
 import { defaultDoc } from '../../pc/core/templates'
 import { applyProject, serializeProject } from '../../pc/project'
 import { useStoryQueue } from '../../pc/editorial/storyQueue'
@@ -42,7 +42,8 @@ export async function flushGraphics(): Promise<void> {
 }
 
 function resetBanner(storyId: string | null) {
-  const doc = defaultDoc()
+  // normalizeDoc fits the photo slots, as the PC's own initialDoc does (a bare defaultDoc has none)
+  const doc = normalizeDoc(defaultDoc(), true)
   const meta = storyId ? readStoryMeta(storyId) : {}
   if (meta.categoryName) doc.content.categoryId = matchCategoryNameToId(meta.categoryName)
   useStore.setState({ images: [] })

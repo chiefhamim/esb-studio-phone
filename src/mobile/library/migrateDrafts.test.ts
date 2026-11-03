@@ -72,7 +72,7 @@ describe('PC stylesheet scoping', () => {
   })
   it('scopes rules, hoists keyframes and font-face, keeps only token declarations of page rules', () => {
     const out = scopeCss('@font-face{font-family:X;src:url(a.woff2)} @keyframes k{to{opacity:0}} body{margin:0;--x:1px} html,body{overflow:hidden} .btn{color:red} @media (max-width:1px){.btn{color:blue}}')
-    const [hoisted, scoped] = out.split('@scope (.pc-host)')
+    const [hoisted, scoped] = out.split('@scope (')
     expect(hoisted).toContain('@font-face')
     expect(hoisted).toContain('@keyframes k')
     expect(hoisted).toContain('body { --x:1px; }')
@@ -80,5 +80,13 @@ describe('PC stylesheet scoping', () => {
     expect(scoped).toContain('.btn{color:red}')
     expect(scoped).toContain('@media (max-width:1px)')
     expect(scoped).not.toContain('overflow:hidden')
+  })
+  it('keeps dark-theme rules working: rewritten outside @scope, pseudo-elements kept valid', () => {
+    const out = scopeCss(':root[data-theme="dark"] .card{color:#fff} [data-theme=dark] .modal-bg{background:#000} [data-theme=dark] .x::before{content:""}')
+    const [hoisted] = out.split('@scope')
+    expect(hoisted).toContain(':root[data-theme="dark"] :is(.pc-host, body > .modal-bg, body > .popover, body > .tooltip, body > .ed-tp-pop) .card')
+    expect(hoisted).toContain('[data-theme=dark]:is(.pc-host, body > .modal-bg, body > .popover, body > .tooltip, body > .ed-tp-pop):is(.modal-bg)')
+    expect(hoisted).toContain(') .x::before')
+    expect(hoisted).not.toMatch(/:is\([^)]*::before/)
   })
 })
