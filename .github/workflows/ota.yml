@@ -1,0 +1,43 @@
+name: Deploy Live OTA Update
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-ota:
+    name: Build & Upload OTA Bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web bundle
+        run: npm run build
+
+      - name: Check Capgo Secret
+        id: check-key
+        run: |
+          if [ -z "${{ secrets.CAPGO_TOKEN }}" ]; then
+            echo "::error::CAPGO_TOKEN secret is not set! Go to Repo Settings -> Secrets and variables -> Actions to add it."
+            exit 1
+          fi
+
+      - name: Upload OTA bundle to Capgo Cloud
+        run: |
+          npx @capgo/cli@latest bundle upload \
+            --apikey "${{ secrets.CAPGO_TOKEN }}" \
+            --channel production \
+            --path dist \
+            --auto-bump patch \
+            --comment "${{ github.event.head_commit.message }}"

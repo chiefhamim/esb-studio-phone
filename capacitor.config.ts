@@ -13,7 +13,12 @@ const config: CapacitorConfig = {
     CapacitorHttp: { enabled: true },
     // Edge-to-edge: the app draws under the bars. 'css' publishes --safe-area-inset-* to the page.
     // Do not set Keyboard.resizeOnFullScreen: SystemBars already pads the page by the keyboard height.
-    SystemBars: { insetsHandling: 'css' }
+    SystemBars: { insetsHandling: 'css' },
+    CapacitorUpdater: {
+      autoUpdate: 'off',
+      appReadyTimeout: 10000,
+      responseTimeout: 20
+    }
   }
 };
 

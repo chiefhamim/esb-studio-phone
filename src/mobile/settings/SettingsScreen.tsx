@@ -14,6 +14,7 @@ import { isAppLockEnabled, isBiometricAvailable, setAppLockEnabled } from '../..
 import { useNav } from '../shell/nav'
 import { snack } from '../shell/core'
 import { Banner, Button, Chip, Collapse, FullDialog, Icon, Row, Section, Segmented } from '../shell/ui'
+import { checkForUpdate, getCurrentBundle } from '../../platform/ota'
 
 const STATE_LABEL: Record<SiteFeatureState, string> = { live: 'Works', 'not-live': 'Planned · site update needed', unknown: 'Not checked (sign in first)' }
 
@@ -191,8 +192,25 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
   const [theme, setTheme] = useState<ThemePref>(getThemePref())
   const [lock, setLock] = useState(isAppLockEnabled())
   const [bio, setBio] = useState<boolean | null>(null)
+  const [bundleInfo, setBundleInfo] = useState<string>('built-in')
+  const [checkingOta, setCheckingOta] = useState(false)
+
   useEffect(() => { void isBiometricAvailable().then((r) => setBio(r.available)) }, [])
+  useEffect(() => { void getCurrentBundle().then((b) => setBundleInfo(b.version && b.version !== 'web' ? b.version : b.id || 'built-in')) }, [])
   useEffect(() => { if (section) document.getElementById(`set-${section}`)?.scrollIntoView({ block: 'start' }) }, [section])
+
+  const handleCheckOta = async () => {
+    setCheckingOta(true)
+    try {
+      const up = await checkForUpdate()
+      if (up) snack(`Update v${up.version} is available!`, { tone: 'success' })
+      else snack('App is up to date', { tone: 'info' })
+    } catch {
+      snack('Could not check for updates', { tone: 'error' })
+    } finally {
+      setCheckingOta(false)
+    }
+  }
 
   return (
     <FullDialog open title="Settings" onClose={onClose}>
@@ -215,7 +233,7 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
           <Row title="App lock" meta={bio === false ? 'This phone has no fingerprint, face or screen lock set up.' : 'Ask for fingerprint, face or screen lock when ESB Studio opens.'} trail={<button type="button" role="switch" aria-checked={lock} aria-label="App lock" disabled={bio === false} className={`m-switch${lock ? ' is-on' : ''}`} onClick={() => { const want = !lock; void setAppLockEnabled(want).then((state) => { setLock(state); if (state !== want) snack('App lock was not turned on (the phone did not confirm it is you).', { tone: 'error' }) }) }}><span /></button>} />
         </Section>
         <Section title="About" id="set-about">
-          <Row title="ESB Studio" meta={`Version ${__APP_VERSION__}`} />
+          <Row title="ESB Studio" meta={`Version ${__APP_VERSION__} · bundle: ${bundleInfo}`} trail={<Button kind="text" icon="refresh" busy={checkingOta} onClick={() => void handleCheckOta()}>Check updates</Button>} />
           <Row title="Engine and editor" meta={`ESB AI Studio (PC) ${manifest.commit.slice(0, 9)} · ${Object.keys(manifest.files).length} files`} />
         </Section>
       </div>

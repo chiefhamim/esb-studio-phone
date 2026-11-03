@@ -15,6 +15,7 @@ import { confirmAsk, handleBack, snack, unsavedReason, useBackLayer, useSizeClas
 import { useNav, type Route } from './shell/nav'
 import { useIncoming } from './shell/incoming'
 import { NavBar, UiHost, type NavItem } from './shell/ui'
+import { UpdateDialog } from './shell/UpdateDialog'
 import HomeScreen from './home/HomeScreen'
 import EditorialScreen from './editorial/EditorialScreen'
 import GraphicsScreen from './graphics/GraphicsScreen'
@@ -101,6 +102,7 @@ export default function MobileApp() {
       {settingsOpen && <SettingsScreen onClose={closeSettings} />}
       <UiHost />
       <LockScreen />
+      <UpdateDialog />
     </div>
   )
 }

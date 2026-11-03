@@ -6,8 +6,10 @@ import './mobile/shell/shell.css'
 import './mobile/shell/settings-kit.css'
 import { initTheme } from './shell/theme'
 import { bootPlatform } from './platform/boot'
+import { notifyAppReady } from './platform/ota'
 import './native/startup'
 
+void notifyAppReady()
 initTheme()
 
 // storage, secrets, the old-draft migration and window.esb first; only then the app (and with it the vendored PC
