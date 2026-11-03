@@ -49,6 +49,23 @@ describe('old phone drafts -> PC story queue', () => {
   })
 })
 
+const PARAS = ['Para one.', '', 'Para two.'].join('\n')
+
+describe('the earlier build key (esb-drafts-v1)', () => {
+  it('is copied too: title/headline, body, URL source and category kept', () => {
+    const legacy = JSON.stringify([{ id: 'draft-test-1', title: 'Long title', headline: 'Short headline', body: PARAS, source: 'https://example.com/a', category: 'renewables', badge: 'Renewables', updatedAt: 7 }])
+    const r = planMigration(null, null, null, null, legacy)
+    expect(r.added).toBe(1)
+    const s = r.queue.stories[0]
+    expect(s.id).toBe('m-legacy-draft-test-1')
+    expect(s.snapshot.draft.headline).toBe('Short headline')
+    expect(s.snapshot.draft.body).toBe(PARAS)
+    expect(s.snapshot.source?.url).toBe('https://example.com/a')
+    expect(r.meta['m-legacy-draft-test-1'].categoryName).toBe('Renewables')
+    expect(planMigration(null, JSON.stringify(r.queue), JSON.stringify(r.migrated), null, legacy).added).toBe(0)
+  })
+})
+
 describe('PC stylesheet scoping', () => {
   it('splits top-level statements across comments, strings and nesting', () => {
     expect(topLevel('a{b:c} /* } */ @media (x){.d{e:f}} .g{content:"}"}')).toHaveLength(3)

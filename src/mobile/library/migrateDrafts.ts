@@ -8,6 +8,8 @@ import type { EditorialChecklist, EditorialDraft } from '../../pc/editorial/edit
 import type { StoryItem } from '../../pc/editorial/storyQueue'
 
 export const OLD_DRAFTS_KEY = 'esb-phone-drafts-v1'
+/** An earlier phone build's key: {id,title,headline,body,source(url or text),category,highlight,...}. Also copied, never removed. */
+export const LEGACY_DRAFTS_KEY = 'esb-drafts-v1'
 export const QUEUE_KEY = 'esb-banner-studio/editorial/queue/v1'
 export const MIGRATED_KEY = 'esb-phone/migrated-drafts/v1'
 export const STORY_META_KEY = 'esb-phone/story-meta/v1'
@@ -39,6 +41,23 @@ export function readOldDrafts(raw: string | null): OldDraft[] {
   } catch { return [] }
 }
 
+/** Drafts from the earlier build, in the OLD shape (ids prefixed so they never collide). */
+export function readLegacyDrafts(raw: string | null): OldDraft[] {
+  if (!raw) return []
+  try {
+    const v = JSON.parse(raw)
+    if (!Array.isArray(v)) return []
+    return v.filter((d) => d && typeof d.id === 'string').map((d) => {
+      const src = str(d.source).trim()
+      const isUrl = /^https?:\/\//i.test(src)
+      return {
+        id: `legacy-${d.id}`, sourceUrl: isUrl ? src : '', source: isUrl ? '' : str(d.source), headline: str(d.headline) || str(d.title), deck: str(d.deck), body: str(d.body),
+        category: str(d.badge) || str(d.category), slug: str(d.slug), translated: false, updatedAt: typeof d.updatedAt === 'number' ? d.updatedAt : Date.now(),
+      }
+    })
+  } catch { return [] }
+}
+
 export const isEmptyOld = (d: OldDraft) => ![d.sourceUrl, d.source, d.headline, d.deck, d.body, d.slug].some((x) => x.trim())
 
 /** One old draft as a PC queue story. Every typed character is kept: source text, headline, deck, body, slug. */
@@ -61,8 +80,8 @@ export function storyFromOld(d: OldDraft): StoryItem {
 export interface MigrationResult { added: number; skipped: number; queue: { stories: StoryItem[]; activeId: string | null }; migrated: string[]; meta: Record<string, StoryMeta> }
 
 /** Pure: given the stored values, what the queue, migrated list and story meta become. */
-export function planMigration(oldRaw: string | null, queueRaw: string | null, migratedRaw: string | null, metaRaw: string | null): MigrationResult {
-  const olds = readOldDrafts(oldRaw)
+export function planMigration(oldRaw: string | null, queueRaw: string | null, migratedRaw: string | null, metaRaw: string | null, legacyRaw: string | null = null): MigrationResult {
+  const olds = [...readOldDrafts(oldRaw), ...readLegacyDrafts(legacyRaw)]
   let queue: { stories: StoryItem[]; activeId: string | null } = { stories: [], activeId: null }
   try { const q = JSON.parse(queueRaw ?? 'null'); if (q && Array.isArray(q.stories)) queue = { stories: q.stories, activeId: q.activeId ?? null } } catch { /* keep empty */ }
   let migrated: string[] = []
@@ -87,7 +106,7 @@ export function planMigration(oldRaw: string | null, queueRaw: string | null, mi
 
 /** Run once at boot (storage router already installed: the queue key lives in IndexedDB). */
 export function migrateOldDrafts(ls: Storage = localStorage): MigrationResult {
-  const r = planMigration(ls.getItem(OLD_DRAFTS_KEY), ls.getItem(QUEUE_KEY), ls.getItem(MIGRATED_KEY), ls.getItem(STORY_META_KEY))
+  const r = planMigration(ls.getItem(OLD_DRAFTS_KEY), ls.getItem(QUEUE_KEY), ls.getItem(MIGRATED_KEY), ls.getItem(STORY_META_KEY), ls.getItem(LEGACY_DRAFTS_KEY))
   if (r.added > 0) ls.setItem(QUEUE_KEY, JSON.stringify(r.queue))
   ls.setItem(MIGRATED_KEY, JSON.stringify(r.migrated))
   ls.setItem(STORY_META_KEY, JSON.stringify(r.meta))
