@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ESB Studio</string>
+    <string name="title_activity_main">ESB Studio</string>
+    <string name="package_name">com.esbpowerline.studio.phone</string>
+    <string name="custom_url_scheme">com.esbpowerline.studio.phone</string>
+</resources>
