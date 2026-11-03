@@ -23,10 +23,9 @@ export function CategorySelect({ value, onChange, id, labelId }: { value: string
 
   useEffect(() => {
     if (!open) return
-    setActive(curIndex)
     list.current?.focus({ preventScroll: true })
     list.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.scrollIntoView({ block: 'center' })
-  }, [open, curIndex])
+  }, [open])
 
   const choose = (i: number) => { onChange(OPTIONS[i].value); close() }
   const onKey = (e: React.KeyboardEvent) => {
@@ -41,7 +40,7 @@ export function CategorySelect({ value, onChange, id, labelId }: { value: string
   return (
     <>
       <button ref={btn} id={id} type="button" className="cs-field" role="combobox" aria-haspopup="listbox" aria-expanded={open} aria-controls={open ? listId : undefined}
-        aria-labelledby={labelId && id ? `${labelId} ${id}` : undefined} onClick={() => setOpen(true)}>
+        aria-labelledby={labelId && id ? `${labelId} ${id}` : undefined} onClick={() => { setActive(curIndex); setOpen(true) }}>
         <i className="cs-dot" style={cur ? { background: cur.accent } : undefined} aria-hidden="true" />
         <span className={cur ? 'cs-val' : 'cs-val cs-ph'}>{cur ? cur.name : 'Choose a category'}</span>
         <span className="cs-chev" aria-hidden="true"><Icon name="chevron" size={18} /></span>

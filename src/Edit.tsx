@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Draft } from './drafts'
 import { BUDGETS } from './charBudgets'
 import { CategorySelect } from './ui/CategorySelect'
+import './ui/refine.css'
 import { buildReadiness, slugFromHeadline } from './publish/readiness'
 import { cleanSource } from './translate'
 import { AiError, errorMessage } from './aiProviders'
@@ -23,6 +24,7 @@ import { AutoTextarea, MeterRing, Sheet, Tool, showInScroller } from './edit/ui'
 import { Icon } from './edit/icons'
 import { useMedia } from './edit/useMedia'
 import './ui/edit.css'
+import './ui/edit-refine.css'
 
 type EditDraft = Draft & { seo?: SeoFields }
 interface Props {

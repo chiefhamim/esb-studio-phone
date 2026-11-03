@@ -12,7 +12,7 @@
 .cs-scrim { position: fixed; inset: 0; z-index: 70; display: grid; align-items: end; background: var(--scrim); animation: cs-fade var(--t-surface) var(--ease) both; }
 .cs-sheet { max-width: 640px; width: 100%; margin: 0 auto; max-height: 78dvh; display: grid; grid-template-rows: auto auto minmax(0, 1fr); background: var(--surface-panel); border-radius: var(--r-4) var(--r-4) 0 0; box-shadow: var(--shadow-l3); padding: var(--s-3) var(--s-4) calc(var(--s-4) + env(safe-area-inset-bottom)); animation: cs-up var(--t-surface) var(--spring) both; }
 .cs-grab { justify-self: center; width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong); margin: var(--s-2) 0 var(--s-3); }
-.cs-title { margin: 0; padding: var(--s-2) var(--s-4) var(--s-4); font: 700 17px/24px var(--font-ui); letter-spacing: -.005em; }
+.cs-sheet .cs-title { margin: 0; padding: var(--s-2) var(--s-4) var(--s-4); font: 700 17px/24px var(--font-ui); letter-spacing: -.005em; }
 .cs-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: var(--s-1); outline: none; }
 .cs-opt { display: flex; align-items: center; gap: var(--s-5); min-height: 52px; padding: 0 var(--s-5); border-radius: var(--r-3); font: 500 15px/22px var(--font-ui); color: var(--text-primary); cursor: pointer; }
 .cs-opt:active { background: var(--fill-active); }
