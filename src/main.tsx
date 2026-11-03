@@ -6,17 +6,20 @@ import './index.css'
 import './layout.css'
 import './ui/shell.css'
 import './ui/home.css'
-import App from './App.tsx'
-import { Gallery } from './ui/kit/Gallery'
 import { initTheme } from './shell/theme'
+import { bootPlatform } from './platform/boot'
+import './native/startup'
 
 initTheme()
 
 const isGallery = typeof window !== 'undefined' && window.location.search.includes('gallery')
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    {isGallery ? <Gallery /> : <App />}
-  </StrictMode>,
-)
-import './native/startup'
+// storage, secrets and window.esb first; only then the app (and with it the vendored PC modules) is loaded
+void bootPlatform().then(async () => {
+  const [{ default: App }, { Gallery }] = await Promise.all([import('./App.tsx'), import('./ui/kit/Gallery')])
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      {isGallery ? <Gallery /> : <App />}
+    </StrictMode>,
+  )
+})

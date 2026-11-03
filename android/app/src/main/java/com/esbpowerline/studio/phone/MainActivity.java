@@ -12,6 +12,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(ShareTargetPlugin.class);
         registerPlugin(AppChromePlugin.class);
         registerPlugin(BiometricPlugin.class);
+        registerPlugin(MediaStorePlugin.class);
         super.onCreate(savedInstanceState); // BridgeActivity.load() calls onNewIntent(getIntent()) once
         AppChromePlugin.applyStored(this, getBridge() != null ? getBridge().getWebView() : null);
     }

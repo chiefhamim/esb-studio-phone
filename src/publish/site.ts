@@ -10,6 +10,10 @@
 
 import type { Draft } from '../drafts'
 import { deleteSecret, getSecret, setSecret } from '../secure'
+
+/** The vendored PC's session key; src/platform/storage.ts routes it to the Keystore once the app has booted. */
+const PC_SESSION_KEY = 'esb-banner-studio/site-session'
+const routedSession = () => typeof window !== 'undefined' && (window as unknown as { __esbStorageRouted?: boolean }).__esbStorageRouted === true
 import { authorFor, ESB_CATEGORIES } from './categories'
 import { consumeConfirmation } from './confirm'
 import type { Confirmation } from './confirm'
@@ -130,7 +134,7 @@ async function sessionFromTokens(t: TokenResponse, fallbackEmail: string, f: Fet
 }
 
 export async function loadSession(): Promise<StaffSession | null> {
-  const raw = await getSecret('site-session')
+  const raw = routedSession() ? localStorage.getItem(PC_SESSION_KEY) : await getSecret('site-session')
   if (!raw) return null
   try {
     const s = JSON.parse(raw) as Partial<StaffSession>
@@ -139,7 +143,15 @@ export async function loadSession(): Promise<StaffSession | null> {
   return null
 }
 
-async function storeSession(s: StaffSession): Promise<void> { await setSecret('site-session', JSON.stringify(s)) }
+async function storeSession(s: StaffSession): Promise<void> {
+  if (!routedSession()) { await setSecret('site-session', JSON.stringify(s)); return }
+  // one copy of the sign-in for the whole app: the vendored PC desk reads the same key (src/platform/storage.ts routes
+  // it to the Keystore) and is told at once, so neither side ever re-uses a spent single-use refresh token
+  const prev = (() => { try { return JSON.parse(localStorage.getItem(PC_SESSION_KEY) ?? 'null') as Record<string, unknown> | null } catch { return null } })()
+  const merged = { ...(prev ?? {}), ...s, authType: 'supabase', authenticatedAt: (prev?.authenticatedAt as string | undefined) ?? new Date().toISOString() }
+  localStorage.setItem(PC_SESSION_KEY, JSON.stringify(merged))
+  try { window.dispatchEvent(new CustomEvent('esb-session', { detail: merged })) } catch { /* no window: tests */ }
+}
 
 /** Sign in with a staff account. The password goes to the site's auth service in this one request and is not kept. */
 export async function signIn(email: string, password: string, f: Fetch = fetch): Promise<{ ok: true; session: StaffSession } | { ok: false; error: string }> {
@@ -200,7 +212,10 @@ export async function ensureFreshSession(f: Fetch = fetch): Promise<StaffSession
 
 export async function signOut(f: Fetch = fetch): Promise<void> {
   const s = await loadSession()
-  await deleteSecret('site-session')
+  if (routedSession()) {
+    localStorage.removeItem(PC_SESSION_KEY)
+    try { window.dispatchEvent(new CustomEvent('esb-session', { detail: null })) } catch { /* no window */ }
+  } else await deleteSecret('site-session')
   if (!s) return
   try { await f(`${SUPABASE_URL}/auth/v1/logout`, { method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${s.token}` } }) } catch { /* already signed out here */ }
 }

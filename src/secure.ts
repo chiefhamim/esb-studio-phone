@@ -4,7 +4,7 @@
 import { Capacitor } from '@capacitor/core'
 import { SecureStorage } from '@aparajita/capacitor-secure-storage'
 
-export type SecretName = 'gemini-key' | 'claude-key' | 'openai-key' | 'site-session' | 'fb-page-token' | 'fb-page-id'
+export type SecretName = 'gemini-key' | 'claude-key' | 'openai-key' | 'site-session' | 'fb-page-token' | 'fb-page-id' | 'pc-ai-settings' | 'pc-facebook'
 
 const mem = new Map<string, string>()
 const native = () => Capacitor.isNativePlatform()

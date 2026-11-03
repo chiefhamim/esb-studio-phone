@@ -1,0 +1,246 @@
+/* ==========================================================================
+   ESB Studio — Design Tokens ("Quiet Studio")
+   Single source of truth for grid, geometry, typography, colour, and elevation.
+   ========================================================================== */
+
+:root {
+  /* ESB type guideline (Figma "ESB News Banners — Guidelines"): Inter only. 800 headlines / numbers, 700 labels, 500 body & footer.
+     Tracking by role: caps chips +.05em (1.2px at 24px), spaced caps +.09em (month), wide caps +.18em (weekday), big numerals -.02em, headlines 0. Headline leading 118%. */
+  --w-headline: 800; --w-label: 700; --w-body: 500;
+  --track-chip: .05em; --track-kicker: .09em; --track-wide: .18em; --track-display: -.02em; --track-headline: 0;
+  --lh-headline: 1.18;
+  /* ---------------------------------------------------------------- Geometry: 4 px Base Grid */
+  --s-0: 0px;
+  --s-1: 2px;
+  --s-2: 4px;
+  --s-3: 6px;   /* Allowed half-step: label to control */
+  --s-4: 8px;
+  --s-5: 12px;
+  --s-6: 16px;
+  --s-7: 20px;
+  --s-8: 24px;
+  --s-9: 32px;
+  --s-10: 40px;
+  --s-11: 48px;
+
+  /* ---------------------------------------------------------------- Control & Row Dimensions */
+  --h-control-xs: 24px;  /* Dense inline / table action */
+  --h-control-sm: 28px;  /* Compact buttons, tabs, segmented */
+  --h-control-md: 32px;  /* Standard input, button, scrub */
+  --h-control-lg: 36px;  /* Topbar actions, primary export */
+  --h-row: 36px;         /* Standard list & table row */
+  --h-panel-header: 40px;/* Standard panel section header */
+  --h-app-header: 46px;  /* Draggable app header bar */
+  --w-rail: 56px;        /* Left workspace navigation rail */
+
+  /* ---------------------------------------------------------------- Corner Radii */
+  --r-0: 0px;
+  --r-1: 4px;    /* Keys, tiny chips inside rows, inner handles */
+  --r-2: 8px;    /* Controls: buttons, inputs, cards */
+  --r-3: 12px;   /* Panels, popovers, menus */
+  --r-4: 16px;   /* Dialogs, floating windows */
+  --r-pill: 9999px; /* Tags and status pills only */
+
+  /* ---------------------------------------------------------------- Typography Scale */
+  --font-ui: "ESB Sans", "Hind Siliguri", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-ui); /* one family across the app: figures stay aligned with tabular numerals, not a second typeface */
+  --font-serif: "Source Serif 4", Georgia, serif;
+
+  --t-caption: 600 11px/16px var(--font-ui);
+  --t-secondary: 400 12px/16px var(--font-ui);
+  --t-body: 400 13px/20px var(--font-ui);
+  --t-body-medium: 500 13px/20px var(--font-ui);
+  --t-title: 600 15px/20px var(--font-ui);
+  --t-dialog: 700 18px/24px var(--font-ui);
+  --t-hero: 700 24px/28px var(--font-ui);
+
+  /* ---------------------------------------------------------------- Motion & Easing */
+  --t-hover: 100ms;
+  --t-state: 160ms;
+  --t-surface: 200ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ---------------------------------------------------------------- Elevation */
+  --shadow-l0: none;
+  --shadow-l1: none;
+  --shadow-l2: 0 12px 32px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06);
+  --shadow-l3: 0 16px 40px rgba(0, 0, 0, 0.22), 0 3px 8px rgba(0, 0, 0, 0.08);
+
+  /* ================================================================ Light Theme Palette (Default) */
+  --surface-app: #e9e9eb;
+  --surface-panel: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f6f6f7;
+  --surface-hover: #efeff1;
+
+  --border-subtle: #ececef;
+  --border-default: #dcdce0;
+  --border-strong: #c3c3ca;
+
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-tertiary: #686872;
+  --text-disabled: rgba(24, 24, 27, 0.42);
+
+  --accent: #18181b;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(24, 24, 27, 0.06);
+  --focus-ring: rgba(24, 24, 27, 0.2);
+
+  --danger: #b42318;
+  --danger-soft: rgba(180, 35, 24, 0.08);
+  --warning: #8c5300;
+  --warning-soft: rgba(154, 91, 0, 0.1);
+  --success: #1a6f3f;
+  --success-soft: rgba(31, 122, 69, 0.1);
+
+  /* tooltips take the theme's own surface: light on light, dark on dark */
+  --tip-bg: #ffffff;
+  --tip-fg: #18181b;
+  --scrim: rgba(24, 24, 27, 0.42);
+
+  /* Chrome surfaces: grey sidebars with white controls, hairline control rings, translucent menus */
+  --side: #f4f4f6;
+  --ctl-shadow: 0 0 0 .5px rgba(0, 0, 0, 0.1), 0 1px 1.5px rgba(0, 0, 0, 0.07);
+  --ctl-shadow-hover: 0 0 0 .5px rgba(0, 0, 0, 0.22), 0 1px 2px rgba(0, 0, 0, 0.1);
+  --menu-bg: rgba(252, 252, 253, 0.82);
+  --shadow-1: 0 .5px 1px rgba(0, 0, 0, 0.08);
+  --shadow-2: 0 0 0 .5px rgba(0, 0, 0, 0.1), 0 12px 36px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  color-scheme: light;
+
+  /* ---------------------------------------------------------------- Legacy aliases (App.css vocabulary) */
+  --bg: var(--surface-app);
+  --dock: var(--surface-panel);
+  --lp: var(--r-pill);
+  --lpb: var(--r-pill);
+  --p: 0px;
+  --vw-ar: 16 / 9;
+
+  --surface: var(--surface-panel);
+  --surface-2: var(--surface-sunken);
+  --surface-3: var(--surface-hover);
+  --border: var(--border-default);
+  --muted: var(--text-secondary);
+
+  /* ---- Studio surfaces (2026-10): cards on a quiet canvas, filled toolbar controls, spring motion ---- */
+  --card: #ffffff;
+  --card-line: rgba(0, 0, 0, 0.07);
+  --card-shadow: 0 0 0 .5px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --card-shadow-open: 0 0 0 .5px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --fill: rgba(0, 0, 0, 0.045);
+  --fill-hover: rgba(0, 0, 0, 0.075);
+  --fill-active: rgba(0, 0, 0, 0.1);
+  --field: rgba(0, 0, 0, 0.04);
+  --field-hover: rgba(0, 0, 0, 0.06);
+  --raised: #ffffff;
+  --raised-shadow: 0 0 0 .5px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.1), 0 1px 1px rgba(0, 0, 0, 0.04);
+  --primary-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 1px 2px rgba(0, 0, 0, 0.18);
+  --split-line: rgba(255, 255, 255, 0.2);
+  --header-bg: rgba(250, 250, 251, 0.92);
+  --spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --bg-0: var(--surface-app);
+  --bg-1: var(--surface-panel);
+  --bg-2: var(--surface-sunken);
+  --bg-3: var(--surface-hover);
+  --bg-4: #e3e3e6;
+  --line: var(--border-subtle);
+  --line-1: var(--border-subtle);
+  --line-2: var(--border-default);
+  --line-3: var(--border-strong);
+  --text: var(--text-primary);
+  --text-2: var(--text-secondary);
+  --text-3: var(--text-tertiary);
+  --ink: var(--accent);
+  --ink-2: #3f3f46;
+  --on-ink: var(--on-accent);
+  --ink-soft: var(--accent-soft);
+  --ink-ring: rgba(24, 24, 27, 0.14);
+  --red: var(--danger);
+  --red-soft: var(--danger-soft);
+  --amber: var(--warning);
+  --amber-soft: var(--warning-soft);
+  --accent-2: var(--ink-2);
+  --accent-ink: var(--on-ink);
+  --sel: var(--ink);
+  --green: var(--text-2);
+  --green-soft: var(--ink-soft);
+  --r: var(--r-2);
+  --r-lg: var(--r-3);
+  --h-sm: var(--h-control-sm);
+  --h-md: var(--h-control-md);
+  --h-lg: var(--h-control-lg);
+  --t-1: var(--t-hover);
+  --t-2: var(--t-state);
+  --t-3: var(--t-surface);
+  --ui: "ESB Sans", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: var(--font-mono);
+}
+
+/* ================================================================ Dark Theme Palette */
+:root[data-theme="dark"] {
+  --surface-app: #0d0d0f;
+  --surface-panel: #18181b;
+  --surface-raised: #1e1e23;
+  --surface-sunken: #1f1f23;
+  --surface-hover: #27272b;
+
+  --border-subtle: #26262a;
+  --border-default: #36363c;
+  --border-strong: #4d4d56;
+
+  --text-primary: #f4f4f5;
+  --text-secondary: #b3b3bd;
+  --text-tertiary: #a8a8b3;
+  --text-disabled: rgba(244, 244, 245, 0.42);
+
+  --accent: #f4f4f5;
+  --on-accent: #18181b;
+  --accent-soft: rgba(244, 244, 245, 0.08);
+  --focus-ring: rgba(244, 244, 245, 0.28);
+
+  --danger: #f2877e;
+  --danger-soft: rgba(242, 135, 126, 0.12);
+  --warning: #e5b04a;
+  --warning-soft: rgba(229, 176, 74, 0.12);
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.12);
+
+  --tip-bg: #2c2c31;
+  --tip-fg: #f4f4f5;
+  --scrim: rgba(0, 0, 0, 0.6);
+
+  --side: #1b1b1e;
+  --ctl-shadow: 0 0 0 .5px rgba(255, 255, 255, 0.12), 0 1px 1.5px rgba(0, 0, 0, 0.4);
+  --ctl-shadow-hover: 0 0 0 1px rgba(255, 255, 255, 0.22), 0 1px 3px rgba(0, 0, 0, 0.5);
+  --menu-bg: rgba(36, 36, 40, 0.78);
+  --shadow-1: 0 .5px 1px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 0 0 .5px rgba(255, 255, 255, 0.12), 0 12px 36px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+
+  color-scheme: dark;
+
+  --bg-4: #323238;
+  --ink-2: #d4d4d8;
+  --ink-ring: rgba(244, 244, 245, 0.2);
+
+  --surface: var(--surface-panel);
+  --surface-2: var(--surface-sunken);
+  --surface-3: var(--surface-hover);
+  --border: var(--border-default);
+  --muted: var(--text-secondary);
+
+  --card: #222226;
+  --card-line: rgba(255, 255, 255, 0.07);
+  --card-shadow: 0 0 0 .5px rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --card-shadow-open: 0 0 0 .5px rgba(255, 255, 255, 0.09), 0 4px 18px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --fill: rgba(255, 255, 255, 0.06);
+  --fill-hover: rgba(255, 255, 255, 0.09);
+  --fill-active: rgba(255, 255, 255, 0.13);
+  --field: rgba(255, 255, 255, 0.055);
+  --field-hover: rgba(255, 255, 255, 0.08);
+  --raised: #3a3a40;
+  --raised-shadow: 0 0 0 .5px rgba(255, 255, 255, 0.1), 0 1px 2px rgba(0, 0, 0, 0.5);
+  --primary-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.5);
+  --split-line: rgba(0, 0, 0, 0.16);
+  --header-bg: rgba(27, 27, 30, 0.92);
+}
