@@ -1,0 +1,16 @@
+:root { color-scheme: light dark; --bg: #f4f4f5; --card: #fff; --text: #18181b; --text-2: #52525b; --line: rgba(0,0,0,.08); --accent: #18181b; font-family: Inter, system-ui, sans-serif; }
+@media (prefers-color-scheme: dark) { :root { --bg: #111113; --card: #1c1c20; --text: #f4f4f5; --text-2: #b3b3bd; --line: rgba(255,255,255,.1); --accent: #f4f4f5; } }
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--text); -webkit-tap-highlight-color: transparent; }
+.phone { display: grid; grid-template-rows: auto 1fr auto; height: 100dvh; max-width: 640px; margin: 0 auto; }
+.phone-head { display: flex; align-items: baseline; gap: 8px; padding: max(12px, env(safe-area-inset-top)) 16px 12px; border-bottom: 1px solid var(--line); }
+.phone-head span { color: var(--text-2); font-size: 13px; }
+.phone-main { padding: 20px 16px; overflow: auto; }
+.phone-main h1 { margin: 0 0 8px; font-size: 22px; }
+.phone-main p { margin: 0 0 12px; color: var(--text-2); line-height: 1.5; }
+.planned { font-weight: 600; color: var(--text) !important; }
+.phone-nav { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); background: var(--card); padding-bottom: env(safe-area-inset-bottom); }
+.phone-nav button { min-height: 56px; border: 0; background: none; color: var(--text-2); font: 600 13px/1 inherit; cursor: pointer; }
+.phone-nav button[aria-current='page'] { color: var(--text); box-shadow: inset 0 3px 0 var(--accent); }
+.phone-nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
