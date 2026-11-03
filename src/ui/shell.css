@@ -142,3 +142,8 @@
 .sh-msg { color: var(--warning); font-weight: 600; }
 .sh-sheet-actions { display: grid; gap: var(--s-4); }
 .sh-sheet-actions .sh-btn { width: 100%; }
+
+/* Dark mode: no white plate behind the logo. The artwork is untouched; a soft white halo (a glow, not a box) keeps its black lettering legible. */
+:root[data-theme=dark] .sh-logo { background: none; box-shadow: none; padding: 0; }
+:root[data-theme=dark] .sh-logo img { filter: drop-shadow(0 0 3px rgba(255, 255, 255, .95)) drop-shadow(0 0 10px rgba(255, 255, 255, .7)); }
+:root[data-theme=dark] .sh-logo img { filter: none; border-radius: 10px; background: rgba(255, 255, 255, .92); box-shadow: 0 0 8px 5px rgba(255, 255, 255, .92), 0 0 18px 8px rgba(255, 255, 255, .4); }
