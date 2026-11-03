@@ -9,6 +9,11 @@ export interface Draft {
   headline: string
   deck: string
   body: string
+  /** one of the site's story categories (empty until the editor picks) */
+  category: string
+  slug: string
+  /** true once the English was produced by translation (still a draft until the editor reviews it) */
+  translated: boolean
   updatedAt: number
 }
 
@@ -17,7 +22,7 @@ const KEY = 'esb-phone-drafts-v1'
 export function loadDrafts(): Draft[] {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) ?? '[]')
-    return Array.isArray(v) ? (v as Draft[]) : []
+    return Array.isArray(v) ? (v as Partial<Draft>[]).map((d) => ({ ...newDraft(), ...d }) as Draft) : []
   } catch {
     return []
   }
@@ -28,7 +33,7 @@ export function saveDrafts(list: Draft[]): void {
 }
 
 export function newDraft(sourceUrl = '', source = ''): Draft {
-  return { id: `d${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, sourceUrl, source, headline: '', deck: '', body: '', updatedAt: Date.now() }
+  return { id: `d${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, sourceUrl, source, headline: '', deck: '', body: '', category: '', slug: '', translated: false, updatedAt: Date.now() }
 }
 
 /** Drafts list that writes through to storage on every change. */
