@@ -1,7 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { listenForShares } from './shareIntent'
+import { newDraft } from './drafts'
 import { useDrafts, type Draft } from './drafts'
 import Stories from './Stories'
 import Edit from './Edit'
+import Settings from './Settings'
+import Banner from './banner/Banner'
+import Publish from './publish/Publish'
 
 type Tab = 'stories' | 'edit' | 'banner' | 'publish'
 const TABS: { id: Tab; label: string; note: string }[] = [
@@ -20,27 +25,24 @@ export default function App() {
 
   const open = (d: Draft) => { setCurrentId(d.id); setTab('edit') }
   const create = (d: Draft) => { upsert(d); open(d) }
-  const cur = TABS.find((t) => t.id === tab)!
+  useEffect(() => listenForShares((s) => create({ ...newDraft(s.url, s.text) })), []) // eslint-disable-line
+  const [settings, setSettings] = useState(false)
 
   return (
     <div className="phone">
-      <header className="phone-head"><b>ESB Studio</b><span>Phone</span></header>
+      <header className="phone-head"><b>ESB Studio</b><span>Phone</span><button type="button" className="head-btn" onClick={() => setSettings(true)}>Settings</button></header>
       <main className="phone-main">
         {tab === 'stories' && <Stories drafts={drafts} onOpen={open} onCreate={create} onRemove={(id) => { remove(id); if (id === currentId) setCurrentId(null) }} />}
-        {tab === 'edit' && <Edit draft={current} onChange={upsert} />}
-        {(tab === 'banner' || tab === 'publish') && (
-          <>
-            <h1>{cur.label}</h1>
-            <p>{cur.note}</p>
-            <p className="planned">Planned. Not built yet.</p>
-          </>
-        )}
+        {tab === 'edit' && <Edit draft={current} onChange={upsert} onOpenSettings={() => setSettings(true)} />}
+        {tab === 'banner' && <Banner draft={current} onChange={upsert} />}
+        {tab === 'publish' && <Publish draft={current} onChange={upsert} />}
       </main>
       <nav className="phone-nav" aria-label="Sections">
         {TABS.map((t) => (
           <button key={t.id} type="button" aria-current={t.id === tab ? 'page' : undefined} onClick={() => setTab(t.id)}>{t.label}</button>
         ))}
       </nav>
+      {settings && <Settings onClose={() => setSettings(false)} />}
     </div>
   )
 }
