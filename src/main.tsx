@@ -1,3 +1,4 @@
+import { CapacitorUpdater } from '@capgo/capacitor-updater'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './mobile/pcStyles'
@@ -23,3 +24,4 @@ void bootPlatform().then(async () => {
     </StrictMode>,
   )
 })
+CapacitorUpdater.notifyAppReady()
