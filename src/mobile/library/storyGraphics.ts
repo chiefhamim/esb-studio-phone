@@ -50,24 +50,45 @@ function resetBanner(storyId: string | null) {
   useStore.getState().loadDoc(doc)
 }
 
+/** Loading or resetting a banner is not an edit: the PC banner link (Graphics -> Editorial) must not copy the
+ *  template's placeholder headline, or an old project's text, into the story on the desk while it happens. */
+async function quietly<T>(fn: () => Promise<T>): Promise<T> {
+  const ed = useEditorialStore.getState()
+  const link = ed.bannerLink
+  if (link) useEditorialStore.setState({ bannerLink: false })
+  try { return await fn() } finally { if (link) useEditorialStore.setState({ bannerLink: true }) }
+}
+
 async function load(storyId: string | null) {
   loading = true
-  try {
+  try { await quietly(() => loadInner(storyId)) } finally { loading = false }
+  // after the load, the story leads: a linked banner takes the story's headline (never the other way round)
+  const ed = useEditorialStore.getState()
+  if (storyId && ed.bannerLink && ed.draft.headline.trim() && useStore.getState().doc.content.headline !== ed.draft.headline) ed.applyDraftToBanner()
+}
+
+async function loadInner(storyId: string | null) {
+  {
     const text = await kvGet(keyFor(storyId))
     if (text) {
       try { await applyProject(text, null, null) } catch { resetBanner(storyId) }
     } else {
       resetBanner(storyId)
-      const ed = useEditorialStore.getState()
-      if (storyId && ed.bannerLink && ed.draft.headline.trim()) ed.applyDraftToBanner()
     }
     const st = useStore.getState()
     lastSaved = { id: storyId, doc: st.doc, images: st.images }
-  } finally { loading = false }
+  }
 }
 
 /** Start following the story queue. Returns once the active story's banner is on screen. */
 export async function startStoryGraphics(): Promise<void> {
+  // The banner template's placeholder ("Your headline goes here…") is never a story headline: any path that resets the
+  // banner (New banner, a story switch) and lets the banner link copy it across is undone at once, before the queue's
+  // autosave (500 ms) could turn it into a story.
+  const PLACEHOLDER = defaultDoc().content.headline
+  useEditorialStore.subscribe((s, p) => {
+    if (s.draft.headline === PLACEHOLDER && p.draft.headline !== PLACEHOLDER) useEditorialStore.getState().setDraftField('headline', p.draft.headline)
+  })
   current = useStoryQueue.getState().activeId
   await load(current)
   useStore.subscribe((s, p) => { if (s.doc !== p.doc || s.images !== p.images) scheduleSave() })
