@@ -20,6 +20,7 @@ import ParagraphList from './edit/ParagraphList'
 import SeoPanel from './edit/SeoPanel'
 import { FactPanel, FindBar, QuotesSheet, ReadinessSheet, TranslateCard, type FactEntry, type FindState } from './edit/Panels'
 import { AutoTextarea, MeterRing, Sheet } from './edit/ui'
+import { Icon } from './edit/icons'
 import { useMedia } from './edit/useMedia'
 import './ui/edit.css'
 
@@ -280,23 +281,26 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
   }
 
   const savedAt = new Date(d.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  const savedShort = new Date(d.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
   const showEn = wide || mode === 'english'
   const showSrc = wide || mode === 'source'
 
   return (
     <div className="ed" ref={root} data-wide={wide ? '1' : '0'}>
       <header className="ed-top">
-        <div className="ed-tools" role="toolbar" aria-label="Editing tools">
-          <button type="button" className="ed-btn" onClick={doUndo} disabled={!undo.canUndo} aria-label="Undo">Undo</button>
-          <button type="button" className="ed-btn" onClick={doRedo} disabled={!undo.canRedo} aria-label="Redo">Redo</button>
-          <button type="button" className="ed-btn" aria-pressed={!!find} onClick={() => { setFindMsg(''); setFind((f) => (f ? null : { query: '', by: '', caseSensitive: false, scope: 'english', cur: 0 })) }}>Find</button>
-          <button type="button" className="ed-btn" onClick={() => setSheet('quotes')}>Quotes{quotes.length ? ` ${quotes.length}` : ''}</button>
+        <div className="ed-toprow">
+          <div className="ed-tools" role="toolbar" aria-label="Editing tools">
+            <button type="button" className="ed-tb" onClick={doUndo} disabled={!undo.canUndo} aria-label="Undo"><Icon name="undo" /><span>Undo</span></button>
+            <button type="button" className="ed-tb" onClick={doRedo} disabled={!undo.canRedo} aria-label="Redo"><Icon name="redo" /><span>Redo</span></button>
+            <button type="button" className="ed-tb" aria-pressed={!!find} onClick={() => { setFindMsg(''); setFind((f) => (f ? null : { query: '', by: '', caseSensitive: false, scope: 'english', cur: 0 })) }}><Icon name="search" /><span>Find</span></button>
+            <button type="button" className="ed-tb" onClick={() => setSheet('quotes')}><Icon name="quote" /><span>Quotes{quotes.length ? ` ${quotes.length}` : ''}</span></button>
+          </div>
+          <span className="ed-saved" role="status"><span className="sr-only">Saved on this phone · {savedAt}</span><span aria-hidden="true"><i />{savedShort}</span></span>
         </div>
-        <span className="ed-saved" role="status">Saved on this phone · {savedAt}</span>
         {!wide && (
           <div className="ed-seg" role="group" aria-label="Show">
-            <button type="button" aria-pressed={mode === 'source'} onClick={() => setMode('source')}>Source{srcBlocks.length ? ` · ${srcBlocks.length}` : ''}</button>
-            <button type="button" aria-pressed={mode === 'english'} onClick={() => setMode('english')}>English{enBlocks.length ? ` · ${enBlocks.length}` : ''}</button>
+            <button type="button" aria-pressed={mode === 'source'} onClick={() => setMode('source')}><Icon name="source" size={16} /><span>Source</span>{srcBlocks.length > 0 && <em>{srcBlocks.length}</em>}</button>
+            <button type="button" aria-pressed={mode === 'english'} onClick={() => setMode('english')}><Icon name="globe" size={16} /><span>English</span>{enBlocks.length > 0 && <em>{enBlocks.length}</em>}</button>
           </div>
         )}
       </header>
@@ -313,16 +317,13 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
       {find && <FindBar f={find} onChange={patchFind} total={matches.length} onStep={(dir) => patchFind({ cur: (find.cur + dir + matches.length) % Math.max(1, matches.length) })} onReplace={doReplace} onReplaceAll={doReplaceAll} onClose={() => setFind(null)} lastMsg={findMsg} />}
 
       <div className="ed-cols">
-        <section className="ed-col ed-col-src" hidden={!showSrc} aria-label="Source">
-          <div className="ed-colhead">
-            <h2>Source</h2>
-            <span className="ed-note">{srcWords} words{d.sourceUrl ? ' · from a link' : ''}</span>
-          </div>
+        <section className="ed-card ed-col ed-col-src" hidden={!showSrc} aria-label="Source">
+          <header className="ed-card-h"><span className="ed-card-ic"><Icon name="source" size={16} /></span><div className="ed-card-t"><h2>Original story</h2><p>{srcWords} words · {srcBlocks.length} paragraph{srcBlocks.length === 1 ? '' : 's'}{d.sourceUrl ? ' · from a link' : ''}</p></div></header>
           {d.sourceUrl && <p className="ed-url">{d.sourceUrl}</p>}
-          <div className="ed-row" role="group" aria-label="Bangla tools">
-            <button type="button" className="ed-btn" onClick={cleanSourceNow} disabled={!hasSource}>Clean source</button>
-            <button type="button" className="ed-btn" onClick={() => mapSource(banglaTools.digitsToAscii, 'Digits')} disabled={!hasSource}>Digits to 0-9</button>
-            <button type="button" className="ed-btn" onClick={() => mapSource(banglaTools.composeLetters, 'Letters')} disabled={!hasSource}>Join ড় ঢ় য়</button>
+          <div className="ed-tchips" role="group" aria-label="Bangla tools">
+            <button type="button" className="ed-chipbtn" onClick={cleanSourceNow} disabled={!hasSource}>Clean source</button>
+            <button type="button" className="ed-chipbtn" onClick={() => mapSource(banglaTools.digitsToAscii, 'Digits')} disabled={!hasSource}>Digits to 0-9</button>
+            <button type="button" className="ed-chipbtn" onClick={() => mapSource(banglaTools.composeLetters, 'Letters')} disabled={!hasSource}>Join ড় ঢ় য়</button>
           </div>
           {cleanMsg && <p className="ed-note" role="status">{cleanMsg}</p>}
           <ParagraphList
@@ -371,51 +372,59 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
 
         <section className="ed-col ed-col-en" hidden={!showEn} aria-label="English story">
           {d.translated && <p className="ed-draft-tag">Draft from a translation. Read it against the source before publishing.</p>}
-          <div id="ed-cat" className="ed-cats" role="group" aria-label="Category" tabIndex={-1}>
-            {CATEGORIES.map((c) => {
-              const on = d.category === c.name
-              return (
-                <button key={c.id} type="button" className="ed-cat" aria-pressed={on} style={on ? { background: c.accent, color: c.chipText, borderColor: c.accent } : undefined} onClick={() => edit({ category: on ? '' : c.name })}>
-                  <i style={{ background: c.accent }} aria-hidden="true" />{c.name}
-                </button>
-              )
-            })}
+          <div className="ed-catwrap">
+            <span className="ed-cap" id="ed-cat-l">Category</span>
+            <div id="ed-cat" className="ed-cats" role="group" aria-labelledby="ed-cat-l" tabIndex={-1}>
+              {CATEGORIES.map((c) => {
+                const on = d.category === c.name
+                return (
+                  <button key={c.id} type="button" className="ed-cat" aria-pressed={on} style={on ? { background: c.accent, color: c.chipText, borderColor: c.accent } : undefined} onClick={() => edit({ category: on ? '' : c.name })}>
+                    <i style={{ background: c.accent }} aria-hidden="true" />{c.name}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
-          <div className="ed-field">
-            <AutoTextarea id="ed-headline" className="ed-h1" label="Headline" lang="en-GB" placeholder="Headline" singleLine value={d.headline} onText={(v) => edit({ headline: v }, 'ed-headline')} />
-            <MeterRing value={[...d.headline].length} max={BUDGETS.headline} label={`Headline ${[...d.headline].length} of ${BUDGETS.headline} characters`}>{BUDGETS.headline - [...d.headline].length}</MeterRing>
-          </div>
-          <div className="ed-field">
-            <AutoTextarea id="ed-deck" className="ed-deck" label="Deck" lang="en-GB" placeholder="Deck: one sentence that sums up the story" singleLine value={d.deck} onText={(v) => edit({ deck: v }, 'ed-deck')} />
-            <MeterRing value={[...d.deck].length} max={BUDGETS.deck} size={36} label={`Deck ${[...d.deck].length} of ${BUDGETS.deck} characters`}>{BUDGETS.deck - [...d.deck].length}</MeterRing>
-          </div>
+          <section className="ed-card ed-card-hd" aria-label="Headline and deck">
+            <header className="ed-card-h"><span className="ed-card-ic"><Icon name="type" size={16} /></span><div className="ed-card-t"><h2>Headline &amp; deck</h2><p>{d.category || 'No category yet'} · English copy for esbpowerline.com</p></div></header>
+            <div className="ed-field">
+              <div className="ed-field-row"><label htmlFor="ed-headline">Headline</label><span className={[...d.headline].length > BUDGETS.headline ? 'ed-budget over' : 'ed-budget'}>{[...d.headline].length} / {BUDGETS.headline}</span></div>
+              <AutoTextarea id="ed-headline" className="ed-h1" label="Headline" lang="en-GB" placeholder="Headline" singleLine value={d.headline} onText={(v) => edit({ headline: v }, 'ed-headline')} />
+            </div>
+            <div className="ed-field">
+              <div className="ed-field-row"><label htmlFor="ed-deck">Deck</label><span className={[...d.deck].length > BUDGETS.deck ? 'ed-budget over' : 'ed-budget'}>{[...d.deck].length} / {BUDGETS.deck}</span></div>
+              <AutoTextarea id="ed-deck" className="ed-deck" label="Deck" lang="en-GB" placeholder="Deck: one sentence that sums up the story" singleLine value={d.deck} onText={(v) => edit({ deck: v }, 'ed-deck')} />
+            </div>
+          </section>
 
           <FactPanel entries={entries} unplaced={unplaced} hasSource={hasSource || entries.length === 0} onJump={jumpFact} />
 
-          <ParagraphList
-            idPrefix="ed-e"
-            blocks={enBlocks}
-            onBlocks={setEn}
-            splitter={splitOnBlankLine}
-            lang="en-GB"
-            tapToEdit
-            spansFor={enSpans}
-            onMark={onEnMark}
-            placeholder="Write the story. A blank line starts a new paragraph."
-            spell
-            selected={selEn}
-            onSelect={setSelEn}
-          />
-          <p className="ed-note ed-count-line">{enWords} words · {readMinutes(enWords)} min read</p>
+          <section className="ed-card ed-card-story" aria-label="Story">
+            <header className="ed-card-h"><span className="ed-card-ic"><Icon name="layers" size={16} /></span><div className="ed-card-t"><h2>Story</h2><p>{enWords} words · ~{readMinutes(enWords)} min read · {enBlocks.length} paragraph{enBlocks.length === 1 ? '' : 's'}</p></div></header>
+            <ParagraphList
+              idPrefix="ed-e"
+              blocks={enBlocks}
+              onBlocks={setEn}
+              splitter={splitOnBlankLine}
+              lang="en-GB"
+              tapToEdit
+              spansFor={enSpans}
+              onMark={onEnMark}
+              placeholder="Write the story. A blank line starts a new paragraph."
+              spell
+              selected={selEn}
+              onSelect={setSelEn}
+            />
+          </section>
 
-          <div className="ed-slugrow">
+          <section className="ed-card ed-slugrow" aria-label="Web address">
             <label className="ed-lab" htmlFor="ed-slug">Web address <span className={[...d.slug].length > BUDGETS.slug ? 'ed-count ed-over' : 'ed-count'}>{[...d.slug].length}/{BUDGETS.slug}</span></label>
             <div className="ed-row">
               <input id="ed-slug" className="ed-input" value={d.slug} autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="story-web-address" onChange={(e) => edit({ slug: e.target.value }, 'ed-slug')} />
               <button type="button" className="ed-btn" disabled={!d.headline.trim()} onClick={() => edit({ slug: slugFromHeadline(d.headline) })}>Make from headline</button>
             </div>
-          </div>
+          </section>
 
           <SeoPanel
             story={{ headline: d.headline, deck: d.deck, body: d.body, slug: d.slug }}
@@ -428,7 +437,7 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
 
       <footer className="ed-actions" aria-label="Next step">
         <button type="button" className="ed-ready" onClick={() => setSheet('ready')} aria-label={blockers.length ? `${blockers.length} things to fix. Open the list.` : 'Ready. Open the list.'}>
-          <MeterRing value={okCount} max={required.length || 1} size={48} label={`${okCount} of ${required.length} checks done`}>{blockers.length ? blockers.length : 'OK'}</MeterRing>
+          <MeterRing value={okCount} max={required.length || 1} size={38} label={`${okCount} of ${required.length} checks done`}>{blockers.length ? blockers.length : 'OK'}</MeterRing>
         </button>
         <button type="button" className="ed-btn ed-btn-primary" onClick={onTranslate} disabled={job.running}>{job.running ? 'Translating…' : 'Translate'}</button>
         <button type="button" className="ed-btn" onClick={() => onGo('banner')}>Banner</button>

@@ -16,6 +16,8 @@ import { panTransform, zoomTransform, NEUTRAL_TRANSFORM, clampTransform, isNeutr
 import { isNeutralAdjust } from './photoEdit'
 import { tapWord, rangeOfPhrase, wordsOf } from './highlight'
 import { photoRectFor } from './template'
+import { Icon } from '../edit/icons'
+import type { IconName } from '../edit/icons'
 
 interface Props {
   draft: Draft | null
@@ -24,12 +26,12 @@ interface Props {
 
 type Status = { kind: 'ok' | 'error' | 'busy'; text: string; fallback?: boolean } | null
 type Tab = 'text' | 'template' | 'size' | 'photo' | 'export'
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'text', label: 'Text' },
-  { id: 'template', label: 'Template' },
-  { id: 'size', label: 'Size' },
-  { id: 'photo', label: 'Photo' },
-  { id: 'export', label: 'Export' },
+const TABS: { id: Tab; label: string; icon: IconName }[] = [
+  { id: 'text', label: 'Text', icon: 'type' },
+  { id: 'template', label: 'Template', icon: 'layout' },
+  { id: 'size', label: 'Size', icon: 'size' },
+  { id: 'photo', label: 'Photo', icon: 'image' },
+  { id: 'export', label: 'Export', icon: 'download' },
 ]
 const PREVIEW_W = 720
 
@@ -232,7 +234,7 @@ function BannerFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) => 
 
   return (
     <div className="bn">
-      <h1>Banner</h1>
+      <h1 className="sr-only">Banner</h1>
       <div className="bn-layout">
         <div className="bn-col-view">
           <div className="bn-viewport" style={{ ...stageStyle, ['--ar' as string]: size.w / size.h }}>
@@ -247,8 +249,8 @@ function BannerFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) => 
           {previewErr && <p className="bn-error" role="alert">{previewErr}</p>}
           <div className="bn-modebar">
             <div className="bn-seg" role="radiogroup" aria-label="What a drag does">
-              <button type="button" role="radio" aria-checked={mode === 'photo'} className={mode === 'photo' ? 'on' : ''} onClick={() => setMode('photo')}>Move photo</button>
-              <button type="button" role="radio" aria-checked={mode === 'view'} className={mode === 'view' ? 'on' : ''} onClick={() => setMode('view')}>Zoom view</button>
+              <button type="button" role="radio" aria-checked={mode === 'photo'} className={mode === 'photo' ? 'on' : ''} onClick={() => setMode('photo')}><Icon name="move" size={16} /><span>Move photo</span></button>
+              <button type="button" role="radio" aria-checked={mode === 'view'} className={mode === 'view' ? 'on' : ''} onClick={() => setMode('view')}><Icon name="zoom" size={16} /><span>Zoom view</span></button>
             </div>
             <button type="button" className="bn-ghost" onClick={() => { setView({ z: 1, x: 0, y: 0 }); patch({ transform: NEUTRAL_TRANSFORM }) }} disabled={isNeutralTransform(T) && view.z === 1 && !view.x && !view.y}>Reset</button>
           </div>
@@ -258,7 +260,7 @@ function BannerFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) => 
         <div className="bn-col-tools">
           <div className="bn-tabs" role="tablist" aria-label="Banner tools">
             {TABS.map((t) => (
-              <button key={t.id} type="button" role="tab" id={`bn-tab-${t.id}`} aria-selected={tab === t.id} aria-controls="bn-panel" className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>{t.label}</button>
+              <button key={t.id} type="button" role="tab" id={`bn-tab-${t.id}`} aria-selected={tab === t.id} aria-controls="bn-panel" className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}><Icon name={t.icon} size={18} /><span>{t.label}</span></button>
             ))}
           </div>
           <div id="bn-panel" role="tabpanel" aria-labelledby={`bn-tab-${tab}`} className="bn-panel">
@@ -323,8 +325,8 @@ function BannerFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) => 
             {tab === 'photo' && (
               <>
                 <div className="bn-row">
-                  <button type="button" className="secondary" disabled={busy} onClick={() => { void pick('gallery') }}>From gallery</button>
-                  <button type="button" className="secondary" disabled={busy} onClick={() => { void pick('camera') }}>Take photo</button>
+                  <button type="button" className="secondary" disabled={busy} onClick={() => { void pick('gallery') }}><Icon name="image" size={16} /><span>From gallery</span></button>
+                  <button type="button" className="secondary" disabled={busy} onClick={() => { void pick('camera') }}><Icon name="camera" size={16} /><span>Take photo</span></button>
                 </div>
                 {photo && <button type="button" className="secondary" disabled={busy} onClick={() => { void removePhoto() }}>Remove photo</button>}
                 <p className="bn-hint">{photo ? 'Photo set (shrunk to 2400 px, location data removed). Drag and pinch it on the preview.' : 'No photo: the banner uses the category colour.'}</p>
@@ -352,8 +354,8 @@ function BannerFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) => 
                   <button type="button" role="radio" aria-checked={cfg.scale === 2} className={cfg.scale === 2 ? 'on' : ''} onClick={() => patch({ scale: 2 })}>2x {exp} px</button>
                 </div>
                 <div className="bn-row">
-                  <button type="button" className="primary" disabled={!ready || busy} onClick={() => { void share() }}>Share</button>
-                  <button type="button" className="primary" disabled={!ready || busy} onClick={() => { void save() }}>Save to gallery</button>
+                  <button type="button" className="primary" disabled={!ready || busy} onClick={() => { void share() }}><Icon name="send" size={16} /><span>Share</span></button>
+                  <button type="button" className="primary" disabled={!ready || busy} onClick={() => { void save() }}><Icon name="download" size={16} /><span>Save to gallery</span></button>
                 </div>
                 {why && <p className="bn-hint">{why}</p>}
                 {status && (

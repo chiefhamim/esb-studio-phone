@@ -1,31 +1,31 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { newDraft, type Draft } from './drafts'
 import { countByFilter, FILTERS, visibleStories, type QueueFilter } from './shell/queue'
 import StoryCard from './shell/StoryCard'
-import NewStorySheet from './shell/NewStorySheet'
+import Launcher from './home/Launcher'
 import Snackbar, { type Toast } from './shell/Snackbar'
-import { IconPlus, IconSearch, IconStories } from './shell/icons'
+import { IconFolder, IconSearch } from './shell/icons'
 import { useBackClose } from './shell/back'
 
 interface Props {
   drafts: Draft[]
   currentId: string | null
   onOpen: (d: Draft) => void
-  /** add a new draft and open it */
-  onCreate: (d: Draft) => void
   /** add or restore a draft without opening it (Duplicate, Undo) */
   onAdd: (d: Draft) => void
   onRemove: (id: string) => void
+  /** Editorial tile: open the story desk (link or text intake) */
+  onEditorial: () => void
+  /** Graphics tile: start a blank banner story */
+  onGraphics: () => void
 }
 
-/** Home: the story queue, newest first, with search, status filters, swipe actions and a New story sheet. */
-export default function Stories({ drafts, currentId, onOpen, onCreate, onAdd, onRemove }: Props) {
+/** Home: the launcher (Editorial, Graphics) and Recent stories, newest first, with search, status filters and swipe actions. */
+export default function Stories({ drafts, currentId, onOpen, onAdd, onRemove, onEditorial, onGraphics }: Props) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<QueueFilter>('all')
-  const [sheet, setSheet] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
   const [toast, setToast] = useState<Toast | null>(null)
-  const closeSheet = useCallback(() => setSheet(false), [])
   useBackClose(openId !== null, () => setOpenId(null))
 
   const counts = useMemo(() => countByFilter(drafts), [drafts])
@@ -46,14 +46,16 @@ export default function Stories({ drafts, currentId, onOpen, onCreate, onAdd, on
   }
 
   return (
-    <div className="sh-home">
-      <div className="sh-home-top">
-        <div className="sh-title-row">
-          <h1>Stories</h1>
-          {drafts.length > 0 && <span className="sh-count">{counts.all}</span>}
+    <div className="hm-home" onClick={(e) => { if (e.target === e.currentTarget) setOpenId(null) }}>
+      <Launcher onEditorial={onEditorial} onGraphics={onGraphics} />
+
+      <section className="hm-section" aria-labelledby="hm-recent-h">
+        <div className="hm-sec-head">
+          <h2 className="hm-sec-title" id="hm-recent-h">Recent stories</h2>
+          {drafts.length > 0 && <span className="hm-sec-count">{counts.all}</span>}
         </div>
         {drafts.length > 0 && (
-          <>
+          <div className="hm-tools">
             <label className="sh-search">
               <IconSearch />
               <input type="search" enterKeyHint="search" autoComplete="off" placeholder="Search headline or text" aria-label="Search stories" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -65,22 +67,18 @@ export default function Stories({ drafts, currentId, onOpen, onCreate, onAdd, on
                 </button>
               ))}
             </div>
-          </>
+          </div>
         )}
-      </div>
-
-      <div className="sh-scroll" onClick={(e) => { if (e.target === e.currentTarget) setOpenId(null) }}>
         {drafts.length === 0 ? (
-          <div className="sh-empty">
-            <span className="sh-empty-ico"><IconStories /></span>
-            <h2>No stories yet</h2>
-            <p>Start from a link or the article text. You can also share a link from another app to ESB Studio and it lands here.</p>
-            <button type="button" className="sh-btn sh-btn-primary" onClick={() => setSheet(true)}><IconPlus /> New story</button>
+          <div className="hm-empty">
+            <IconFolder />
+            <strong>Nothing started yet</strong>
+            <span>Stories you start or share in from another app appear here.</span>
           </div>
         ) : list.length === 0 ? (
-          <div className="sh-empty">
-            <h2>Nothing matches</h2>
-            <p>{query ? `No story contains “${query}”` : 'No stories with this status'}{filter !== 'all' && query ? ' in this filter' : ''}.</p>
+          <div className="hm-empty">
+            <strong>Nothing matches</strong>
+            <span>{query ? `No story contains “${query}”` : 'No stories with this status'}{filter !== 'all' && query ? ' in this filter' : ''}.</span>
             <button type="button" className="sh-btn" onClick={() => { setQuery(''); setFilter('all') }}>Show all stories</button>
           </div>
         ) : (
@@ -92,11 +90,9 @@ export default function Stories({ drafts, currentId, onOpen, onCreate, onAdd, on
             ))}
           </ul>
         )}
-      </div>
+      </section>
 
-      {drafts.length > 0 && <button type="button" className="sh-fab" onClick={() => setSheet(true)}><IconPlus /><span>New story</span></button>}
       <Snackbar toast={toast} onDone={() => setToast(null)} />
-      {sheet && <NewStorySheet onClose={closeSheet} onCreate={(d) => { setSheet(false); onCreate(d) }} />}
     </div>
   )
 }

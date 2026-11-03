@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
-import { IconBanner, IconEdit, IconPublish, IconStories } from './icons'
+import { IconBanner, IconEdit, IconHome, IconPublish } from './icons'
 
 export type Tab = 'stories' | 'edit' | 'banner' | 'publish'
 const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
-  { id: 'stories', label: 'Stories', icon: <IconStories /> },
+  { id: 'stories', label: 'Home', icon: <IconHome /> },
   { id: 'edit', label: 'Edit', icon: <IconEdit /> },
   { id: 'banner', label: 'Banner', icon: <IconBanner /> },
   { id: 'publish', label: 'Publish', icon: <IconPublish /> },

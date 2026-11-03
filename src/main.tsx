@@ -4,6 +4,7 @@ import './ui/tokens.css'
 import './index.css'
 import './layout.css'
 import './ui/shell.css'
+import './ui/home.css'
 import App from './App.tsx'
 import { initTheme } from './shell/theme'
 

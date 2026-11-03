@@ -9,12 +9,40 @@
 .settings .card { background: var(--surface-raised); border-color: var(--border-default); border-radius: var(--r-3); }
 .set-row { display: flex; flex-wrap: wrap; gap: var(--s-4); }
 .set-row button { flex: 1 1 96px; width: auto; margin: 0; min-height: 48px; }
-.set-test.set-ok { color: var(--success); font-weight: 600; }
-.set-test.set-fail { color: var(--danger); font-weight: 600; }
+.set-test.set-ok { color: var(--success); font-weight: 700; }
+.set-test.set-fail { color: var(--danger); font-weight: 700; }
 .set-where { margin-top: var(--s-7); line-height: 1.5; }
 .st-pill { justify-self: start; margin: 0; padding: var(--s-1) var(--s-4); border-radius: var(--r-pill); font: var(--t-caption); background: var(--fill); color: var(--text-secondary); }
 .st-pill.st-saved { background: var(--success-soft); color: var(--success); }
 .st-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-2); padding: var(--s-2); border-radius: var(--r-3); background: var(--fill); }
 .st-seg button { min-height: 48px; border: 0; border-radius: var(--r-2); background: transparent; color: var(--text-secondary); font: var(--t-title); cursor: pointer; }
-.st-seg button.on { background: var(--surface-raised); color: var(--text-primary); box-shadow: var(--raised-shadow); }
+.st-seg button.on { background: var(--raised); color: var(--text-primary); box-shadow: var(--raised-shadow); }
 .settings button:focus-visible, .settings input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ====================================================================================================================
+   PC look (2026-11-03): grouped cards with small-caps kickers, hairline fields, segmented theme control (desktop values).
+   ==================================================================================================================== */
+.settings { font-family: var(--font-ui); }
+.settings-head { border-bottom: 1px solid var(--card-line); background: var(--header-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.settings-head h1 { font: 700 18px/24px var(--font-ui); letter-spacing: -.01em; }
+.settings-head button.secondary { min-height: 44px; min-width: 76px; padding: 0 var(--s-5); border-radius: var(--r-2); border: 1px solid var(--border-default); background: var(--surface-raised); box-shadow: var(--shadow-1); color: var(--text-primary); font: 500 13px/20px var(--font-ui); }
+.settings-body { padding-top: var(--s-2); }
+.st-group { margin-top: var(--s-6); display: grid; gap: var(--s-4); }
+.st-group h2 { margin: 0 0 var(--s-1) var(--s-2); font: 700 11px/16px var(--font-ui); letter-spacing: var(--track-kicker); }
+.settings .card { display: grid; gap: var(--s-4); margin: 0; padding: 14px; background: var(--card); border: 0; border-radius: var(--r-3); box-shadow: var(--card-shadow); }
+.settings .card label { font: 500 12px/16px var(--font-ui); color: var(--text-secondary); }
+.settings .card input { min-height: 44px; padding: 8px 12px; border: 1px solid transparent; border-radius: var(--r-2); background: var(--surface-panel); box-shadow: var(--ctl-shadow); color: var(--text-primary); font: 400 15px/22px var(--font-ui); }
+.settings .card input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--ink-ring), var(--ctl-shadow); }
+.settings .note { margin: 0; font: 400 12px/17px var(--font-ui); color: var(--text-tertiary); }
+.settings button.primary, .settings button.secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 var(--s-5); border-radius: var(--r-2); font: 700 14px/20px var(--font-ui); margin: 0; width: 100%; }
+.settings button.secondary { border: 1px solid var(--border-default); background: var(--surface-raised); box-shadow: var(--shadow-1); color: var(--text-primary); font-weight: 500; }
+.settings button.primary { background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); }
+.settings button.primary:disabled, .settings button.secondary:disabled { opacity: .42; }
+.set-row button { flex: 1 1 96px; width: auto; }
+.st-pill { height: 22px; padding: 0 9px; font: 600 11.5px/22px var(--font-ui); border-radius: var(--r-pill); }
+.st-seg { gap: var(--s-1); padding: var(--s-1); border-radius: var(--r-2); background: var(--fill); }
+.st-seg button { min-height: 44px; border-radius: 6px; font: 500 13px/20px var(--font-ui); }
+.st-seg button.on { background: var(--raised); color: var(--text-primary); box-shadow: var(--raised-shadow); font-weight: 700; }
+.set-where { margin-top: var(--s-6); font: 400 12px/17px var(--font-ui); color: var(--text-tertiary); }
+.settings .settings-head button.secondary { width: auto; min-width: 76px; }
+.settings form { display: grid; gap: var(--s-4); }

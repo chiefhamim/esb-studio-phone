@@ -21,6 +21,8 @@ import type { StepId } from './steps'
 import { FacebookPreviewCard, SitePreviewCard } from './Previews'
 import { formatArticleDate } from './steps'
 import { renderDraftBanner } from '../banner/compose'
+import { Icon } from '../edit/icons'
+import type { IconName } from '../edit/icons'
 
 type Outcome = { tone: 'ok' | 'bad'; text: string; link?: string } | null
 
@@ -28,6 +30,12 @@ type Outcome = { tone: 'ok' | 'bad'; text: string; link?: string } | null
 export default function Publish({ draft, onChange }: { draft: Draft | null; onChange: (d: Draft) => void }) {
   if (!draft) return (<><h1>Publish</h1><p>Open or start a story in Stories first.</p></>)
   return <PublishFor key={draft.id} draft={draft} onChange={onChange} />
+}
+
+function PHead({ id, icon, children, tag }: { id: string; icon: IconName; children: string; tag?: string }) {
+  return (
+    <header className="pb-card-h"><span className="pb-card-ic"><Icon name={icon} size={16} /></span><h2 id={id}>{children}</h2>{tag && <span className="pb-card-tag">{tag}</span>}</header>
+  )
 }
 
 function Ring({ done, total, fraction }: { done: number; total: number; fraction: number }) {
@@ -151,12 +159,12 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
 
   return (
     <div className="pub">
-      <h1>Publish</h1>
+      <h1 className="sr-only">Publish</h1>
       <ol className="pb-steps" aria-label="Publish steps">
         {STEPS.map((s, i) => (
           <li key={s.id}>
             <button type="button" className={`pb-step${i === idx ? ' on' : ''}${i < idx ? ' done' : ''}`} aria-current={i === idx ? 'step' : undefined} onClick={() => setStep(s.id)}>
-              <span className="pb-step-n" aria-hidden="true">{i + 1}</span>{s.label}
+              <span className="pb-step-n" aria-hidden="true">{i < idx ? <Icon name="check" size={12} /> : i + 1}</span>{s.label}
             </button>
           </li>
         ))}
@@ -184,7 +192,7 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
           </section>
 
           <section className="card" aria-labelledby="pub-details">
-            <h2 id="pub-details">Details</h2>
+            <PHead id="pub-details" icon="info">Details</PHead>
             <label htmlFor="pub-cat">Category</label>
             <select id="pub-cat" value={draft.category} onChange={(e) => set({ category: e.target.value })}>
               <option value="">Choose a category</option>
@@ -203,7 +211,7 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
       {step === 'review' && (
         <>
           <section className="card" aria-labelledby="pub-pic">
-            <h2 id="pub-pic">Picture</h2>
+            <PHead id="pub-pic" icon="image">Picture</PHead>
             <button type="button" className="secondary" onClick={() => { void attachBanner() }}>Use this story's banner for Facebook</button>
             {pictureNote && <p className="note" role="status">{pictureNote}</p>}
             <label htmlFor="pub-file">Or choose from the phone (used for Facebook)</label>
@@ -216,13 +224,13 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
           </section>
 
           <section className="card" aria-labelledby="pb-site-h">
-            <h2 id="pb-site-h">Website page</h2>
+            <PHead id="pb-site-h" icon="globe">Website page</PHead>
             <SitePreviewCard title={draft.headline} deck={draft.deck} slug={draft.slug} category={draft.category} author={session?.name ?? null} body={draft.body} heroUrl={heroUrl} credit={credit} dateLine={dateLine} />
             <p className="note">An approximation drawn by the phone. The live page uses the site's own styles; the picture shown is the link if you set one, otherwise the chosen file (the site only receives a link).</p>
           </section>
 
           <section className="card" aria-labelledby="pub-fb">
-            <h2 id="pub-fb">Facebook post</h2>
+            <PHead id="pub-fb" icon="facebook">Facebook post</PHead>
             <label htmlFor="pub-cap">Caption (no link; about {CAPTION_TEXT_LIMIT} characters plus hashtags)</label>
             <textarea id="pub-cap" rows={4} value={caption} onChange={(e) => setCaption(e.target.value)} />
             <button type="button" className="secondary" onClick={() => setCaption(defaultCaption(draft.headline))} disabled={!draft.headline.trim()}>Reset to the headline</button>
@@ -247,7 +255,7 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
       {step === 'send' && (
         <>
           <section className="card" aria-labelledby="pub-acct">
-            <h2 id="pub-acct">esbpowerline.com account</h2>
+            <PHead id="pub-acct" icon="user">esbpowerline.com account</PHead>
             {session ? (
               <>
                 <p className="note" role="status">Signed in as {session.name} ({session.email}){session.role ? `, ${session.role.toLowerCase()}` : ''}.</p>
@@ -265,7 +273,7 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
           </section>
 
           <section className="card" aria-labelledby="pb-sum">
-            <h2 id="pb-sum">What each button does</h2>
+            <PHead id="pb-sum" icon="send">What each button does</PHead>
             <ul className="pub-why">
               <li>Save to site as draft: stores the story on the site, not visible to readers.</li>
               <li>{isLive ? 'Update live article' : 'Publish live'}: public on esbpowerline.com, after a second tap.</li>

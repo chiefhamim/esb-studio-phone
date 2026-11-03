@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { IconAuto, IconMoon, IconSettings, IconSun } from './icons'
+import { IconAuto, IconMoon, IconSettings, IconSparkle, IconSun } from './icons'
 import { getThemePref, nextPref, setThemePref, type ThemePref } from './theme'
 import { useOnline } from './hooks'
 
 const THEME_LABEL: Record<ThemePref, string> = { auto: 'Theme: follows the phone', light: 'Theme: light', dark: 'Theme: dark' }
 
-/** App header: the protected ESB Power Line logo (unchanged artwork on a light plate), save status, theme, Settings. */
-export default function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
+/** Top bar like the desktop's: protected ESB Power Line logo, status dot, Connect AI chip, theme, Settings. */
+export default function Header({ onOpenSettings, ai }: { onOpenSettings: () => void; ai: boolean }) {
   const [pref, setPref] = useState<ThemePref>(getThemePref)
   const online = useOnline()
   const cycle = () => { const n = nextPref(pref); setThemePref(n); setPref(n) }
@@ -20,6 +20,9 @@ export default function Header({ onOpenSettings }: { onOpenSettings: () => void 
         <span className="sh-sync-text">{online ? 'Saved on phone' : 'Offline'}</span>
         <span className="sr-only">{status}</span>
       </span>
+      <button type="button" className={ai ? 'sh-chipbtn on' : 'sh-chipbtn off'} onClick={onOpenSettings} aria-label={ai ? 'AI: Gemini key saved. Open Settings' : 'Connect AI. Open Settings'}>
+        <IconSparkle />{ai ? 'Gemini' : 'Connect AI'}
+      </button>
       <button type="button" className="sh-ibtn" onClick={cycle} aria-label={THEME_LABEL[pref] + '. Tap to change.'}>
         {pref === 'auto' ? <IconAuto /> : pref === 'light' ? <IconSun /> : <IconMoon />}
       </button>

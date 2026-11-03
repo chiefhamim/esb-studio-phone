@@ -93,7 +93,7 @@ export function FindBar({ f, onChange, total, onStep, onReplace, onReplaceAll, o
   onReplace: () => void; onReplaceAll: () => void; onClose: () => void; lastMsg: string
 }) {
   return (
-    <section className="ed-card ed-find" aria-label="Find and replace">
+    <section className="ed-card ed-findbar" aria-label="Find and replace">
       <div className="ed-row">
         <input className="ed-input" type="search" aria-label="Find" placeholder="Find" value={f.query} onChange={(e) => onChange({ query: e.target.value, cur: 0 })} autoCapitalize="none" />
         <button type="button" className="ed-btn" onClick={() => onStep(-1)} disabled={!total} aria-label="Previous match">Prev</button>

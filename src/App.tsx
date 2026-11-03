@@ -10,6 +10,9 @@ import Banner from './banner/Banner'
 import Publish from './publish/Publish'
 import Header from './shell/Header'
 import Nav, { type Tab } from './shell/Nav'
+import Desk from './home/Desk'
+import StatusBar from './home/StatusBar'
+import { useStatus, wordCount } from './home/useStatus'
 import { handleBack, useBackClose } from './shell/back'
 import { useMedia } from './shell/hooks'
 
@@ -20,13 +23,19 @@ export default function App() {
   const [currentId, setCurrentId] = useState<string | null>(null)
   const current = drafts.find((d) => d.id === currentId) ?? null
   const [settings, setSettings] = useState(false)
+  const [desk, setDesk] = useState(false)
   const wide = useMedia('(min-width: 900px)')
+  const status = useStatus(settings)
 
-  const open = (d: Draft) => { setCurrentId(d.id); setTab('edit') }
+  const open = (d: Draft) => { setDesk(false); setCurrentId(d.id); setTab('edit') }
   const create = (d: Draft) => { upsert(d); open(d) }
+  /** Graphics tile: a blank story that opens on the Banner tab */
+  const newGraphic = () => { const d = newDraft(); upsert(d); setDesk(false); setCurrentId(d.id); setTab('banner') }
+  const goTab = (t: Tab) => { setDesk(false); setTab(t) }
   useEffect(() => listenForShares((s) => create({ ...newDraft(s.url, s.text) })), []) // eslint-disable-line
 
   useBackClose(settings, () => setSettings(false))
+  useBackClose(desk, () => setDesk(false))
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
     const h = CapApp.addListener('backButton', () => {
@@ -42,19 +51,23 @@ export default function App() {
 
   // Two-pane: the list stays on the left, so "Stories" shows the editor on the right.
   const shown: Tab = wide && tab === 'stories' ? 'edit' : tab
+  const words = desk || shown === 'stories' || !current ? 0 : wordCount(current.body || current.source)
   const stories = (
-    <Stories drafts={drafts} currentId={currentId} onOpen={open} onCreate={create} onAdd={upsert}
+    <Stories drafts={drafts} currentId={currentId} onOpen={open} onAdd={upsert} onEditorial={() => setDesk(true)} onGraphics={newGraphic}
       onRemove={(id) => { remove(id); if (id === currentId) setCurrentId(null) }} />
   )
 
   return (
-    <div className={`sh-app ${wide ? 'sh-wide' : ''}`}>
-      <Header onOpenSettings={() => setSettings(true)} />
-      <Nav tab={tab} onTab={setTab} />
+    <div className={`sh-app ${wide ? 'sh-wide' : ''} ${!wide && tab === 'stories' && !desk ? 'hm-on' : ''}`}>
+      <Header onOpenSettings={() => setSettings(true)} ai={status.ai} />
+      <Nav tab={tab} onTab={goTab} />
+      <StatusBar status={status} words={words} />
       <div className="sh-panes">
         {wide && <section className="sh-pane-list" aria-label="Stories">{stories}</section>}
-        {!wide && tab === 'stories' ? (
+        {!wide && tab === 'stories' && !desk ? (
           <main className="sh-pane-main sh-page" key="stories">{stories}</main>
+        ) : desk ? (
+          <main className="sh-pane-main sh-page hm-deskpane" key="desk"><Desk onCreate={create} /></main>
         ) : (
           <main className="sh-pane-main phone-main sh-page" key={shown}>
             {shown === 'edit' && <Edit draft={current} onChange={upsert} onOpenSettings={() => setSettings(true)} onGo={(t) => setTab(t)} />}

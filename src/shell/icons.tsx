@@ -11,7 +11,7 @@ export const IconStories = () => <I><rect x="4" y="3.5" width="16" height="17" r
 export const IconEdit = () => <I><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z" /><path d="M14 8l3 3" /></I>
 export const IconBanner = () => <I><rect x="4" y="3.5" width="16" height="17" rx="3" /><circle cx="9" cy="9" r="1.6" /><path d="M4.5 17l4.5-4.5 3.5 3.5 2.5-2.5 5 5" /></I>
 export const IconPublish = () => <I><path d="M12 16V4M7 9l5-5 5 5" /><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" /></I>
-export const IconSettings = () => <I><circle cx="12" cy="12" r="3" /><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7" /></I>
+export const IconSettings = () => <I><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></I>
 export const IconSearch = () => <I><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></I>
 export const IconPlus = () => <I><path d="M12 5v14M5 12h14" /></I>
 export const IconClose = () => <I><path d="M6 6l12 12M18 6L6 18" /></I>
@@ -33,3 +33,14 @@ export function CatMark({ cat, size = 36 }: { cat: Category; size?: number }) {
     </span>
   )
 }
+
+// Launcher and desk icons (same 24 px line set).
+export const IconHome = () => <I><path d="M4 11l8-7 8 7" /><path d="M6 9.5V19a1 1 0 0 0 1 1h3.5v-5.5h3V20H17a1 1 0 0 0 1-1V9.5" /></I>
+export const IconNewspaper = () => <I><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M8 9h8M8 12.5h8M8 16h5" /></I>
+export const IconLayers = () => <I><path d="M12 3.5l8.5 4.5-8.5 4.5L3.5 8z" /><path d="M3.5 12.2l8.5 4.5 8.5-4.5" /><path d="M3.5 16.2l8.5 4.5 8.5-4.5" /></I>
+export const IconSparkle = () => <I><path d="M12 4l1.8 4.7L18.5 10.5l-4.7 1.8L12 17l-1.8-4.7L5.5 10.5l4.7-1.8z" /></I>
+export const IconUpload = () => <I><path d="M12 16V5M7.5 9.5L12 5l4.5 4.5" /><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" /></I>
+export const IconGlobe = () => <I><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.4 2.4 3.4 5.2 3.4 8.5s-1 6.1-3.4 8.5c-2.4-2.4-3.4-5.2-3.4-8.5s1-6.1 3.4-8.5z" /></I>
+export const IconInbox = () => <I><path d="M4 13l2.2-7a2 2 0 0 1 1.9-1.4h7.8a2 2 0 0 1 1.9 1.4L20 13v4.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" /><path d="M4 13h4.5a3.5 3.5 0 0 0 7 0H20" /></I>
+export const IconPencilSquare = () => <I><path d="M11 5H7a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-4" /><path d="M9 15l.6-3L18 3.6a1.8 1.8 0 0 1 2.4 2.4L12 14.4z" /></I>
+export const IconFolder = () => <I><path d="M3.5 7.5A2.5 2.5 0 0 1 6 5h3.5l2 2.5H18A2.5 2.5 0 0 1 20.5 10v7A2.5 2.5 0 0 1 18 19.5H6A2.5 2.5 0 0 1 3.5 17z" /></I>
