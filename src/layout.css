@@ -1,8 +1,0 @@
-/* Shell layout lives in src/ui/shell.css (class prefix sh-). This file keeps only shared helpers. */
-@media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
-.row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-button.secondary.wide { width: 100%; }
-.card .over { color: var(--danger); font-weight: 700; }
-.card .count { font-weight: 400; margin-left: 6px; }
-.card.warn { border-color: var(--warning); }
-.card.warn ul { margin: 4px 0 0; padding-left: 18px; color: var(--text-2); }

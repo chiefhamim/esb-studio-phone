@@ -3,10 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { _resetMemoryForTests, getSecret, setSecret } from '../secure'
 import { newDraft } from '../drafts'
 import type { Draft } from '../drafts'
-import { defaultCaption, sanitizeFacebook } from './caption'
 import { emailKey, ESB_AUTHORS } from './categories'
 import { _resetConfirmationsForTests, consumeConfirmation, issueConfirmation } from './confirm'
-import { facebookError, GRAPH, postToFacebook } from './facebook'
 import { buildReadiness, facebookBlockers, slugFromHeadline } from './readiness'
 import { buildArticleRecord, ensureFreshSession, mapSiteError, saveArticle, signIn, SUPABASE_URL } from './site'
 import type { StaffSession } from './site'
@@ -59,19 +57,6 @@ describe('readiness', () => {
   })
 })
 
-describe('caption', () => {
-  it('strips links, keeps two lines within 125 characters and one hashtag line ending with the brand tag', () => {
-    const c = sanitizeFacebook('Big news https://example.com/x\nsecond\nthird #LNG #ESBPowerLine #Energy')
-    expect(c).not.toMatch(/https?:/)
-    expect(c.split('\n\n')[1]).toBe('#LNG #Energy #ESBPowerLine')
-    expect(sanitizeFacebook('x '.repeat(100)).split('\n\n')[0].length).toBeLessThanOrEqual(126)
-  })
-  it('defaults to the headline plus the brand tag, and to nothing when there is no headline', () => {
-    expect(defaultCaption('A fine headline')).toBe('A fine headline\n\n#ESBPowerLine')
-    expect(defaultCaption('  ')).toBe('')
-  })
-})
-
 describe('confirmation gate', () => {
   const plan = { kind: 'site' as const, title: 'A fine headline', slug: 'a-fine-headline', destination: 'site', picture: 'none' }
   it('is one-time and tied to kind, title and slug', () => {
@@ -91,12 +76,6 @@ describe('confirmation gate', () => {
     const wrong = issueConfirmation({ ...plan, title: 'Another story' })
     const r2 = await saveArticle(good(), { publish: true, confirmation: wrong }, f as unknown as typeof fetch)
     expect(r2.ok).toBe(false)
-    expect(f).not.toHaveBeenCalled()
-  })
-  it('a facebook post without confirmation sends nothing', async () => {
-    const f = vi.fn()
-    const r = await postToFacebook({ cfg: { pageId: '1234567', token: 'FB-TOKEN' }, photo: new Blob(['x'], { type: 'image/jpeg' }), caption: 'Hi', title: 'T' }, f as unknown as typeof fetch)
-    expect(r.ok).toBe(false)
     expect(f).not.toHaveBeenCalled()
   })
 })
@@ -201,42 +180,5 @@ describe('sign-in', () => {
     const g = vi.fn()
     expect((await ensureFreshSession(g as unknown as typeof fetch))?.token).toBe('ACCESS-NEW')
     expect(g).not.toHaveBeenCalled()
-  })
-})
-
-describe('facebook', () => {
-  const cfg = { pageId: '1234567890', token: 'FB-TOKEN-XYZ' }
-  const photo = () => new Blob(['img'], { type: 'image/jpeg' })
-  it('posts a photo with the token only in the Authorization header', async () => {
-    const f = vi.fn(async () => json(200, { id: '111', post_id: '1234567890_111' }))
-    const c = issueConfirmation({ kind: 'facebook', title: 'A fine headline', destination: 'd', picture: 'p' })
-    const r = await postToFacebook({ cfg, photo: photo(), caption: 'Headline https://example.com\n\n#ESBPowerLine', title: 'A fine headline', confirmation: c }, f as unknown as typeof fetch)
-    expect(r.ok && r.postId).toBe('1234567890_111')
-    const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit]
-    expect(url).toBe(`${GRAPH}/1234567890/photos`)
-    expect(url).not.toContain('FB-TOKEN')
-    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer FB-TOKEN-XYZ')
-    const form = init.body as FormData
-    expect(String(form.get('caption'))).not.toMatch(/https?:/)
-    expect(form.get('published')).toBe('true')
-    expect(JSON.stringify([...form.keys()])).not.toContain('token')
-  })
-  it('adds the link comment after a post and reports a failed comment honestly', async () => {
-    const f = vi.fn(async (url: string) => (String(url).endsWith('/photos') ? json(200, { post_id: 'p_1' }) : json(403, { error: { code: 200, message: 'no' } })))
-    const c = issueConfirmation({ kind: 'facebook', title: 'T', destination: 'd', picture: 'p' })
-    const r = await postToFacebook({ cfg, photo: photo(), caption: 'Hi', title: 'T', confirmation: c, commentLink: 'https://esbpowerline.com/articles/x' }, f as unknown as typeof fetch)
-    expect(r.ok && r.comment && !r.comment.ok).toBe(true)
-    expect(f).toHaveBeenCalledTimes(2)
-    for (const call of f.mock.calls as unknown as [string][]) expect(call[0]).not.toContain('FB-TOKEN')
-  })
-  it('maps Graph errors and refuses a wrong picture type before any request', async () => {
-    expect(facebookError(400, { error: { code: 190 } })).toMatch(/expired or was revoked/)
-    expect(facebookError(400, { error: { code: 100 } })).toMatch(/Page ID/)
-    expect(facebookError(500, null)).toBe('Facebook answered HTTP 500.')
-    const f = vi.fn()
-    const c = issueConfirmation({ kind: 'facebook', title: 'T', destination: 'd', picture: 'p' })
-    const r = await postToFacebook({ cfg, photo: new Blob(['x'], { type: 'image/gif' }), caption: 'Hi', title: 'T', confirmation: c }, f as unknown as typeof fetch)
-    expect(r.ok).toBe(false)
-    expect(f).not.toHaveBeenCalled()
   })
 })

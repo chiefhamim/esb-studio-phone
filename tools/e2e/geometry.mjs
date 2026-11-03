@@ -11,8 +11,9 @@ import path from 'node:path'
 
 const URL = process.env.URL || 'http://127.0.0.1:4173/'
 const args = Object.fromEntries(process.argv.slice(2).map((a) => a.replace(/^--/, '').split('=')).map(([k, v]) => [k, v ?? true]))
-const SIZES = [[360, 800], [375, 812], [393, 852], [412, 915], [432, 960], [600, 960], [800, 1280], [915, 412], [1280, 800]]
-const THEMES = ['light', 'dark']
+const ALL_SIZES = [[360, 800], [375, 812], [393, 852], [412, 915], [432, 960], [600, 960], [800, 1280], [915, 412], [1280, 800]]
+const SIZES = args.sizes ? String(args.sizes).split(',').map((x) => x.split('x').map(Number)) : ALL_SIZES
+const THEMES = args.themes ? String(args.themes).split(',') : ['light', 'dark']
 const OUT = path.resolve(import.meta.dirname, '../../docs/screens/pc-clone/geometry')
 if (args.shots) fs.mkdirSync(OUT, { recursive: true })
 const SAFE = { top: 24, bottom: 16 }
@@ -28,16 +29,16 @@ const SCREENS = {
     await p.locator('.m-nav-item', { hasText: 'Graphics' }).click()
     const b = p.locator('.gx-dock-item', { hasText: t })
     if (!(await b.count())) throw new Error('skip: no ' + t + ' in the dock at this size')
-    await b.first().click(); await p.waitForSelector('.m-sheet')
+    await b.first().click(); await p.waitForSelector('.m-sheet, .gx-side')
   }])),
-  'graphics-more': async (p) => { await p.locator('.m-nav-item', { hasText: 'Graphics' }).click(); await p.locator('button[aria-label="More options"], button[aria-label="More"]').last().click(); await p.waitForSelector('.m-sheet, .m-menu') },
+  'graphics-more': async (p) => { await p.locator('.m-nav-item', { hasText: 'Graphics' }).click(); await p.locator('button[aria-label^="More"]:visible').last().click(); await p.waitForSelector('.m-sheet, .m-menu') },
   'graphics-export': async (p) => { await p.locator('.m-nav-item', { hasText: 'Graphics' }).click(); await p.locator('.gx-tools button', { hasText: 'Export' }).click(); await p.waitForSelector('.m-fulldialog') },
   ...Object.fromEntries(['Story', 'Details', 'SEO', 'Social', 'Preview'].map((t) => [`story-${t.toLowerCase()}`, async (p) => {
     await openStory(p)
-    await p.locator('.me-tabs [role=tab]', { hasText: t }).first().click()
+    await p.locator('.me-tabs [role=tab]:visible', { hasText: t }).first().click()
   }])),
-  'story-ready': async (p) => { await openStory(p); await p.locator('.me-ready').first().click(); await p.waitForSelector('.m-sheet') },
-  'story-publish': async (p) => { await openStory(p); await p.locator('.m-actionbar button', { hasText: /^(Publish|Update)$/ }).first().click(); await p.waitForSelector('.m-fulldialog, .m-sheet') },
+  'story-ready': async (p) => { await openStory(p); await p.locator('.me-ready:visible').first().click(); await p.waitForSelector('.m-sheet') },
+  'story-publish': async (p) => { await openStory(p); await p.locator('.m-actionbar button:visible', { hasText: /^(Publish|Update)$/ }).first().click(); await p.waitForSelector('.m-fulldialog, .m-sheet') },
 }
 async function openStory(p) {
   await p.locator('.m-home .m-row', { hasText: 'Grid operator' }).first().click()
@@ -69,6 +70,13 @@ function audit({ safe, w, h }) {
     return false
   }
 
+  // a target scrolled underneath a bar or sheet cannot be touched there: judged where it is visible, not here
+  const occluded = (el, r) => {
+    const x = Math.min(Math.max(r.left + r.width / 2, 0), w - 1), y = Math.min(Math.max(r.top + r.height / 2, 0), h - 1)
+    const top = document.elementFromPoint(x, y)
+    return !!top && !el.contains(top) && !top.contains(el)
+  }
+
   // 1. horizontal page overflow
   const se = document.scrollingElement
   if (se.scrollWidth > w + 1) issues.push(['overflow', `page scrolls sideways: ${se.scrollWidth}px > ${w}px`])
@@ -89,8 +97,12 @@ function audit({ safe, w, h }) {
 
   // 3. targets: size, overlap, spacing
   const targets = [...document.querySelectorAll('button, a[href], input:not([type=hidden]), select, textarea, [role=button], [role=tab], [role=switch], [role=radio], [role=menuitem], [role=checkbox]')]
-    .map((el) => ({ el, r: vis(el) })).filter((t) => t.r && !t.el.disabled && !t.el.closest('.m-sr') && !t.el.classList.contains('m-sr') && !clippedBy(t.el, t.r))
-  const EXPANDS = ['m-chip', 'm-switch', 'm-hit-pad']
+    .map((el) => {
+      // a checkbox/radio inside a <label> is tapped through the whole label
+      const lab = el.matches('input[type=checkbox], input[type=radio]') ? el.closest('label') : null
+      return { el: lab ?? el, r: vis(lab ?? el) }
+    }).filter((t) => t.r && !occluded(t.el, t.r) && !t.el.disabled && !t.el.closest('.m-sr') && !t.el.classList.contains('m-sr') && !clippedBy(t.el, t.r))
+  const EXPANDS = ['m-chip', 'm-switch', 'm-hit-pad', 'tgl']
   for (const t of targets) {
     const pc = !!t.el.closest('.pc-host')
     const min = pc ? 44 : 48
@@ -104,7 +116,14 @@ function audit({ safe, w, h }) {
     if (a.el.contains(b.el) || b.el.contains(a.el)) continue
     const gx = Math.max(a.r.left - b.r.right, b.r.left - a.r.right), gy = Math.max(a.r.top - b.r.bottom, b.r.top - a.r.bottom)
     const gap = Math.max(gx, gy)
-    if (gap < -1) { issues.push(['target', `overlap: ${label(a.el)} / ${label(b.el)}`]); continue }
+    if (gap < -1) {
+      // layered (one scrolled under a bar or sheet) is not an overlap: at the shared area only one of them is on top
+      const ix = (Math.max(a.r.left, b.r.left) + Math.min(a.r.right, b.r.right)) / 2, iy = (Math.max(a.r.top, b.r.top) + Math.min(a.r.bottom, b.r.bottom)) / 2
+      const top = document.elementFromPoint(ix, iy)
+      const inA = !!top && (a.el.contains(top) || top.contains(a.el)), inB = !!top && (b.el.contains(top) || top.contains(b.el))
+      if (inA !== inB) continue
+      issues.push(['target', `overlap: ${label(a.el)} / ${label(b.el)}`]); continue
+    }
     const small = Math.min(a.r.width, a.r.height) < 48 || Math.min(b.r.width, b.r.height) < 48
     if (small && gap < 8 && gap >= -1 && !a.el.closest('.pc-host') && !b.el.closest('.pc-host') && !a.el.closest('.m-seg') && !a.el.closest('.m-chips')) issues.push(['spacing', `${Math.round(gap)}px apart: ${label(a.el)} / ${label(b.el)}`])
   }
@@ -135,7 +154,7 @@ function audit({ safe, w, h }) {
   // 7. safe areas: top bar content below the status bar, nav above the gesture bar
   for (const el of document.querySelectorAll('.m-topbar-row')) { const r = vis(el); if (r && r.top < safe.top - 1 && !el.closest('[hidden]')) issues.push(['safe', `top bar under the status bar (${Math.round(r.top)} < ${safe.top})`]) }
   const nav = document.querySelector('.m-navbar, .m-rail')
-  if (!nav || !vis(nav)) { if (!document.documentElement.classList.contains('kb-open') && !document.querySelector('.m-fulldialog')) issues.push(['nav', 'navigation missing']) }
+  if (!nav || !vis(nav)) { if (!document.documentElement.classList.contains('kb-open') && !document.querySelector('.m-fulldialog, .m-scrim')) issues.push(['nav', 'navigation missing']) }
   else if (nav.classList.contains('m-navbar')) for (const it of nav.querySelectorAll('.m-nav-item')) { const r = vis(it); if (r && r.bottom > h - safe.bottom + 1) issues.push(['safe', 'nav item under the gesture bar']) }
   return issues
 }
@@ -150,8 +169,8 @@ const browser = await chromium.launch({ channel: 'msedge' })
 let failures = 0
 const summary = []
 for (const [w, h] of SIZES) for (const theme of THEMES) {
-  const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, colorScheme: theme })
   for (const name of only) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, colorScheme: theme })
     const page = await ctx.newPage()
     await page.addInitScript(({ t, b }) => { document.addEventListener('DOMContentLoaded', () => { const s = document.documentElement.style; s.setProperty('--safe-area-inset-top', t + 'px'); s.setProperty('--safe-area-inset-bottom', b + 'px') }) }, { t: SAFE.top, b: SAFE.bottom })
     // the phone's OLD draft format: the boot migration turns these into PC queue stories
@@ -163,7 +182,7 @@ for (const [w, h] of SIZES) for (const theme of THEMES) {
     })
     await page.goto(URL)
     await page.waitForSelector('.m-app', { timeout: 20000 })
-    try { await SCREENS[name](page) } catch (e) { if (String(e.message).startsWith('skip:')) { summary.push(`skip ${name} ${w}x${h} ${theme}`); await page.close(); continue } summary.push(`${name} ${w}x${h} ${theme}: could not open (${e.message.split('\n')[0]})`); failures++; await page.close(); continue }
+    try { await SCREENS[name](page) } catch (e) { if (String(e.message).startsWith('skip:')) { summary.push(`skip ${name} ${w}x${h} ${theme}`); await page.close(); await ctx.close(); continue } summary.push(`${name} ${w}x${h} ${theme}: could not open (${e.message.split('\n')[0]})`); failures++; await page.close(); await ctx.close(); continue }
     await page.waitForTimeout(500)
     const tag = `${name} ${w}x${h} ${theme}`
     const base = await page.evaluate(audit, { safe: SAFE, w, h })
@@ -176,8 +195,8 @@ for (const [w, h] of SIZES) for (const theme of THEMES) {
     if (uniq.length) { failures += uniq.length; summary.push(`FAIL ${tag}\n  ` + uniq.slice(0, 12).map(([k, m]) => `${k}: ${m}`).join('\n  ') + (uniq.length > 12 ? `\n  … ${uniq.length - 12} more` : '')) }
     else summary.push(`ok   ${tag}`)
     await page.close()
+    await ctx.close()
   }
-  await ctx.close()
 }
 await browser.close()
 console.log(summary.join('\n'))

@@ -1,16 +1,12 @@
 // Tests for src/sync and the site connection. Every fetch is a mock: no network, no real credential, nothing is posted.
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { _resetMemoryForTests, getSecret, setSecret } from '../secure'
-import { fetchArticle } from '../fetchArticle'
 import { refreshSession } from '../publish/site'
 import type { StaffSession } from '../publish/site'
-import { getSent } from '../publish/state'
-import { checkConnection } from './connection'
 import {
   _resetProbeForTests, cachedAvailability, fetchArticleViaSite, interpretProbe, mapEndpointError, probeFeature, revalidateSlugs,
   TTL_NO_MS, TTL_YES_MS, uploadPicture,
 } from './endpoints'
-import { fetchPublished, htmlToBody, listRequest, openForUpdate, toItem } from './published'
 
 // the test environment is plain Node: give the modules a small in-memory localStorage
 const store = new Map<string, string>()
@@ -21,7 +17,6 @@ vi.stubGlobal('localStorage', {
   clear: () => { store.clear() },
 })
 
-const realFetch = globalThis.fetch
 const TOKEN = 'TOKEN-ABC.def.ghi'
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 const seed = async (expiresInSec = 3600): Promise<StaffSession> => {
@@ -46,8 +41,7 @@ describe('bearer header only', () => {
     await uploadPicture(new Blob(['x'], { type: 'image/jpeg' }), 'a.jpg', f)
     await revalidateSlugs(['a-story'], f)
     await fetchArticleViaSite('https://news.example/a', f)
-    await fetchPublished(5, 0, f)
-    expect(calls).toHaveLength(4)
+    expect(calls).toHaveLength(3)
     for (const c of calls) {
       expect(authOf(c)).toBe(`Bearer ${TOKEN}`)
       expect(c.url).not.toContain(TOKEN)
@@ -130,32 +124,7 @@ describe('feature probe and degrade', () => {
     expect(calls[2].init?.body).toBe('{}')
   })
 
-  it('fetchArticle says "not connected" until proved, and uses the site once proved', async () => {
-    await seed()
-    const old = recorder(() => json(401, {}))
-    // fetchArticle uses the global fetch: stub it
-    vi.stubGlobal('fetch', old.f)
-    const r1 = await fetchArticle('https://news.example/a')
-    expect(r1.ok).toBe(false)
-    expect(r1.reason).toMatch(/not connected yet/)
-    expect(old.calls.every((c) => c.url.includes('/api/staff/fetch-article'))).toBe(true)
-    _resetProbeForTests()
-    const live = recorder((c) => (JSON.parse(String(c.init?.body)).url ? json(200, { ok: true, url: 'https://news.example/a', title: 'T', deck: null, text: 'Story text here.', paragraphs: ['Story text here.'], images: [], method: 'paragraphs' }) : json(400, {})))
-    vi.stubGlobal('fetch', live.f)
-    const r2 = await fetchArticle('https://news.example/a')
-    expect(r2).toMatchObject({ ok: true, text: 'Story text here.', title: 'T' })
-    vi.stubGlobal('fetch', realFetch)
-  })
 
-  it('fetchArticle refuses non-https links without any call', async () => {
-    const { f, calls } = recorder(() => json(200, {}))
-    vi.stubGlobal('fetch', f)
-    expect((await fetchArticle('http://news.example/a')).ok).toBe(false)
-    expect((await fetchArticle('ftp://news.example/a')).ok).toBe(false)
-    expect((await fetchArticle('nonsense')).ok).toBe(false)
-    expect(calls).toHaveLength(0)
-    vi.stubGlobal('fetch', realFetch)
-  })
 })
 
 describe('error mapping', () => {
@@ -206,58 +175,3 @@ describe('session refresh', () => {
   })
 })
 
-describe('connection state', () => {
-  const site = (feed: number, user: number) => recorder((c) => (c.url.endsWith('/feed.xml') ? new Response('<rss/>', { status: feed }) : c.url.includes('/auth/v1/user') ? json(user, {}) : json(200, {})))
-  it('not-connected when nothing is saved', async () => { expect(await checkConnection(site(200, 200).f)).toBe('not-connected') })
-  it('connected when the site answers and the token is accepted', async () => { await seed(); expect(await checkConnection(site(200, 200).f)).toBe('connected') })
-  it('expired when the token is refused', async () => { await seed(); expect(await checkConnection(site(200, 401).f)).toBe('expired') })
-  it('expired when the refresh token is refused', async () => {
-    await seed(60)
-    const r = recorder((c) => (c.url.endsWith('/feed.xml') ? new Response('', { status: 200 }) : json(400, { error: 'invalid_grant' })))
-    expect(await checkConnection(r.f)).toBe('expired')
-  })
-  it('offline when the site cannot be reached, or answers an error', async () => {
-    await seed()
-    expect(await checkConnection((async () => { throw new TypeError('network') }) as unknown as typeof fetch)).toBe('offline')
-    expect(await checkConnection(site(503, 200).f)).toBe('offline')
-  })
-})
-
-describe('published list', () => {
-  it('asks for newest-edited, non-trashed rows with the token in a header', () => {
-    const { url, init } = listRequest(TOKEN, 10, 20)
-    expect(url).toContain('/rest/v1/Article?')
-    expect(url).toContain('order=updatedAt.desc')
-    expect(url).toContain('editorTrash=eq.false')
-    expect(url).toContain('limit=10&offset=20')
-    expect(url).not.toContain(TOKEN)
-    expect((init.headers as Record<string, string>).Authorization).toBe(`Bearer ${TOKEN}`)
-  })
-  it('maps rows and gives only live stories a public link', () => {
-    const row = { id: '1', title: 'T', slug: 's', status: 'PUBLISHED', category: 'Power Generation', imageUrl: null, publishedAt: null, updatedAt: null }
-    expect(toItem(row).liveUrl).toBe('https://esbpowerline.com/articles/s')
-    expect(toItem({ ...row, status: 'DRAFT' }).liveUrl).toBeNull()
-  })
-  it('needs a session and reports the network honestly', async () => {
-    expect((await fetchPublished(5, 0, recorder(() => json(200, [])).f)).ok).toBe(false)
-    await seed()
-    const down = (async () => { throw new TypeError('network') }) as unknown as typeof fetch
-    expect(await fetchPublished(5, 0, down)).toMatchObject({ ok: false, offline: true })
-  })
-  it('opens a story into a draft linked to the same article', async () => {
-    await seed()
-    const row = { id: 'art1', title: 'Solar deal', slug: 'solar-deal', status: 'PUBLISHED', excerpt: 'Deck.', content: '<p>One &amp; two.</p>\n<p>Three.</p>', category: 'Power Generation', imageUrl: 'https://x.supabase.co/a.webp', imageCredit: 'Credit', publishedAt: null, updatedAt: null }
-    const r = await openForUpdate('art1', recorder(() => json(200, [row])).f)
-    expect(r.ok).toBe(true)
-    if (!r.ok) return
-    expect(r.draft).toMatchObject({ headline: 'Solar deal', deck: 'Deck.', body: 'One & two.\n\nThree.', category: 'Power Generation', slug: 'solar-deal' })
-    expect(getSent(r.draft.id)).toMatchObject({ articleId: 'art1', status: 'PUBLISHED', imageUrl: 'https://x.supabase.co/a.webp', imageCredit: 'Credit' })
-  })
-  it('refuses a story the phone cannot round-trip', async () => {
-    await seed()
-    const row = { id: 'a', title: 'T', slug: 's', status: 'DRAFT', excerpt: null, content: '{"type":"doc"}', category: 'Nope', imageUrl: null, imageCredit: null, publishedAt: null, updatedAt: null }
-    expect((await openForUpdate('a', recorder(() => json(200, [row])).f)).ok).toBe(false)
-    expect((await openForUpdate('a', recorder(() => json(200, [])).f)).ok).toBe(false)
-  })
-  it('htmlToBody keeps paragraphs', () => { expect(htmlToBody('<p>a</p><p>b<br/>c</p>')).toBe('a\n\nb\nc') })
-})

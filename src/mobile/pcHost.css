@@ -2,5 +2,9 @@
    text size), never colours. Applies to PC markup inside .pc-host.pc-touch. */
 .pc-host { font-family: var(--font-ui); font-size: 14px; line-height: 20px; color: var(--text-primary); --h-control-sm: 40px; --h-control-md: 44px; --h-control-lg: 48px; --h-row: 48px; --h-sm: 40px; --h-md: 44px; --h-lg: 48px; }
 .pc-host.pc-touch input:not([type=checkbox]):not([type=radio]):not([type=range]), .pc-host.pc-touch textarea, .pc-host.pc-touch select { font-size: 16px; min-height: 44px; }
-.pc-host.pc-touch button:not(.tgl):not([role=switch]) { min-height: 40px; }
+.pc-host.pc-touch button:not(.tgl):not([role=switch]) { min-height: 44px; }
 .pc-host.pc-touch input[type=range] { min-height: 44px; }
+/* PC switches keep their look; ::before (free: the knob is ::after) gives them a finger-sized hit area */
+.pc-host.pc-touch .tgl::before { content: ''; position: absolute; left: 50%; top: 50%; width: 48px; height: 44px; transform: translate(-50%, -50%); }
+/* icon-only PC buttons (Add text, Add rectangle, …) get at least a 44 px square */
+.pc-host.pc-touch button:not(.tgl):not([role=switch]) { min-width: 44px; }
