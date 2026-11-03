@@ -1,6 +1,6 @@
 # CLAUDE.md: ESB Studio Phone
 
-Phone companion to ESB AI Studio (desktop, `chiefhamim/esb-banner-studio`). Read `docs/PLAN.md` first.
+Phone companion to ESB AI Studio (desktop, `chiefhamim/esb-banner-studio`). Read `docs/PLAN.md` and `docs/DEVICE.md` first. **Target device: Samsung Galaxy S25 Ultra** (design for about 412 dp wide, 120 Hz, S Pen, DeX/landscape; confirm on the real phone). The app is a Capacitor wrapper around the React UI from the start.
 
 ## Rules (the same ones as the desktop app)
 - **Never invent content**: no made-up names, figures, quotes or sources. AI output is a draft until the editor reviews it.
