@@ -18,6 +18,7 @@ import StatusBar from './home/StatusBar'
 import { useStatus, wordCount } from './home/useStatus'
 import { handleBack, useBackClose } from './shell/back'
 import { useMedia } from './shell/hooks'
+import { watchKeyboard } from './shell/keyboard'
 
 /** The phone shell: header, bottom bar (left rail when wide), and two panes (list + editor) from 900 px. */
 export default function App() {
@@ -39,7 +40,11 @@ export default function App() {
     if (!blank) upsert(d)
     setDesk(false); setCurrentId(d.id); setTab('banner')
   }
-  const goTab = (t: Tab) => { setDesk(false); setTab(t) }
+  const goTab = (t: Tab) => {
+    setDesk(false); setTab(t)
+    // Edit / Banner / Publish need a story: fall back to the most recent one instead of a dead end
+    if (t !== 'stories' && !currentId && drafts[0]) setCurrentId(drafts[0].id)
+  }
   useEffect(() => listenForIncoming((inc) => {
     if (inc.action === 'new-story' || inc.action === 'paste-link') { setDesk(true); setTab('stories'); return }
     const s = parseShared(inc.text ?? '')
@@ -47,6 +52,7 @@ export default function App() {
     if (inc.files.length) warn() // shared pictures/PDFs: intake is Planned
   }), []) // eslint-disable-line
 
+  useEffect(() => watchKeyboard(), [])
   useBackClose(settings, () => setSettings(false))
   useBackClose(desk, () => setDesk(false))
   useEffect(() => {
@@ -83,9 +89,16 @@ export default function App() {
           <main className="sh-pane-main sh-page hm-deskpane" key="desk"><Desk onCreate={create} /></main>
         ) : (
           <main className="sh-pane-main phone-main sh-page" key={shown}>
-            {shown === 'edit' && <Edit draft={current} onChange={upsert} onOpenSettings={() => setSettings(true)} onGo={(t) => setTab(t)} />}
-            {shown === 'banner' && <Banner draft={current} onChange={upsert} />}
-            {shown === 'publish' && <Publish draft={current} onChange={upsert} />}
+            {shown !== 'stories' && !current && (
+              <div className="hm-noStory">
+                <h1>{shown === 'edit' ? 'Edit' : shown === 'banner' ? 'Banner' : 'Publish'}</h1>
+                <p>No story is open. Start one, then come back here.</p>
+                <button type="button" className="hm-go" onClick={() => setDesk(true)}>Start a story</button>
+              </div>
+            )}
+            {shown === 'edit' && current && <Edit draft={current} onChange={upsert} onOpenSettings={() => setSettings(true)} onGo={(t) => setTab(t)} />}
+            {shown === 'banner' && current && <Banner draft={current} onChange={upsert} />}
+            {shown === 'publish' && current && <Publish draft={current} onChange={upsert} />}
           </main>
         )}
       </div>

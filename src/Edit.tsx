@@ -19,7 +19,7 @@ import { EMPTY_SEO, type SeoFields } from './edit/seoTools'
 import ParagraphList from './edit/ParagraphList'
 import SeoPanel from './edit/SeoPanel'
 import { FactPanel, FindBar, QuotesSheet, ReadinessSheet, TranslateCard, type FactEntry, type FindState } from './edit/Panels'
-import { AutoTextarea, MeterRing, Sheet } from './edit/ui'
+import { AutoTextarea, MeterRing, Sheet, Tool, showInScroller } from './edit/ui'
 import { Icon } from './edit/icons'
 import { useMedia } from './edit/useMedia'
 import './ui/edit.css'
@@ -77,11 +77,18 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
   const [paraJob, setParaJob] = useState<ParaJob | null>(null)
   const paraAbort = useRef<AbortController | null>(null)
   const root = useRef<HTMLDivElement | null>(null)
+  const [typing, setTyping] = useState(false)
   const scrolls = useRef<{ english: number; source: number }>({ english: 0, source: 0 })
 
+  // A text field has focus = the keyboard is up: the next-step bar steps aside so the writing gets the screen.
+  const syncTyping = () => {
+    const a = document.activeElement as HTMLElement | null
+    const isText = !!a && !!root.current?.contains(a) && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/^(checkbox|radio|button|submit)$/i.test((a as HTMLInputElement).type)))
+    setTyping(isText)
+  }
   const scroller = () => root.current?.closest('.phone-main') as HTMLElement | null
   const say = (m: string) => { setFlash(m) }
-  useEffect(() => { if (!flash) return; const t = setTimeout(() => setFlash(''), 5000); return () => clearTimeout(t) }, [flash])
+  useEffect(() => { if (!flash) return; const t = setTimeout(() => setFlash(''), 7000); return () => clearTimeout(t) }, [flash])
   useEffect(() => () => { paraAbort.current?.abort() }, [])
 
   // ---------------------------------------------------------------- changing the draft (instant save + undo)
@@ -113,7 +120,7 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
   const jobPhase = job.state.phase
   useEffect(() => {
     if (jobPhase === 'idle') return
-    document.querySelector('.ed-job')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    { const j = document.querySelector<HTMLElement>('.ed-job'); if (j) showInScroller(j, true) }
   }, [job.running ? 'running' : jobPhase]) // eslint-disable-line react-hooks/exhaustive-deps
   const hasEnglish = !!(d.headline.trim() || d.deck.trim() || d.body.trim())
   const runTranslate = () => { setNotes([]); setSheet(null); void job.start(draftRef.current.source, draftRef.current.sourceUrl) }
@@ -152,9 +159,9 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
   }
   const goTo = (id: string, focus = false) => {
     const el = document.getElementById(id)
-    if (!el) return
-    el.scrollIntoView({ block: 'center', behavior: 'smooth' })
-    if (focus) (el as HTMLElement).focus?.()
+    if (!el || el.offsetParent === null) return // not on screen (its column is hidden): nothing to scroll to
+    showInScroller(el, true)
+    if (focus) (el as HTMLElement).focus?.({ preventScroll: true })
   }
 
   // ---------------------------------------------------------------- facts
@@ -212,7 +219,9 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
   useEffect(() => {
     if (!find || !curMatch) return
     if (!wide) setMode(find.scope === 'source' ? 'source' : 'english')
-    goTo(`${find.scope === 'source' ? 'ed-s' : 'ed-e'}-${curMatch.para}`)
+    const target = `${find.scope === 'source' ? 'ed-s' : 'ed-e'}-${curMatch.para}`
+    const t = setTimeout(() => goTo(target), 60) // after the column for this scope is shown
+    return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [find?.cur, find?.query, find?.scope])
   const patchFind = (p: Partial<FindState>) => { setFindMsg(''); setFind((f) => (f ? { ...f, ...p } : f)) }
@@ -292,16 +301,23 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
   const showSrc = wide || mode === 'source'
 
   return (
-    <div className="ed" ref={root} data-wide={wide ? '1' : '0'}>
-      <header className="ed-top">
-        <div className="ed-toprow">
-          <div className="ed-tools" role="toolbar" aria-label="Editing tools">
-            <button type="button" className="ed-tb" onClick={doUndo} disabled={!undo.canUndo} aria-label="Undo"><Icon name="undo" /><span>Undo</span></button>
-            <button type="button" className="ed-tb" onClick={doRedo} disabled={!undo.canRedo} aria-label="Redo"><Icon name="redo" /><span>Redo</span></button>
-            <button type="button" className="ed-tb" aria-pressed={!!find} onClick={() => { setFindMsg(''); setFind((f) => (f ? null : { query: '', by: '', caseSensitive: false, scope: 'english', cur: 0 })) }}><Icon name="search" /><span>Find</span></button>
-            <button type="button" className="ed-tb" onClick={() => setSheet('quotes')}><Icon name="quote" /><span>Quotes{quotes.length ? ` ${quotes.length}` : ''}</span></button>
-          </div>
-          <span className="ed-saved" role="status"><span className="sr-only">Saved on this phone · {savedAt}</span><span aria-hidden="true"><i />{savedShort}</span></span>
+    <div className="ed" ref={root} data-wide={wide ? '1' : '0'} data-typing={typing ? '1' : '0'} onFocus={(e) => {
+        setTimeout(syncTyping, 0)
+        // the keyboard resizes the screen a moment after focus: keep the field in view above it
+        const t = e.target as HTMLElement
+        if (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT') setTimeout(() => { if (document.activeElement === t) showInScroller(t) }, 320)
+      }} onBlur={() => setTimeout(syncTyping, 0)}>
+      <div className="ed-toprow">
+        <div className="ed-tools2" role="toolbar" aria-label="Find and quotes" onMouseDown={(e) => e.preventDefault()}>
+          <button type="button" className="ed-tb" aria-pressed={!!find} onClick={() => { setFindMsg(''); setFind((f) => (f ? null : { query: '', by: '', caseSensitive: false, scope: 'english', cur: 0 })) }}><Icon name="search" /><span>Find</span></button>
+          <button type="button" className="ed-tb" onClick={() => setSheet('quotes')}><Icon name="quote" /><span>Quotes{quotes.length ? ` ${quotes.length}` : ''}</span></button>
+        </div>
+        <span className="ed-saved" role="status"><span className="sr-only">Saved on this phone · {savedAt}</span><span aria-hidden="true"><i />{savedShort}</span></span>
+      </div>
+      <header className="ed-stick">
+        <div className="ed-tools" role="toolbar" aria-label="Undo and redo" onMouseDown={(e) => e.preventDefault()}>
+          <button type="button" className="ed-ib" onClick={doUndo} disabled={!undo.canUndo} aria-label="Undo" title="Undo"><Icon name="undo" size={20} /></button>
+          <button type="button" className="ed-ib" onClick={doRedo} disabled={!undo.canRedo} aria-label="Redo" title="Redo"><Icon name="redo" size={20} /></button>
         </div>
         {!wide && (
           <div className="ed-seg" role="group" aria-label="Show">
@@ -311,7 +327,6 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
         )}
       </header>
 
-      {flash && <p className="ed-flash" role="status">{flash}</p>}
       <TranslateCard job={job.state} onCancel={job.cancel} onRetry={onTranslate} onSettings={onOpenSettings} onDismiss={job.reset} />
       {notes.length > 0 && (
         <section className="ed-card ed-warncard" aria-label="Check these before publishing">
@@ -346,7 +361,7 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
             onSelect={setSelSrc}
             pulseIdx={pulse?.para ?? null}
             toolFor={(i) => (
-              <button type="button" className="ed-btn ed-btn-primary" disabled={!srcBlocks[i]?.trim() || paraJob?.status === 'running'} onClick={() => translatePara(i)}>Translate this paragraph</button>
+              <Tool icon="globe" text="Translate" label="Translate this paragraph" disabled={!srcBlocks[i]?.trim() || paraJob?.status === 'running'} onClick={() => translatePara(i)} />
             )}
             belowFor={(i) => paraJob && paraJob.i === i ? (
               <div className="ed-para-job" role="status">
@@ -378,6 +393,18 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
 
         <section className="ed-col ed-col-en" hidden={!showEn} aria-label="English story">
           {d.translated && <p className="ed-draft-tag">Draft from a translation. Read it against the source before publishing.</p>}
+          <section className="ed-card ed-card-hd" aria-label="Headline and deck">
+            <header className="ed-card-h"><span className="ed-card-ic"><Icon name="type" size={16} /></span><div className="ed-card-t"><h2>Headline &amp; deck</h2><p>{d.category || 'No category yet'} · English copy for esbpowerline.com</p></div></header>
+            <div className="ed-field">
+              <div className="ed-field-row"><label htmlFor="ed-headline">Headline</label><span className={[...d.headline].length > BUDGETS.headline ? 'ed-budget over' : 'ed-budget'}>{[...d.headline].length} / {BUDGETS.headline}</span></div>
+              <AutoTextarea id="ed-headline" className="ed-h1" label="Headline" lang="en-GB" placeholder="Headline" singleLine onEnter={() => document.getElementById('ed-deck')?.focus()} value={d.headline} onText={(v) => edit({ headline: v }, 'ed-headline')} />
+            </div>
+            <div className="ed-field">
+              <div className="ed-field-row"><label htmlFor="ed-deck">Deck</label><span className={[...d.deck].length > BUDGETS.deck ? 'ed-budget over' : 'ed-budget'}>{[...d.deck].length} / {BUDGETS.deck}</span></div>
+              <AutoTextarea id="ed-deck" className="ed-deck" label="Deck" lang="en-GB" placeholder="Deck: one sentence that sums up the story" singleLine onEnter={() => { const p = document.querySelector<HTMLElement>('#ed-e-0 .ed-ptext'); if (p) p.click(); else (document.activeElement as HTMLElement | null)?.blur() }} value={d.deck} onText={(v) => edit({ deck: v }, 'ed-deck')} />
+            </div>
+          </section>
+
           <div className="ed-catwrap">
             <span className="ed-cap" id="ed-cat-l">Category</span>
             <div id="ed-cat" className="ed-cats" role="group" aria-labelledby="ed-cat-l" tabIndex={-1}>
@@ -392,18 +419,6 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
             </div>
           </div>
 
-          <section className="ed-card ed-card-hd" aria-label="Headline and deck">
-            <header className="ed-card-h"><span className="ed-card-ic"><Icon name="type" size={16} /></span><div className="ed-card-t"><h2>Headline &amp; deck</h2><p>{d.category || 'No category yet'} · English copy for esbpowerline.com</p></div></header>
-            <div className="ed-field">
-              <div className="ed-field-row"><label htmlFor="ed-headline">Headline</label><span className={[...d.headline].length > BUDGETS.headline ? 'ed-budget over' : 'ed-budget'}>{[...d.headline].length} / {BUDGETS.headline}</span></div>
-              <AutoTextarea id="ed-headline" className="ed-h1" label="Headline" lang="en-GB" placeholder="Headline" singleLine value={d.headline} onText={(v) => edit({ headline: v }, 'ed-headline')} />
-            </div>
-            <div className="ed-field">
-              <div className="ed-field-row"><label htmlFor="ed-deck">Deck</label><span className={[...d.deck].length > BUDGETS.deck ? 'ed-budget over' : 'ed-budget'}>{[...d.deck].length} / {BUDGETS.deck}</span></div>
-              <AutoTextarea id="ed-deck" className="ed-deck" label="Deck" lang="en-GB" placeholder="Deck: one sentence that sums up the story" singleLine value={d.deck} onText={(v) => edit({ deck: v }, 'ed-deck')} />
-            </div>
-          </section>
-
           <FactPanel entries={entries} unplaced={unplaced} hasSource={hasSource || entries.length === 0} onJump={jumpFact} />
 
           <section className="ed-card ed-card-story" aria-label="Story">
@@ -417,7 +432,7 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
               tapToEdit
               spansFor={enSpans}
               onMark={onEnMark}
-              placeholder="Write the story. A blank line starts a new paragraph."
+              placeholder="Write the story. Enter starts a new paragraph."
               spell
               selected={selEn}
               onSelect={setSelEn}
@@ -441,6 +456,7 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
         </section>
       </div>
 
+      {flash && <p className="ed-flash" role="status" onClick={() => setFlash('')}>{flash}</p>}
       <footer className="ed-actions" aria-label="Next step">
         <button type="button" className="ed-ready" onClick={() => setSheet('ready')} aria-label={blockers.length ? `${blockers.length} things to fix. Open the list.` : 'Ready. Open the list.'}>
           <MeterRing value={okCount} max={required.length || 1} size={38} label={`${okCount} of ${required.length} checks done`}>{blockers.length ? blockers.length : 'OK'}</MeterRing>

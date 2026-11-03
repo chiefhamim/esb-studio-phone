@@ -38,7 +38,6 @@
 .ed .ed-chip-ai { background: var(--accent); color: var(--on-accent); align-self: start; justify-self: start; }
 
 /* ---- top strip ---- */
-.ed-top { position: sticky; top: -20px; z-index: 5; display: grid; gap: var(--s-3); margin: -20px calc(-1 * var(--s-6)) 0; padding: calc(var(--s-4) + 20px) var(--s-6) var(--s-4); background: var(--header-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-subtle); }
 .ed-tools { display: flex; gap: var(--s-3); overflow-x: auto; scrollbar-width: none; }
 .ed-saved { font: var(--t-secondary); color: var(--text-tertiary); }
 .ed-seg { display: grid; grid-template-columns: 1fr 1fr; padding: var(--s-2); border-radius: var(--r-3); background: var(--fill); gap: var(--s-2); }
@@ -159,7 +158,6 @@
 .ed-sheet-head h2 { font: var(--t-dialog); }
 
 /* ---- wide / landscape / DeX: source and English side by side ---- */
-.ed[data-wide='1'] .ed-top { top: -20px; }
 .ed[data-wide='1'] .ed-cols { grid-template-columns: 1fr 1fr; align-items: start; gap: var(--s-9); }
 .ed[data-wide='1'] .ed-col-src { position: sticky; top: 72px; max-height: calc(100dvh - 160px); overflow: auto; padding-right: var(--s-3); }
 .ed[data-wide='1'] .ed-actions { max-width: 560px; justify-self: center; width: 100%; }
@@ -205,7 +203,6 @@
 .ed .ed-chip-ai { background: var(--accent); color: var(--on-accent); }
 
 /* ---- top strip: compact icon toolbar + the PC segmented control ---- */
-.ed-top { gap: var(--s-4); padding-top: calc(var(--s-4) + 20px); padding-bottom: var(--s-4); border-bottom: 1px solid var(--card-line); }
 .ed-toprow { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); }
 .ed-tools { flex: none; display: inline-flex; gap: 0; padding: var(--s-1); border-radius: var(--r-2); background: var(--fill); overflow: visible; }
 .ed-tb { position: relative; display: inline-flex; align-items: center; gap: var(--s-3); height: 36px; padding: 0 var(--s-4); border: 0; border-radius: 6px; background: transparent; color: var(--text-secondary); font: 500 12px/16px var(--font-ui); cursor: pointer; white-space: nowrap; }
@@ -294,9 +291,72 @@
 .ed-findbar .ed-row-between > .ed-note { flex: 1 1 100%; }
 .ed-findbar { grid-template-columns: minmax(0, 1fr); } .ed-findbar .ed-btn { padding: 0 var(--s-4); }
 
-/* ---- QA pass: short landscape (891x411). The tools row scrolls away instead of eating a third of the screen; the next-step bar is compact. ---- */
-@media (orientation: landscape) and (max-height: 520px) {
-  .ed-top { position: static; }
-  .ed-actions, .ed[data-wide='1'] .ed-actions { bottom: var(--s-2); padding: var(--s-1); }
-  .ed-actions .ed-btn { min-height: 44px; }
-}
+/* ====================================================================================================================
+   Typing pass (2026-11-03): slim sticky strip, one-row paragraph tools, next-step bar docked at the bottom edge and hidden
+   while a text field has focus. Later rules win.
+   ==================================================================================================================== */
+.phone-main:has(> .ed) { scroll-padding-top: 64px; scroll-padding-bottom: 72px; }
+.ed { padding-bottom: 0; gap: var(--s-4); }
+
+/* scrolls away with the page: Find, Quotes, saved time */
+.ed-toprow { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); }
+.ed-tools2 { display: inline-flex; gap: var(--s-2); padding: var(--s-1); border-radius: var(--r-2); background: var(--fill); }
+
+/* the only sticky piece: undo, redo and the Source / English switch, one 52 px row */
+.ed-stick { position: sticky; top: calc(-1 * var(--s-7)); z-index: 5; display: flex; align-items: center; gap: var(--s-3); margin: 0 calc(-1 * var(--s-6)); padding: var(--s-2) var(--s-6); background: var(--header-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--card-line); }
+.ed-tools { flex: none; display: inline-flex; gap: 0; padding: 0; background: none; overflow: visible; }
+.ed-ib { display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--r-2); background: transparent; color: var(--text-primary); cursor: pointer; }
+.ed-ib:active:not(:disabled) { background: var(--fill-active); }
+.ed-ib:disabled { opacity: .32; cursor: not-allowed; }
+.ed-stick .ed-seg { flex: 1; min-width: 0; }
+.ed-stick .ed-seg button { min-height: 40px; }
+.ed[data-wide='1'] .ed-stick { justify-content: flex-start; }
+
+/* find bar stays on screen under the strip, so the box you type in never scrolls away */
+.ed-findbar { position: sticky; top: 44px; z-index: 4; gap: var(--s-3); padding: var(--s-4) var(--s-5); }
+.ed-findbar .ed-row { gap: var(--s-3); }
+.ed-findbar .ed-ib2 { padding: 0 var(--s-3); min-width: 44px; }
+.ed-findbar .ed-row-between { justify-content: space-between; }
+.ed-findbar .ed-row-between > .ed-note { flex: 1 1 0; min-width: 0; }
+.ed-findbar .ed-check { min-height: 40px; }
+
+/* paragraph tools: ONE row of 44 px targets, scrolls sideways if the row is wider than the column */
+.ed-ptools { display: flex; flex-wrap: nowrap; gap: 0; padding: 0; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+.ed-pt { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2); min-width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--r-2); background: transparent; color: var(--text-secondary); cursor: pointer; font: 600 13px/16px var(--font-ui); }
+.ed-pt-txt { padding: 0 var(--s-4); }
+.ed-pt:active:not(:disabled) { background: var(--fill-active); }
+.ed-pt:disabled { opacity: .3; cursor: not-allowed; }
+.ed-pt-danger { color: var(--danger); }
+.ed-pt-txt:first-child { color: var(--accent); }
+.ed .ed-ptools .ed-btn::after { display: none; }
+
+.ed-ptext-edit { scroll-margin-top: 72px; scroll-margin-bottom: 24px; }
+
+/* notice: floats above the bar at the bottom, so it is seen wherever the page is scrolled */
+.ed-flash { position: sticky; bottom: 40px; z-index: 7; margin: 0; }
+
+/* next-step bar: flush with the bottom edge, no floating card */
+.ed-actions, .ed[data-wide='1'] .ed-actions { position: sticky; bottom: calc(-1 * var(--s-8)); z-index: 6; max-width: none; width: auto; justify-self: stretch; margin: 0 calc(-1 * var(--s-6)) calc(-1 * var(--s-8)); padding: var(--s-2) var(--s-6) var(--s-2); border-radius: 0; background: var(--surface-panel); box-shadow: none; border-top: 1px solid var(--card-line); gap: var(--s-3); }
+.ed-actions .ed-btn { min-height: 44px; }
+.ed-ready { height: 44px; }
+.ed[data-typing='1'] .ed-actions { display: none; }
+.ed[data-typing='1'] .ed-flash { bottom: var(--s-3); }
+.ed-cols { padding-bottom: var(--s-6); }
+
+/* keyboard open (html.kb-open is set by the shell): only the slim strip stays; the tools row and next-step bar step aside */
+html.kb-open .ed-toprow, html.kb-open .ed-actions { display: none; }
+html.kb-open .ed-stick { padding-block: 0; }
+html.kb-open .ed-stick .ed-seg button { min-height: 40px; }
+html.kb-open .ed-stick .ed-ib { width: 44px; height: 44px; }
+.ed-find-opts { flex-wrap: nowrap; justify-content: space-between; gap: var(--s-3); }
+.ed-find-opts .ed-note { flex: 1 1 auto; min-width: 0; }
+.ed-find-opts .ed-check { min-height: 44px; gap: var(--s-2); }
+.ed-findbar { padding: var(--s-3) var(--s-4); gap: 0; }
+.ed-findbar .ed-input { min-height: 44px; }
+.ed-findbar .ed-btn { min-height: 44px; }
+.ed-findbar .ed-btn-quiet[aria-expanded='true'] { color: var(--text-primary); }
+
+/* short pages: the bar still sits at the bottom of the screen, not under the last card */
+.phone-main > .ed { display: flex; flex-direction: column; min-height: 100%; }
+.ed-actions, .ed[data-wide='1'] .ed-actions { margin-top: auto; }
+.ed-findbar { top: 32px; }

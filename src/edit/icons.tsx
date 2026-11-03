@@ -34,6 +34,11 @@ const P: Record<string, ReactNode> = {
   trash: <><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></>,
   moon: <><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z" /></>,
   close: <><path d="M6 6l12 12M18 6 6 18" /></>,
+  up: <><path d="M12 19V5m0 0-6 6m6-6 6 6" /></>,
+  down: <><path d="M12 5v14m0 0-6-6m6 6 6-6" /></>,
+  split: <><path d="M12 9V3m0 0L9 6m3-3 3 3M12 15v6m0 0-3-3m3 3 3-3M3 12h3M10.5 12h3M18 12h3" /></>,
+  merge: <><path d="M12 3v7m0 0L9 7m3 3 3-3M12 21v-7m0 0-3 3m3-3 3 3" /></>,
+  plus: <><path d="M12 5v14M5 12h14" /></>,
   chevron: <><path d="m6 9 6 6 6-6" /></>,
 }
 

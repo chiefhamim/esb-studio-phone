@@ -92,23 +92,27 @@ export function FindBar({ f, onChange, total, onStep, onReplace, onReplaceAll, o
   f: FindState; onChange: (p: Partial<FindState>) => void; total: number; onStep: (d: 1 | -1) => void
   onReplace: () => void; onReplaceAll: () => void; onClose: () => void; lastMsg: string
 }) {
+  const [withReplace, setWithReplace] = useState(false)
   return (
     <section className="ed-card ed-findbar" aria-label="Find and replace">
       <div className="ed-row">
-        <input className="ed-input" type="search" aria-label="Find" placeholder="Find" value={f.query} onChange={(e) => onChange({ query: e.target.value, cur: 0 })} autoCapitalize="none" />
-        <button type="button" className="ed-btn" onClick={() => onStep(-1)} disabled={!total} aria-label="Previous match">Prev</button>
-        <button type="button" className="ed-btn" onClick={() => onStep(1)} disabled={!total} aria-label="Next match">Next</button>
+        <input className="ed-input" type="search" aria-label="Find" placeholder="Find" value={f.query} onChange={(e) => onChange({ query: e.target.value, cur: 0 })} autoCapitalize="none" autoCorrect="off" enterKeyHint="search" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onStep(e.shiftKey ? -1 : 1) } }} />
+        <button type="button" className="ed-btn ed-ib2" onClick={() => onStep(-1)} disabled={!total} aria-label="Previous match">Prev</button>
+        <button type="button" className="ed-btn ed-ib2" onClick={() => onStep(1)} disabled={!total} aria-label="Next match">Next</button>
+        <button type="button" className="ed-btn ed-btn-quiet ed-ib2" onClick={onClose} aria-label="Close find">Close</button>
       </div>
-      <div className="ed-row">
-        <input className="ed-input" aria-label="Replace with" placeholder="Replace with" value={f.by} onChange={(e) => onChange({ by: e.target.value })} autoCapitalize="none" />
-        <button type="button" className="ed-btn" onClick={onReplace} disabled={!total}>Replace</button>
-        <button type="button" className="ed-btn" onClick={onReplaceAll} disabled={!total}>All</button>
-      </div>
-      <div className="ed-row ed-row-between">
-        <span className="ed-note">{f.query ? (total ? `${Math.min(f.cur + 1, total)} of ${total}` : 'No matches') : 'Searches the story paragraphs. Headline and deck are not searched.'}</span>
-        <label className="ed-check"><input type="checkbox" checked={f.caseSensitive} onChange={(e) => onChange({ caseSensitive: e.target.checked, cur: 0 })} /> Match case</label>
-        <label className="ed-check"><input type="checkbox" checked={f.scope === 'source'} onChange={(e) => onChange({ scope: e.target.checked ? 'source' : 'english', cur: 0 })} /> In the source</label>
-        <button type="button" className="ed-btn ed-btn-quiet" onClick={onClose}>Close</button>
+      {withReplace && (
+        <div className="ed-row">
+          <input className="ed-input" aria-label="Replace with" placeholder="Replace with" value={f.by} onChange={(e) => onChange({ by: e.target.value })} autoCapitalize="none" autoCorrect="off" />
+          <button type="button" className="ed-btn ed-ib2" onClick={onReplace} disabled={!total}>Replace</button>
+          <button type="button" className="ed-btn ed-ib2" onClick={onReplaceAll} disabled={!total}>All</button>
+        </div>
+      )}
+      <div className="ed-row ed-find-opts">
+        <span className="ed-note" role="status">{f.query ? (total ? `${Math.min(f.cur + 1, total)} of ${total}` : 'No matches') : 'Story paragraphs only'}</span>
+        <label className="ed-check"><input type="checkbox" checked={f.caseSensitive} onChange={(e) => onChange({ caseSensitive: e.target.checked, cur: 0 })} /> Case</label>
+        <label className="ed-check"><input type="checkbox" checked={f.scope === 'source'} onChange={(e) => onChange({ scope: e.target.checked ? 'source' : 'english', cur: 0 })} /> Source</label>
+        <button type="button" className="ed-btn ed-btn-quiet ed-ib2" aria-expanded={withReplace} onClick={() => setWithReplace((v) => !v)}>{withReplace ? 'Hide' : 'Replace'}</button>
       </div>
       {lastMsg && <p className="ed-note" role="status">{lastMsg}</p>}
     </section>

@@ -143,3 +143,11 @@
 .sh-sheet-actions { display: grid; gap: var(--s-4); }
 .sh-sheet-actions .sh-btn { width: 100%; }
 
+
+/* keyboard open: the editor gets the screen (portrait phone only; wide/DeX keeps its rail) */
+@media (max-width: 719px) and (orientation: portrait) {
+  html.kb-open .sh-head, html.kb-open .hm-status, html.kb-open .sh-nav { display: none; }
+}
+@media (max-width: 719px) and (orientation: portrait) {
+  html.kb-open .sh-panes { padding-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px)); }
+}

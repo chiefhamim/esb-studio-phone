@@ -16,7 +16,8 @@ export function parseSource(text: string): Blocks {
   return text.replace(/\r/g, '').split(/\n+/).map((p) => p.trim()).filter(Boolean)
 }
 
-export const joinBlocks = (b: Blocks): string => b.join('\n\n')
+/** Paragraphs joined by a blank line. Empty paragraphs (added but not typed in yet) are left out of the saved text, so it never holds runs of blank lines. */
+export const joinBlocks = (b: Blocks): string => b.filter((x) => x.trim() !== '').join('\n\n')
 
 export const setBlock = (b: Blocks, i: number, text: string): Blocks => b.map((x, k) => (k === i ? text : x))
 
@@ -54,6 +55,19 @@ export function mergeUp(b: Blocks, i: number): Blocks {
   if (i <= 0 || i >= b.length) return b
   const joined = `${b[i - 1].replace(/\s+$/, '')} ${b[i].replace(/^\s+/, '')}`.trim()
   return [...b.slice(0, i - 1), joined, ...b.slice(i + 1)]
+}
+
+/** Backspace at the very start of paragraph `i`: it joins straight onto the paragraph above (no added space). `caret` is where the cursor goes. */
+export function joinPrev(b: Blocks, i: number): { blocks: Blocks; caret: number } | null {
+  if (i <= 0 || i >= b.length) return null
+  return { blocks: [...b.slice(0, i - 1), b[i - 1] + b[i], ...b.slice(i + 1)], caret: b[i - 1].length }
+}
+
+/** Enter inside paragraph `i` over the selection [start, end): the text before stays, the text after becomes a new paragraph (either may be empty). */
+export function breakBlock(b: Blocks, i: number, start: number, end = start): Blocks {
+  const t = b[i]
+  if (t === undefined) return b
+  return [...b.slice(0, i), t.slice(0, start).replace(/[ 	]+$/, ''), t.slice(end).replace(/^[ 	]+/, ''), ...b.slice(i + 1)]
 }
 
 /** Typing a blank line inside a paragraph starts a new one: returns the paragraphs the text now holds (1 = no split). */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { blockOffsets, insertBlock, joinBlocks, mergeUp, moveBlock, parseBody, parseSource, removeBlock, replaceBlock, setBlock, splitBlock, splitOnBlankLine } from './blocks'
+import { blockOffsets, breakBlock, insertBlock, joinPrev, joinBlocks, mergeUp, moveBlock, parseBody, parseSource, removeBlock, replaceBlock, setBlock, splitBlock, splitOnBlankLine } from './blocks'
 import { UndoStack } from './undo'
 import { findFactMarks, locateInSource, segmentize, summarize, unplacedFlags } from './factMap'
 import { analyzeSeo } from './seo'
@@ -54,6 +54,28 @@ describe('paragraph blocks', () => {
     const b = ['ab', 'cde', 'f']
     const j = joinBlocks(b)
     blockOffsets(b).forEach((o, i) => expect(j.slice(o, o + b[i].length)).toBe(b[i]))
+  })
+})
+
+describe('typing helpers', () => {
+  it('Enter breaks a paragraph at the cursor, even into an empty half', () => {
+    expect(breakBlock(['Hello world', 'x'], 0, 5)).toEqual(['Hello', 'world', 'x'])
+    expect(breakBlock(['Hello'], 0, 5)).toEqual(['Hello', ''])
+    expect(breakBlock(['Hello'], 0, 0)).toEqual(['', 'Hello'])
+    expect(breakBlock(['abcdef'], 0, 2, 4)).toEqual(['ab', 'ef'])
+    const b = ['a']
+    expect(breakBlock(b, 3, 0)).toBe(b)
+  })
+  it('Backspace at the start joins straight onto the paragraph above and says where the cursor goes', () => {
+    expect(joinPrev(['One', 'Two', 'Three'], 1)).toEqual({ blocks: ['OneTwo', 'Three'], caret: 3 })
+    expect(joinPrev(['One', ''], 1)).toEqual({ blocks: ['One'], caret: 3 })
+    expect(joinPrev(['One'], 0)).toBeNull()
+    expect(joinPrev(['One'], 4)).toBeNull()
+  })
+  it('empty paragraphs are not saved, so the text never holds runs of blank lines', () => {
+    expect(joinBlocks(['a', '', 'b', '  '])).toBe('a\n\nb')
+    expect(joinBlocks([''])).toBe('')
+    expect(parseBody(joinBlocks(['a', 'b']))).toEqual(['a', 'b'])
   })
 })
 

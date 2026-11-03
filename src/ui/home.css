@@ -163,3 +163,9 @@
 .lk p { margin: 0; color: var(--text-secondary); }
 .lk-btn { min-height: 48px; padding: 0 28px; border: 0; border-radius: 12px; background: var(--accent); color: var(--on-accent); font: 700 15px/1 inherit; cursor: pointer; }
 
+
+/* Edit / Banner / Publish with no story open */
+.hm-noStory { display: grid; justify-items: start; gap: 12px; padding: 8px 0; }
+.hm-noStory h1 { margin: 0; font-size: 22px; line-height: 28px; font-weight: 700; }
+.hm-noStory p { margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 20px; }
+.hm-noStory .hm-go { width: auto; padding: 0 24px; }
