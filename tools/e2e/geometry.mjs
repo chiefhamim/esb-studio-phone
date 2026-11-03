@@ -146,6 +146,7 @@ function audit({ safe, w, h }) {
   for (const wrap of document.querySelectorAll('.m-wrap')) {
     for (const el of wrap.children) {
       const r = vis(el); if (!r || clippedBy(el, r)) continue
+      if (el.matches('.m-chips.is-scroll')) continue // full-bleed horizontal scroller (Material pattern): its content starts on the margin
       const wr = wrap.getBoundingClientRect()
       if (r.left < wr.left + margin - 1 || r.right > wr.right - margin + 1) issues.push(['grid', `outside the ${margin}px margins: ${label(el)} (${Math.round(r.left - wr.left)}px)`])
     }
