@@ -1,0 +1,86 @@
+/* ESB Studio Phone: the one layout grid. Every mobile screen uses these tokens; no ad-hoc widths.
+   Window size classes (width in dp = CSS px), Material 3 breakpoints:
+     compact  < 600   4 columns, 16 px margins, 8 px gutters   (all phones in portrait)
+     medium   600–839 8 columns, 24 px margins, 12 px gutters  (foldables, small tablets, phone landscape)
+     expanded >= 840  12 columns, 32 px margins, 16 px gutters (tablets, DeX)
+   Spacing is the PC's 4 px scale (--s-* in src/pc/styles/tokens.css). */
+
+:root {
+  --m-cols: 4;
+  --m-margin: 16px;
+  --m-gutter: 8px;
+  --m-max: 100%;
+  /* touch: 48 px hit area, 8 px between targets */
+  --m-touch: 48px;
+  --m-touch-gap: 8px;
+  /* chrome heights */
+  --m-topbar: 56px;
+  --m-navbar: 64px;
+  --m-rail: 80px;
+  --m-actionbar: 64px;
+  --m-row: 64px;
+  --m-row-dense: 56px;
+  --m-row-tall: 72px;
+  /* type scale (body >= 14, inputs 16 to avoid WebView zoom), scales with the Android font size */
+  --m-t-caption: 500 12px/1.34 var(--font-ui);
+  --m-t-label: 600 14px/1.43 var(--font-ui);
+  --m-t-body: 400 15px/1.47 var(--font-ui);
+  --m-t-body-strong: 600 15px/1.47 var(--font-ui);
+  --m-t-input: 400 16px/1.5 var(--font-ui);
+  --m-t-title: 600 18px/1.34 var(--font-ui);
+  --m-t-headline: 700 22px/1.28 var(--font-ui);
+  --m-t-display: 700 28px/1.22 var(--font-ui);
+  /* motion: short, interruptible */
+  --m-dur: 200ms;
+  --m-dur-fast: 150ms;
+  --m-dur-slow: 250ms;
+  --m-ease: cubic-bezier(0.2, 0, 0, 1);
+  --m-ease-out: cubic-bezier(0.05, 0.7, 0.1, 1);
+  /* safe areas (Capacitor SystemBars publishes --safe-area-inset-*; env() in a browser) */
+  --m-safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --m-safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --m-safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --m-safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+  --m-kb: 0px; /* keyboard height, set by src/mobile/shell/keyboard.ts */
+}
+@media (min-width: 600px) {
+  :root { --m-cols: 8; --m-margin: 24px; --m-gutter: 12px; }
+}
+@media (min-width: 840px) {
+  :root { --m-cols: 12; --m-margin: 32px; --m-gutter: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --m-dur: 0ms; --m-dur-fast: 0ms; --m-dur-slow: 0ms; }
+}
+
+/* The page container: side margins (plus side safe areas in landscape) and the column grid. */
+.m-wrap {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--m-max);
+  margin-inline: auto;
+  padding-inline: calc(var(--m-margin) + var(--m-safe-left)) calc(var(--m-margin) + var(--m-safe-right));
+}
+.m-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--m-cols), minmax(0, 1fr));
+  column-gap: var(--m-gutter);
+  row-gap: var(--s-6);
+}
+/* spans: full row by default; wider classes can split */
+.m-grid > * { grid-column: 1 / -1; min-width: 0; }
+@media (min-width: 600px) {
+  .m-grid > .m-span-half { grid-column: span 4; }
+}
+@media (min-width: 840px) {
+  .m-grid > .m-span-half { grid-column: span 6; }
+  .m-grid > .m-span-third { grid-column: span 4; }
+  .m-grid > .m-span-main { grid-column: span 8; }
+  .m-grid > .m-span-side { grid-column: span 4; }
+}
+
+/* Touch targets: visuals may be smaller, the hit area never is. */
+.m-hit { position: relative; min-width: var(--m-touch); min-height: var(--m-touch); }
+.m-hit-pad::after { content: ''; position: absolute; inset: 50% auto auto 50%; width: max(100%, var(--m-touch)); height: max(100%, var(--m-touch)); transform: translate(-50%, -50%); }
+
+.m-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

@@ -1,25 +1,23 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './ui/tokens.css'
-import './ui/kit/kit.css'
-import './index.css'
-import './layout.css'
-import './ui/shell.css'
-import './ui/home.css'
+import './mobile/pcStyles'
+import './mobile/grid.css'
+import './mobile/shell/shell.css'
+import './mobile/shell/settings-kit.css'
 import { initTheme } from './shell/theme'
 import { bootPlatform } from './platform/boot'
 import './native/startup'
 
 initTheme()
 
-const isGallery = typeof window !== 'undefined' && window.location.search.includes('gallery')
-
-// storage, secrets and window.esb first; only then the app (and with it the vendored PC modules) is loaded
+// storage, secrets, the old-draft migration and window.esb first; only then the app (and with it the vendored PC
+// modules, which read storage when they load), then the active story's banner, then the first paint
 void bootPlatform().then(async () => {
-  const [{ default: App }, { Gallery }] = await Promise.all([import('./App.tsx'), import('./ui/kit/Gallery')])
+  const [{ default: MobileApp }, { startStoryGraphics }] = await Promise.all([import('./mobile/MobileApp'), import('./mobile/library/storyGraphics')])
+  await startStoryGraphics().catch((e) => console.warn('banner restore failed', e))
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      {isGallery ? <Gallery /> : <App />}
+      <MobileApp />
     </StrictMode>,
   )
 })

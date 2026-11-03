@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react'
 import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
+import { pcCssScope } from './tools/pc-css-scope.ts'
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
 
@@ -8,7 +9,7 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 // installs its own window.esb (src/platform/esbShim.ts) before any vendored module runs.
 export default defineConfig({
   base: './',
-  plugins: [react()],
+  plugins: [pcCssScope(), react()],
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   build: { chunkSizeWarningLimit: 2500 },
 })

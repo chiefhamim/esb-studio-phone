@@ -39,7 +39,8 @@ export const ENTRIES = [
   'editorial/TranslateProgress.tsx', 'editorial/imageTools.ts', 'editorial/blocks.ts', 'editorial/bengali.ts',
   'editorial/automation.ts', 'editorial/jobLog.ts',
   // Design system and types
-  'fonts.css', 'styles/tokens.css', 'editorial/editorial.css', 'editorial/site-preview.css', 'esb.d.ts', 'env.d.ts',
+  'fonts.css', 'styles/tokens.css', 'styles/base.css', 'styles/primitives.css', 'styles/studio.css', 'App.css',
+  'editorial/editorial.css', 'editorial/site-preview.css', 'esb.d.ts', 'env.d.ts',
 ]
 
 /** Whole folders copied as they are (fonts with their licences). */

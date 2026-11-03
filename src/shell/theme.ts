@@ -18,6 +18,9 @@ export function nextPref(p: ThemePref): ThemePref {
 export function applyTheme(pref: ThemePref = getThemePref()): void {
   const dark = pref === 'dark' || (pref === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+  // the vendored PC Graphics store reads its own theme key at start-up and owns the canvas chrome colours: keep it in step
+  try { localStorage.setItem('esb-banner-studio/theme', dark ? 'dark' : 'light') } catch { /* ignore */ }
+  try { window.dispatchEvent(new CustomEvent('esb-theme-applied', { detail: dark ? 'dark' : 'light' })) } catch { /* ignore */ }
 }
 
 export function setThemePref(p: ThemePref): void {
