@@ -1,3 +1,11 @@
+export const IconMenu = () => <I><path d="M4 7h16M4 12h16M4 17h16" /></I>
+export const IconChevronRight = () => <I><path d="M9 6l6 6-6 6" /></I>
+export const IconChevronDown = () => <I><path d="M6 9l6 6 6-6" /></I>
+export const IconCheck = () => <I><path d="M5 13l4 4L19 7" /></I>
+export const IconInfo = () => <I><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5M12 8h.01" /></I>
+export const IconAlert = () => <I><path d="M12 3.5l9 16H3zM12 10v4M12 17h.01" /></I>
+export const IconSparkles = () => <I><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6.5 6.5l2 2M15.5 15.5l2 2M6.5 17.5l2-2M15.5 8.5l2-2" /></I>
+
 // Simple 24 px stroke icons (same line style as the desktop icon set: 1.8 stroke, round caps).
 import type { ReactNode } from 'react'
 import type { Category } from '../banner/tokens'
@@ -44,3 +52,4 @@ export const IconGlobe = () => <I><circle cx="12" cy="12" r="8.5" /><path d="M3.
 export const IconInbox = () => <I><path d="M4 13l2.2-7a2 2 0 0 1 1.9-1.4h7.8a2 2 0 0 1 1.9 1.4L20 13v4.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" /><path d="M4 13h4.5a3.5 3.5 0 0 0 7 0H20" /></I>
 export const IconPencilSquare = () => <I><path d="M11 5H7a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-4" /><path d="M9 15l.6-3L18 3.6a1.8 1.8 0 0 1 2.4 2.4L12 14.4z" /></I>
 export const IconFolder = () => <I><path d="M3.5 7.5A2.5 2.5 0 0 1 6 5h3.5l2 2.5H18A2.5 2.5 0 0 1 20.5 10v7A2.5 2.5 0 0 1 18 19.5H6A2.5 2.5 0 0 1 3.5 17z" /></I>
+export const IconLock = () => <I><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></I>
