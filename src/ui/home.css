@@ -24,8 +24,8 @@
 .hm-mark { display: block; height: 40px; width: auto; border-radius: 6px; }
 /* dark: the logo artwork is drawn for a light ground, so the dark Home types the name instead (as the PC Home does); no plate */
 .hm-typed { display: none; }
-:root[data-theme=dark] .hm-mark { display: none; }
-:root[data-theme=dark] .hm-typed { display: inline-flex; align-items: center; gap: 6px; font-family: Inter, var(--font-ui); line-height: 1; }
+:root[data-theme=dark] .hm-mark { background: #fff; padding: 3px 6px; box-sizing: content-box; }
+:root[data-theme=dark] .hm-typed { display: none; align-items: center; align-items: center; gap: 6px; font-family: Inter, var(--font-ui); line-height: 1; }
 .hm-typed b { font-size: 42px; font-weight: 800; letter-spacing: -.04em; color: #fff; }
 .hm-pl { display: inline-grid; gap: 4px; font-size: 19px; font-weight: 800; letter-spacing: .01em; line-height: .8; text-align: left; }
 .hm-pl > span:first-child { color: #ff5359; }
