@@ -66,14 +66,13 @@ export function NavBar({ items, value, onChange, rail }: { items: NavItem[]; val
 // ---------------------------------------------------------------- menu anchored to its button
 export interface MenuItem { label: string; icon?: IconName; onClick: () => void; danger?: boolean; disabled?: boolean; hint?: string; checked?: boolean; divider?: boolean }
 export function MenuButton({ icon = 'more', label, items, children, className = '' }: { icon?: IconName; label: string; items: MenuItem[]; children?: ReactNode; className?: string }) {
-  const [open, setOpen] = useState(false)
-  const btn = useRef<HTMLButtonElement>(null)
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   return (
     <>
-      <button ref={btn} type="button" className={children ? `m-btn m-btn-text ${className}` : `m-iconbtn ${className}`} aria-label={label} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(true)} title={label}>
+      <button type="button" className={children ? `m-btn m-btn-text ${className}` : `m-iconbtn ${className}`} aria-label={label} aria-haspopup="menu" aria-expanded={!!anchor} onClick={(e) => setAnchor(e.currentTarget)} title={label}>
         <Icon name={icon} size={22} />{children}
       </button>
-      {open && <Menu anchor={btn.current} items={items} onClose={() => setOpen(false)} />}
+      {anchor && <Menu anchor={anchor} items={items} onClose={() => setAnchor(null)} />}
     </>
   )
 }

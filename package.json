@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "sync:pc": "node tools/sync-pc.mjs sync",
-    "check:pc": "node tools/sync-pc.mjs check"
+    "check:pc": "node tools/sync-pc.mjs check",
+    "test:parity": "node tools/parity/parity.mjs",
+    "test:geometry": "node tools/e2e/geometry.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.3.0",
