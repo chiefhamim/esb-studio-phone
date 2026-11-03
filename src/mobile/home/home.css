@@ -27,3 +27,25 @@
   .m-home { max-width: 960px; }
 }
 .m-status { position: relative; display: inline-flex; align-items: center; gap: var(--s-3); min-height: 32px; padding: 0; border: 0; background: none; font: var(--m-t-caption); color: var(--text-secondary); cursor: pointer; max-width: 100%; overflow-x: clip; overflow-y: visible; white-space: nowrap; text-overflow: ellipsis; }
+
+/* ---------------------------------------------------------------- polish: Home rhythm (8 / 16 / 24) */
+.m-home { padding-top: var(--s-6); }
+.m-home-start { gap: var(--s-5); }
+.m-start { min-height: 80px; padding: var(--s-6); border-radius: var(--r-4); box-shadow: var(--ctl-shadow); gap: var(--s-5); }
+.m-start > span { gap: 2px; }
+.m-start strong { font: 700 16px/1.25 var(--font-ui); }
+.m-start small { font: 500 13px/1.3 var(--font-ui); }
+.m-continue { margin-top: var(--s-5); min-height: 52px; border-radius: var(--r-3); justify-content: flex-start; text-align: left; height: auto; padding-block: 10px; }
+.m-continue .m-btn-label { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.m-home .m-section { margin-top: var(--s-8); }
+.m-section-head h2 { font: 700 18px/1.3 var(--font-ui); }
+.m-list { border: 1px solid var(--border-default); border-radius: var(--r-4); background: var(--surface-raised); box-shadow: var(--ctl-shadow); padding-inline: var(--s-6); overflow: hidden; }
+.m-list > .m-row:last-child { border-bottom: 0; }
+.m-thumb { width: 48px; height: 48px; border-radius: var(--r-3); }
+.m-row { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.m-account { display: inline-grid; place-items: center; width: var(--m-touch); height: var(--m-touch); border: 0; border-radius: var(--r-pill); background: none; color: var(--text-primary); cursor: pointer; }
+.m-account-badge { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font: 700 14px/1 var(--font-ui); }
+.m-menu-item { min-height: 52px; }
+.m-menu { border-radius: var(--r-3); min-width: 260px; padding: var(--s-3) 0; }
+.m-menu-text > span { font: 600 15px/1.3 var(--font-ui); }
+.m-menu-text small { font: 500 12px/1.3 var(--font-ui); margin-top: 1px; overflow-wrap: anywhere; }

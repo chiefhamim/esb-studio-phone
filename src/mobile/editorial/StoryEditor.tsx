@@ -27,7 +27,7 @@ import { openSiteCms } from '../../pc/editorial/siteApi'
 import type { Assets } from '../../pc/core/render'
 import { platform } from '../../platform/platform'
 import { PcHost } from '../PcHost'
-import { Banner, Button, Icon, IconBtn, Planned, Segmented, TopBar } from '../shell/ui'
+import { Banner, Button, Icon, IconBtn, Planned, Segmented, Sheet, TopBar } from '../shell/ui'
 import type { MenuItem } from '../shell/ui'
 import { confirmAsk, snack, useSizeClass, useUi } from '../shell/core'
 import { useNav } from '../shell/nav'
@@ -119,11 +119,25 @@ function DetailsTab() {
   return (
     <div className="me-stack">
       <section className="me-card" id="me-details-cat">
-        <label className="m-field"><span className="m-field-label">Category</span>
-          <select className="m-select" value={cat.id} onChange={(e) => useEditorialStore.getState().setDesk(e.target.value)}>
-            {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select></label>
+        <div className="m-field"><span className="m-field-label">Category</span>
+          <button type="button" className="me-catpick" aria-haspopup="dialog" onClick={() => useUi.getState().openSheet('ed-category')}>
+            <span className="gx-cat-dot" style={{ background: cat.accent }} aria-hidden />
+            <span className="me-catpick-t"><b>{cat.name}</b><small>Desk {cat.id}{deskAuto ? ' · detected from the story' : ''}</small></span>
+            <Icon name="chevDown" size={20} />
+          </button></div>
         <Button kind="text" icon={deskAuto ? 'check' : 'sparkle'} onClick={() => { const id = useEditorialStore.getState().autoDetectDesk(); snack(`Category set to ${CATEGORIES.find((c) => c.id === id)?.name ?? id} from the story`) }}>{deskAuto ? 'Detected from the story' : 'Detect from the story'}</Button>
+        <Sheet id="ed-category" title="Category">
+          <div className="gx-cats">
+            {CATEGORIES.map((c) => (
+              <button key={c.id} type="button" className={'gx-cat' + (c.id === cat.id ? ' is-on' : '')} aria-pressed={c.id === cat.id}
+                onClick={() => { useEditorialStore.getState().setDesk(c.id); useUi.getState().closeSheet('ed-category') }}>
+                <span className="gx-cat-dot" style={{ background: c.accent }} aria-hidden />
+                <span className="gx-cat-text"><b>{c.name}</b><small>Desk {c.id}</small></span>
+                {c.id === cat.id && <Icon name="check" size={20} />}
+              </button>
+            ))}
+          </div>
+        </Sheet>
       </section>
       <section className="me-card" id="me-details-tags">
         <div className="m-field-label"><span>Tags</span><span className="m-field-count">{tags.length}</span></div>
@@ -138,7 +152,7 @@ function DetailsTab() {
       </section>
       <section className="me-card">
         <label className="m-field"><span className="m-field-label">Byline</span><input className="m-input" value={draft.byline} placeholder={staff?.name || 'Reporter name'} onChange={(e) => setField('byline', e.target.value)} /></label>
-        <label className="me-switchrow"><span><b>Post as ESB News Desk</b><small>Credited to the desk instead of the signed-in editor.</small></span><input type="checkbox" checked={!!draft.postAsNewsDesk} onChange={(e) => setField('postAsNewsDesk', e.target.checked)} /></label>
+        <label className="me-switchrow"><span><b>Post as ESB News Desk</b><small>Credited to the desk instead of the signed-in editor.</small></span><input type="checkbox" role="switch" checked={!!draft.postAsNewsDesk} onChange={(e) => setField('postAsNewsDesk', e.target.checked)} /></label>
         <div className="me-switchrow is-planned"><span><b>Featured · Breaking · Trending</b><small>The PC desk always sends these off; the story draft has no field for them yet.</small></span><Planned /></div>
       </section>
       <section className="me-card" id="me-details-photo">
@@ -148,7 +162,7 @@ function DetailsTab() {
       </section>
       <section className="me-card">
         <h3 className="me-h3">Banner</h3>
-        <label className="me-switchrow"><span><b>Keep the banner in step</b><small>Headline, credit and caption follow this story both ways.</small></span><input type="checkbox" checked={bannerLink} onChange={(e) => useEditorialStore.getState().setBannerLink(e.target.checked)} /></label>
+        <label className="me-switchrow"><span><b>Keep the banner in step</b><small>Headline, credit and caption follow this story both ways.</small></span><input type="checkbox" role="switch" checked={bannerLink} onChange={(e) => useEditorialStore.getState().setBannerLink(e.target.checked)} /></label>
         <div className="me-start-row">
           <Button kind="tonal" icon="refresh" disabled={!draft.headline.trim()} onClick={() => { useEditorialStore.getState().applyDraftToBanner(); snack('Banner updated from the story') }}>Update banner</Button>
           <Button kind="tonal" icon="layers" onClick={() => useNav.getState().go('graphics')}>Open in Graphics</Button>
@@ -356,7 +370,6 @@ export function StoryEditor() {
   const headline = useEditorialStore((s) => s.draft.headline)
   const source = useEditorialStore((s) => s.source)
   const story = useStoryQueue((s) => s.stories.find((x) => x.id === s.activeId))
-  const cat = useCategory()
   const { words } = useStoryNumbers()
   const size = useSizeClass()
   const pubBusy = usePublish((s) => s.busy)
@@ -368,10 +381,10 @@ export function StoryEditor() {
       <div className="me-hide-writing">
         <TopBar leading={<IconBtn icon="chevLeft" label="Back to stories" onClick={() => d.set({ view: 'home', writing: false })} />}
           title={headline.trim() || source?.title || 'Untitled story'}
-          sub={<>{story ? <StatusChip s={story.status} /> : <span className="me-status s-draft">{STATUS_LABEL.draft}</span>}<span>{cat.name} · {words} words{linked ? ' · live' : ''}</span></>}
+          sub={<>{story ? <StatusChip s={story.status} /> : <span className="me-status s-draft">{STATUS_LABEL.draft}</span>}<span>{words} words{linked ? ' · live' : ''}</span></>}
           actions={<>
-            <IconBtn icon="newspaper" label="Original source" disabled={!source} onClick={() => useUi.getState().openSheet('ed-source')} />
             <IconBtn icon="activity" label={jobLive ? 'Activity (a job is running)' : 'Activity'} badge={jobLive ? '•' : undefined} onClick={() => useUi.getState().openSheet('ed-activity')} />
+            <Button icon="upload" className="me-pub-top" disabled={!headline.trim()} onClick={() => useUi.getState().openSheet('ed-publish')}>{linked ? 'Update' : 'Publish'}</Button>
           </>}
           overflow={storyMenu()} />
         <nav className="me-tabs" role="tablist" aria-label="Story sections">

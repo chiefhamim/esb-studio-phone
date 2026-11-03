@@ -176,8 +176,8 @@ export function PublishReview() {
           <h3 className="me-h3">Facebook</h3>
           {fb ? (
             <>
-              <label className="me-switchrow"><span><b>Post the banner when I {verb.toLowerCase()}</b><small>{fb.pageName || fb.pageId} · the 4:5 banner with the Facebook caption{linked ? ' · off by default for an update' : ''}</small></span><input type="checkbox" checked={fbOn} onChange={(e) => setFbOn(e.target.checked)} /></label>
-              <label className="me-switchrow"><span><b>Add the article link as the first comment</b><small>Pin it on Facebook afterwards (the API cannot pin).</small></span><input type="checkbox" checked={fbLink} disabled={!fbOn} onChange={(e) => setFbLink(e.target.checked)} /></label>
+              <label className="me-switchrow"><span><b>Post the banner when I {verb.toLowerCase()}</b><small>{fb.pageName || fb.pageId} · the 4:5 banner with the Facebook caption{linked ? ' · off by default for an update' : ''}</small></span><input type="checkbox" role="switch" checked={fbOn} onChange={(e) => setFbOn(e.target.checked)} /></label>
+              <label className="me-switchrow"><span><b>Add the article link as the first comment</b><small>Pin it on Facebook afterwards (the API cannot pin).</small></span><input type="checkbox" role="switch" checked={fbLink} disabled={!fbOn} onChange={(e) => setFbLink(e.target.checked)} /></label>
             </>
           ) : <div className="me-card-row"><span className="me-meta me-grow">No Facebook Page connected.</span><Button kind="text" onClick={() => useNav.getState().openSettings('facebook')}>Connect</Button></div>}
         </section>

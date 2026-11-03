@@ -76,6 +76,15 @@ function KeyField({ id, ai, onSave }: { id: AiProviderId; ai: AiSettings; onSave
   const [testing, setTesting] = useState(false)
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null)
   const dirty = val.trim() !== ai.keys[id]
+  // a saved key lists that account's models on its own, so the model can be changed without running a test first
+  useEffect(() => {
+    const k = ai.keys[id]
+    if (!k || models || ai.paused) return
+    let dead = false
+    void listModels(id, k).then((m) => { if (!dead && m.length) setModels(m) }).catch(() => undefined)
+    return () => { dead = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ai.keys[id], ai.paused])
   const save = () => { onSave({ ...ai, keys: { ...ai.keys, [id]: val.trim() } }); snack(`${meta.name} key saved on this phone`, { tone: 'success' }) }
   const test = async () => {
     setTesting(true); setResult(null)

@@ -230,11 +230,11 @@ export function Chip({ on, onClick, children, icon, color }: { on?: boolean; onC
   )
 }
 
-export function Row({ title, meta, lead, trail, onClick, tall }: { title: ReactNode; meta?: ReactNode; lead?: ReactNode; trail?: ReactNode; onClick?: () => void; tall?: boolean }) {
+export function Row({ title, meta, lead, trail, onClick, tall, ...rest }: { title: ReactNode; meta?: ReactNode; lead?: ReactNode; trail?: ReactNode; onClick?: () => void; tall?: boolean } & Omit<React.HTMLAttributes<HTMLElement>, 'title' | 'onClick'>) {
   const inner = (<>{lead && <span className="m-row-lead">{lead}</span>}<span className="m-row-text"><span className="m-row-title">{title}</span>{meta && <span className="m-row-meta">{meta}</span>}</span>{trail && <span className="m-row-trail">{trail}</span>}</>)
   return onClick
-    ? <button type="button" className={`m-row${tall ? ' m-row-tall' : ''}`} onClick={onClick}>{inner}</button>
-    : <div className={`m-row${tall ? ' m-row-tall' : ''}`}>{inner}</div>
+    ? <button type="button" className={`m-row${tall ? ' m-row-tall' : ''}`} onClick={onClick} {...rest}>{inner}</button>
+    : <div className={`m-row${tall ? ' m-row-tall' : ''}`} {...rest}>{inner}</div>
 }
 
 export function Empty({ icon, title, body, action }: { icon: IconName; title: string; body?: ReactNode; action?: ReactNode }) {

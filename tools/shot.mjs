@@ -32,6 +32,7 @@ await page.goto('http://127.0.0.1:4173/')
 await page.waitForSelector('.m-app', { timeout: 20000 })
 if (route !== 'home') await page.evaluate((r) => { const btn = [...document.querySelectorAll('.m-nav-item')].find((b) => b.textContent?.trim().toLowerCase() === r); btn?.click() }, route)
 if (js) await page.evaluate(js)
+if (process.env.STORY) { await page.locator('.m-home .m-row').first().click(); await page.waitForSelector('.me-tabs'); if (process.env.TAB) await page.locator('.me-tabs [role=tab]:visible', { hasText: process.env.TAB }).first().click() }
 await page.waitForTimeout(900)
 await page.screenshot({ path: path.join(out, `${name}.png`) })
 if (errors.length) console.log('ERRORS:\n' + errors.join('\n'))

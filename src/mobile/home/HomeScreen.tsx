@@ -1,13 +1,13 @@
 // Home: start work fast and get back to it. A compact hero (two primary starts + continue) that never pushes the
 // recent stories below the fold: at 411×891 at least four recent stories are visible.
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStoryQueue, storyTitle, STATUS_LABEL, type StoryItem } from '../../pc/editorial/storyQueue'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import { fmtTime } from '../../pc/ui/time'
 import type { ScreenProps } from '../shell/nav'
 import { useNav } from '../shell/nav'
-import { useOnline } from '../shell/core'
-import { Button, Empty, Icon, IconBtn, Row, TopBar } from '../shell/ui'
+import { confirmAsk, snack, useOnline } from '../shell/core'
+import { Button, Empty, Icon, IconBtn, Menu, Row, TopBar } from '../shell/ui'
 import './home.css'
 
 function ago(t: number): string {
@@ -29,18 +29,54 @@ export function phoneStoryTitle(s: StoryItem): string {
   return raw ? (raw.length > 90 ? raw.slice(0, 88).trimEnd() + '…' : raw) : t
 }
 
+/** Press opens; hold (500 ms, finger still) offers Remove, like a launcher shortcut. */
+function useHold(onHold: (anchor: HTMLElement) => void) {
+  const t = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const start = useRef<{ x: number; y: number } | null>(null)
+  const held = useRef(false)
+  const stop = () => { if (t.current) clearTimeout(t.current); t.current = null; start.current = null }
+  return {
+    held,
+    onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+      held.current = false
+      start.current = { x: e.clientX, y: e.clientY }
+      const el = e.currentTarget
+      t.current = setTimeout(() => { held.current = true; onHold(el) }, 500)
+    },
+    onPointerMove: (e: React.PointerEvent) => { if (start.current && Math.hypot(e.clientX - start.current.x, e.clientY - start.current.y) > 10) stop() },
+    onPointerUp: stop,
+    onPointerCancel: stop,
+    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+  }
+}
+
 export function StoryRow({ s, onOpen, active }: { s: StoryItem; onOpen: () => void; active?: boolean }) {
   const title = phoneStoryTitle(s)
   const bn = /[ঀ-৿]/.test(title)
+  const [menuAt, setMenuAt] = useState<HTMLElement | null>(null)
+  const hold = useHold(setMenuAt)
+  const remove = async () => {
+    if (await confirmAsk({ title: 'Remove this story?', body: `"${title}" and its draft are deleted from this phone. An article already on esbpowerline.com is not touched.`, confirm: 'Remove', danger: true })) {
+      useStoryQueue.getState().remove(s.id)
+      snack('Story removed')
+    }
+  }
   return (
-    <Row
-      tall
-      onClick={onOpen}
-      lead={<span className={`m-thumb m-thumb-${s.status}`} aria-hidden><Icon name={STATUS_ICON[s.status]} size={22} /></span>}
-      title={<span lang={bn ? 'bn' : undefined}>{title}</span>}
-      meta={<>{STATUS_LABEL[s.status]} · {ago(s.updatedAt)}{active ? ' · on the desk' : ''}</>}
-      trail={<Icon name="chevRight" size={20} />}
-    />
+    <>
+      <Row
+        tall
+        onClick={() => { if (!hold.held.current) onOpen() }}
+        lead={<span className={`m-thumb m-thumb-${s.status}`} aria-hidden><Icon name={STATUS_ICON[s.status]} size={22} /></span>}
+        title={<span lang={bn ? 'bn' : undefined}>{title}</span>}
+        meta={<>{STATUS_LABEL[s.status]} · {ago(s.updatedAt)}{active ? ' · on the desk' : ''}</>}
+        trail={<Icon name="chevRight" size={20} />}
+        {...hold}
+      />
+      {menuAt && <Menu anchor={menuAt} onClose={() => setMenuAt(null)} items={[
+        { label: 'Open', icon: 'edit', onClick: onOpen },
+        { label: 'Remove from this phone', icon: 'trash', danger: true, onClick: () => { void remove() } },
+      ]} />}
+    </>
   )
 }
 
@@ -58,6 +94,7 @@ export default function HomeScreen({ active }: ScreenProps) {
   useEffect(() => { if (active) void checkConnection() }, [active, checkConnection])
 
   const open = (id: string) => { useStoryQueue.getState().switchTo(id); nav.intendEditorial('open') }
+  const [accountAt, setAccountAt] = useState<HTMLElement | null>(null)
   const status = !online ? 'Offline · saved on the phone' : !session ? 'Not signed in' : site.connected ? (session.name || session.email) : site.sessionEnded ? 'Sign in again' : 'Site not reachable'
   const dot = !online ? 'off' : session && site.connected ? 'ok' : 'warn'
 
@@ -66,8 +103,13 @@ export default function HomeScreen({ active }: ScreenProps) {
       <TopBar
         leading={<img className="m-brand" src="./brand/esb-logo.png" alt="ESB Power Line" />}
         title={<span className="m-sr">ESB Studio</span>}
-        sub={<button type="button" className="m-status m-hit-pad" onClick={() => nav.openSettings('site')}><span className={`m-dot m-dot-${dot}`} aria-hidden />{status}</button>}
-        actions={<IconBtn icon="sliders" label="Settings" onClick={() => nav.openSettings()} />}
+        sub={<button type="button" className="m-status m-hit-pad" onClick={(e) => setAccountAt(e.currentTarget)} aria-haspopup="menu"><span className={`m-dot m-dot-${dot}`} aria-hidden />{status}</button>}
+        actions={<>
+          <button type="button" className="m-account" aria-label={session ? `Account: ${session.name || session.email}` : 'Account'} aria-haspopup="menu" onClick={(e) => setAccountAt(e.currentTarget)}>
+            {session ? <span className="m-account-badge">{(session.name || session.email).slice(0, 1).toUpperCase()}</span> : <Icon name="user" size={22} />}
+          </button>
+          <IconBtn icon="sliders" label="Settings" onClick={() => nav.openSettings()} />
+        </>}
       />
       <div className="m-scroll">
         <div className="m-wrap m-home">
@@ -96,6 +138,15 @@ export default function HomeScreen({ active }: ScreenProps) {
           {site.checkedAt && <p className="m-home-foot">Site checked {fmtTime(site.checkedAt)}</p>}
         </div>
       </div>
+      {accountAt && <Menu anchor={accountAt} onClose={() => setAccountAt(null)} items={[
+        session
+          ? { label: session.name || session.email, hint: `${session.email}${session.role ? ' · ' + session.role : ''} · ${site.connected ? 'connected' : 'not connected'}`, icon: 'user', onClick: () => nav.openSettings('site') }
+          : { label: 'Sign in to esbpowerline.com', hint: 'Save drafts and publish from this phone', icon: 'user', onClick: () => nav.openSettings('site') },
+        { label: 'Check the site connection', icon: 'refresh', onClick: () => { void checkConnection().then(() => snack(useEditorialStore.getState().siteStatus.connected ? 'Connected to esbpowerline.com' : 'esbpowerline.com is not reachable')) } },
+        { label: 'AI providers', icon: 'sparkle', onClick: () => nav.openSettings('ai'), hint: 'Keys and models' },
+        { divider: true, label: '', onClick: () => {} },
+        { label: 'Settings', icon: 'sliders', onClick: () => nav.openSettings() },
+      ]} />}
     </>
   )
 }

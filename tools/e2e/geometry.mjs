@@ -38,7 +38,7 @@ const SCREENS = {
     await p.locator('.me-tabs [role=tab]:visible', { hasText: t }).first().click()
   }])),
   'story-ready': async (p) => { await openStory(p); await p.locator('.me-ready:visible').first().click(); await p.waitForSelector('.m-sheet') },
-  'story-publish': async (p) => { await openStory(p); await p.locator('.m-actionbar button:visible', { hasText: /^(Publish|Update)$/ }).first().click(); await p.waitForSelector('.m-fulldialog, .m-sheet') },
+  'story-publish': async (p) => { await openStory(p); await p.locator('button:visible', { hasText: /^(Publish|Update)$/ }).first().click(); await p.waitForSelector('.m-fulldialog, .m-sheet') },
 }
 async function openStory(p) {
   await p.locator('.m-home .m-row', { hasText: 'Grid operator' }).first().click()

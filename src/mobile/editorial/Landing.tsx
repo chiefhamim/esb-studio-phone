@@ -188,7 +188,7 @@ export function WireSourcesSheet() {
           return (
             <div key={s.id} className="me-card">
               <div className="me-card-row"><b className="me-grow">{s.name || hostOf(s.url)}</b>
-                <label className="me-switch"><input type="checkbox" checked={s.enabled} onChange={(e) => update(s.id, { enabled: e.target.checked })} /><span>On</span></label>
+                <label className="me-switch"><input type="checkbox" role="switch" checked={s.enabled} onChange={(e) => update(s.id, { enabled: e.target.checked })} /><span>On</span></label>
                 <IconBtn icon="trash" label={`Remove ${s.name || s.url}`} onClick={() => remove(s.id)} />
               </div>
               <p className="me-meta me-break">{s.url}</p>
