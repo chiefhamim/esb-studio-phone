@@ -1,0 +1,27 @@
+/* Shared category select (src/ui/CategorySelect.tsx): a 48 px field plus a bottom-sheet listbox. Prefix cs-. */
+.cs-field { display: flex; align-items: center; gap: var(--s-4); width: 100%; min-height: 48px; padding: 0 var(--s-4) 0 var(--s-5); border: 1px solid transparent; border-radius: var(--r-3); background: var(--surface-panel); box-shadow: var(--ctl-shadow); color: var(--text-primary); font: 500 15px/22px var(--font-ui); text-align: left; cursor: pointer; transition: box-shadow var(--t-state) var(--ease), transform var(--t-hover) var(--ease); }
+.cs-field:active { transform: scale(.985); }
+.cs-field:focus-visible, .cs-field[aria-expanded='true'] { outline: none; box-shadow: 0 0 0 2px var(--ink-ring), var(--ctl-shadow); }
+.cs-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: transparent; box-shadow: inset 0 0 0 1.5px var(--border-strong); }
+.cs-dot[style] { box-shadow: none; }
+.cs-val { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-ph { color: var(--text-tertiary); font-weight: 400; }
+.cs-chev { display: grid; place-items: center; width: 32px; height: 32px; color: var(--text-tertiary); }
+.cs-field[aria-expanded='true'] .cs-chev { transform: rotate(180deg); }
+
+.cs-scrim { position: fixed; inset: 0; z-index: 70; display: grid; align-items: end; background: var(--scrim); animation: cs-fade var(--t-surface) var(--ease) both; }
+.cs-sheet { max-width: 640px; width: 100%; margin: 0 auto; max-height: 78dvh; display: grid; grid-template-rows: auto auto minmax(0, 1fr); background: var(--surface-panel); border-radius: var(--r-4) var(--r-4) 0 0; box-shadow: var(--shadow-l3); padding: var(--s-3) var(--s-4) calc(var(--s-4) + env(safe-area-inset-bottom)); animation: cs-up var(--t-surface) var(--spring) both; }
+.cs-grab { justify-self: center; width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong); margin: var(--s-2) 0 var(--s-3); }
+.cs-title { margin: 0; padding: var(--s-2) var(--s-4) var(--s-4); font: 700 17px/24px var(--font-ui); letter-spacing: -.005em; }
+.cs-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: var(--s-1); outline: none; }
+.cs-opt { display: flex; align-items: center; gap: var(--s-5); min-height: 52px; padding: 0 var(--s-5); border-radius: var(--r-3); font: 500 15px/22px var(--font-ui); color: var(--text-primary); cursor: pointer; }
+.cs-opt:active { background: var(--fill-active); }
+.cs-opt.is-active { background: var(--fill); }
+.cs-list:focus-visible .cs-opt.is-active { box-shadow: inset 0 0 0 2px var(--ink-ring); }
+.cs-opt.is-sel { font-weight: 700; background: var(--accent-soft); }
+.cs-name { flex: 1; min-width: 0; }
+.cs-tick { color: var(--text-primary); display: grid; }
+.cs-opt:first-child { color: var(--text-secondary); }
+@keyframes cs-fade { from { opacity: 0; } }
+@keyframes cs-up { from { transform: translate3d(0, 24px, 0); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cs-scrim, .cs-sheet { animation: none; } .cs-field { transition: none; } .cs-field:active { transform: none; } }

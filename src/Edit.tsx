@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Draft } from './drafts'
 import { BUDGETS } from './charBudgets'
-import { CATEGORIES } from './banner/tokens'
+import { CategorySelect } from './ui/CategorySelect'
 import { buildReadiness, slugFromHeadline } from './publish/readiness'
 import { cleanSource } from './translate'
 import { AiError, errorMessage } from './aiProviders'
@@ -407,16 +407,7 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
 
           <div className="ed-catwrap">
             <span className="ed-cap" id="ed-cat-l">Category</span>
-            <div id="ed-cat" className="ed-cats" role="group" aria-labelledby="ed-cat-l" tabIndex={-1}>
-              {CATEGORIES.map((c) => {
-                const on = d.category === c.name
-                return (
-                  <button key={c.id} type="button" className="ed-cat" aria-pressed={on} style={on ? { background: c.accent, color: c.chipText, borderColor: c.accent } : undefined} onClick={() => edit({ category: on ? '' : c.name })}>
-                    <i style={{ background: c.accent }} aria-hidden="true" />{c.name}
-                  </button>
-                )
-              })}
-            </div>
+            <CategorySelect id="ed-cat" labelId="ed-cat-l" value={d.category} onChange={(name) => edit({ category: name })} />
           </div>
 
           <FactPanel entries={entries} unplaced={unplaced} hasSource={hasSource || entries.length === 0} onJump={jumpFact} />

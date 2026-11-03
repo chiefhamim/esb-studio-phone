@@ -6,7 +6,7 @@ import '../ui/banner.css'
 import { renderBanner, photoSize } from './renderBanner'
 import { choosePhoto, deletePhoto, loadPhoto } from './photos'
 import { fileStem, saveToGallery, shareBanner } from './output'
-import { CATEGORIES } from './tokens'
+import { CategorySelect } from '../ui/CategorySelect'
 import { categoryIdOf } from './categories'
 import { loadSettings, saveSettings } from './settings'
 import type { BannerSettings } from './settings'
@@ -285,12 +285,7 @@ function BannerFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) => 
                   ))}
                 </div>
                 <span className="bn-label" id="bn-cat-l">Category</span>
-                <div className="bn-cats" role="radiogroup" aria-labelledby="bn-cat-l">
-                  {CATEGORIES.map((c) => (
-                    <button key={c.id} type="button" role="radio" aria-checked={catId === c.id} className={`bn-cat${catId === c.id ? ' on' : ''}`}
-                      style={{ ['--cat' as string]: c.accent, ['--cat-ink' as string]: c.chipText }} onClick={() => onChange({ ...draft, category: c.name })}>{c.name}</button>
-                  ))}
-                </div>
+                <CategorySelect id="bn-cat" labelId="bn-cat-l" value={draft.category} onChange={(name) => onChange({ ...draft, category: name })} />
                 <p className="bn-hint">The headline and category are the story's own: changes here are saved to the story.</p>
               </>
             )}

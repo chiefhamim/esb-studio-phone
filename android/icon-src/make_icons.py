@@ -20,10 +20,11 @@ def save(img, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     img.save(path, optimize=True)
 
-# adaptive layers: 108dp canvas, artwork inside the 66dp safe zone
+# adaptive layers: 108dp canvas; the artwork fills 76dp (the visible window is ~72dp), so the launcher mask never shows a margin.
+# The background layer is the artwork's own edge green (gradient), so even a sliver at a corner is green, never white.
 for name, px in {'mdpi': 108, 'hdpi': 162, 'xhdpi': 216, 'xxhdpi': 324, 'xxxhdpi': 432}.items():
     canvas = Image.new('RGBA', (px, px), (0, 0, 0, 0))
-    a = scaled(av, round(px * 66 / 108))
+    a = scaled(av, round(px * 76 / 108))
     canvas.paste(a, ((px - a.width) // 2, (px - a.height) // 2), a)
     save(canvas, f'{RES}/mipmap-{name}/ic_launcher_foreground.png')
 # legacy (API < 26) square + round
@@ -34,13 +35,13 @@ for name, px in {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144, 'xxxhdpi': 
     m = Image.new('L', (px * 4, px * 4), 0)
     ImageDraw.Draw(m).ellipse((0, 0, px * 4 - 1, px * 4 - 1), fill=255)
     m = m.resize((px, px), Image.LANCZOS)
-    bg = Image.new('RGBA', (px, px), (255, 255, 255, 255))
+    bg = Image.new('RGBA', (px, px), (0x1E, 0x9A, 0x50, 255))
     c.paste(bg, (0, 0), m)
-    a = scaled(av, round(px * 0.78))
+    a = scaled(av, round(px * 0.92))
     c.paste(a, ((px - a.width) // 2, (px - a.height) // 2), a)
     save(c, f'{RES}/mipmap-{name}/ic_launcher_round.png')
 # themed (monochrome) layer: the white "ESB" letters of the avatar as an alpha mask
-big = scaled(av, round(432 * 66 / 108))
+big = scaled(av, round(432 * 76 / 108))
 px = big.load()
 mono = Image.new('RGBA', big.size, (0, 0, 0, 0))
 mp = mono.load()
