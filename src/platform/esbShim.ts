@@ -41,7 +41,12 @@ export const phoneBridge: EsbBridge = {
   async pickFolder() { return PHONE_FOLDER },
   async reveal() { /* no file manager hand-off on the phone */ },
   async saveProject(name, text, existingPath) {
-    const path = existingPath && existingPath.startsWith(PROJECT_PREFIX) ? existingPath : PROJECT_PREFIX + name
+    let path = existingPath && existingPath.startsWith(PROJECT_PREFIX) ? existingPath : PROJECT_PREFIX + name
+    if (path !== existingPath) {
+      // a NEW project called like a saved one gets "name 2", "name 3" ...: the saved one is never overwritten
+      const base = path
+      for (let n = 2; (await kvGet(path)) != null; n++) path = `${base} ${n}`
+    }
     await kvSet(path, text)
     return path
   },

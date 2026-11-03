@@ -3,7 +3,7 @@
 // Social (four captions, 14 checks) · Preview (the site's article page and the two banners). From 840 dp the story sits
 // beside a side column with the readiness list and a live phone preview. The bottom bar: readiness (explained on tap)
 // and Publish / Update.
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import { useStoryQueue, STATUS_LABEL } from '../../pc/editorial/storyQueue'
@@ -27,7 +27,10 @@ import { openSiteCms } from '../../pc/editorial/siteApi'
 import type { Assets } from '../../pc/core/render'
 import { platform } from '../../platform/platform'
 import { PcHost } from '../PcHost'
-import { Banner, Button, Icon, IconBtn, Planned, Segmented, Sheet, TopBar } from '../shell/ui'
+import { CatDot, CatName, ChannelMark, DeviceMark, FormatMark } from '../shell/cat'
+import { ProviderMark } from '../shell/marks'
+import { Banner, Button, Dropdown, Icon, IconBtn, NavBar, Planned, Segmented, Sheet, TopBar } from '../shell/ui'
+import type { IconName } from '../shell/ui'
 import type { MenuItem } from '../shell/ui'
 import { confirmAsk, snack, useSizeClass, useUi } from '../shell/core'
 import { useNav } from '../shell/nav'
@@ -41,7 +44,7 @@ import { baseAssets, cmsPayload, linkedArticle, usePublish } from './publish'
 import { StatusChip } from './Landing'
 import { useCategory, useFacts, useLeadPhoto, useReadiness, useStoryNumbers } from './useStory'
 
-const TABS: { id: Tab; label: string }[] = [{ id: 'story', label: 'Story' }, { id: 'details', label: 'Details' }, { id: 'seo', label: 'SEO' }, { id: 'social', label: 'Social' }, { id: 'preview', label: 'Preview' }]
+const TABS: { id: Tab; label: string; icon: IconName }[] = [{ id: 'story', label: 'Story', icon: 'edit' }, { id: 'details', label: 'Details', icon: 'sliders' }, { id: 'seo', label: 'SEO', icon: 'search' }, { id: 'social', label: 'Social', icon: 'send' }, { id: 'preview', label: 'Preview', icon: 'eye' }]
 
 export function useBase(): Assets | null {
   const [b, setB] = useState<Assets | null>(null)
@@ -97,7 +100,7 @@ function StoryTab() {
           <span className="m-field-label"><span>Deck / excerpt</span><Counter n={draft.deck.length} max={200} /></span>
           <textarea id="me-deck" className="m-textarea" rows={3} placeholder="One or two sentences that sum up the story" value={draft.deck} onChange={(e) => setField('deck', e.target.value)} />
         </label>
-        <Segmented<'edit' | 'verified'> label="Story view" value={d.bodyMode} onChange={(v) => d.set({ bodyMode: v })} options={[{ value: 'edit', label: 'Write', icon: 'edit' }, { value: 'verified', label: 'Verified', icon: 'eye' }]} />
+        <Segmented<'edit' | 'verified'> compact label="Story view" value={d.bodyMode} onChange={(v) => d.set({ bodyMode: v })} options={[{ value: 'edit', label: 'Write', icon: 'edit' }, { value: 'verified', label: 'Verified', icon: 'eye' }]} />
       </div>
       {d.bodyMode === 'edit' ? <BodyEditor /> : <Verified />}
     </div>
@@ -120,20 +123,20 @@ function DetailsTab() {
     <div className="me-stack">
       <section className="me-card" id="me-details-cat">
         <div className="m-field"><span className="m-field-label">Category</span>
-          <button type="button" className="me-catpick" aria-haspopup="dialog" onClick={() => useUi.getState().openSheet('ed-category')}>
-            <span className="gx-cat-dot" style={{ background: cat.accent }} aria-hidden />
-            <span className="me-catpick-t"><b>{cat.name}</b><small>Desk {cat.id}{deskAuto ? ' · detected from the story' : ''}</small></span>
+          <button type="button" className="me-catpick" style={{ '--cc': cat.accent } as React.CSSProperties} aria-haspopup="dialog" onClick={() => useUi.getState().openSheet('ed-category')}>
+            <CatDot cat={cat} size={36} />
+            <span className="me-catpick-t"><CatName cat={cat} /><small>Desk {cat.id}{deskAuto ? ' · detected from the story' : ''}</small></span>
             <Icon name="chevDown" size={20} />
           </button></div>
         <Button kind="text" icon={deskAuto ? 'check' : 'sparkle'} onClick={() => { const id = useEditorialStore.getState().autoDetectDesk(); snack(`Category set to ${CATEGORIES.find((c) => c.id === id)?.name ?? id} from the story`) }}>{deskAuto ? 'Detected from the story' : 'Detect from the story'}</Button>
-        <Sheet id="ed-category" title="Category">
-          <div className="gx-cats">
+        <Sheet id="ed-category" title="Category" initial="half">
+          <div className="gx-grid">
             {CATEGORIES.map((c) => (
-              <button key={c.id} type="button" className={'gx-cat' + (c.id === cat.id ? ' is-on' : '')} aria-pressed={c.id === cat.id}
+              <button key={c.id} type="button" style={{ '--cc': c.accent } as React.CSSProperties} className={'gx-tile' + (c.id === cat.id ? ' is-on' : '')} aria-pressed={c.id === cat.id}
                 onClick={() => { useEditorialStore.getState().setDesk(c.id); useUi.getState().closeSheet('ed-category') }}>
-                <span className="gx-cat-dot" style={{ background: c.accent }} aria-hidden />
-                <span className="gx-cat-text"><b>{c.name}</b><small>Desk {c.id}</small></span>
-                {c.id === cat.id && <Icon name="check" size={20} />}
+                <CatDot cat={c} size={32} />
+                <span className="gx-tile-txt"><CatName cat={c} /></span>
+                {c.id === cat.id && <Icon name="check" size={16} />}
               </button>
             ))}
           </div>
@@ -153,7 +156,7 @@ function DetailsTab() {
       <section className="me-card">
         <label className="m-field"><span className="m-field-label">Byline</span><input className="m-input" value={draft.byline} placeholder={staff?.name || 'Reporter name'} onChange={(e) => setField('byline', e.target.value)} /></label>
         <label className="me-switchrow"><span><b>Post as ESB News Desk</b><small>Credited to the desk instead of the signed-in editor.</small></span><input type="checkbox" role="switch" checked={!!draft.postAsNewsDesk} onChange={(e) => setField('postAsNewsDesk', e.target.checked)} /></label>
-        <div className="me-switchrow is-planned"><span><b>Featured · Breaking · Trending</b><small>The PC desk always sends these off; the story draft has no field for them yet.</small></span><Planned /></div>
+        <div className="me-switchrow is-planned"><span><b>Featured · Breaking · Trending</b><small>These are always sent off; the story draft has no field for them yet.</small></span><Planned /></div>
       </section>
       <section className="me-card" id="me-details-photo">
         <h3 className="me-h3">Featured image</h3>
@@ -181,7 +184,7 @@ function SeoTab() {
   const photo = useLeadPhoto()
   const seoAi = aiFor('seo', ai)
   return (
-    <div className="me-stack">
+    <div className="me-stack" data-provider={seoAi?.provider}>
       {(d.busy === 'seo' || d.busy === 'fixSeo') && <JobProgress />}
       {d.undo && <Banner tone="info" action={<Button kind="text" onClick={d.undo.restore}>Undo</Button>}>{d.undo.label}</Banner>}
       <PcHost className="me-seo">
@@ -206,7 +209,7 @@ function SocialTab() {
   const text = draft.social[net] || ''
   const checks = useMemo(() => analyzeSocial(draft.social, draft.slug), [draft.social, draft.slug])
   return (
-    <div className="me-stack">
+    <div className="me-stack" data-provider={socialAi?.provider}>
       {(d.busy === 'social' || d.busy === 'fixSocial') && <JobProgress />}
       {d.undo && <Banner tone="info" action={<Button kind="text" onClick={d.undo.restore}>Undo</Button>}>{d.undo.label}</Banner>}
       <div className="me-linkrow">
@@ -214,7 +217,7 @@ function SocialTab() {
         <IconBtn icon="copy" label="Copy the article link" onClick={async () => snack((await platform().copyText(url)) ? 'Article link copied' : 'Could not copy')} />
       </div>
       {!draft.slug.trim() && <Banner tone="warn">Set the slug under SEO first — every caption links to this address.</Banner>}
-      <Segmented<Net> label="Channel" value={net} onChange={setNet} options={[{ value: 'facebook', label: 'Facebook' }, { value: 'x', label: 'X' }, { value: 'linkedin', label: 'LinkedIn' }, { value: 'telegram', label: 'Telegram' }]} />
+      <Segmented<Net> compact label="Channel" value={net} onChange={setNet} options={[{ value: 'facebook', label: 'Facebook', node: <ChannelMark id="facebook" /> }, { value: 'x', label: 'X', node: <ChannelMark id="x" /> }, { value: 'linkedin', label: 'LinkedIn', node: <ChannelMark id="linkedin" /> }, { value: 'telegram', label: 'Telegram', node: <ChannelMark id="telegram" /> }]} />
       <label className="m-field" htmlFor="me-caption">
         <span className="m-field-label"><span>{net === 'facebook' ? 'Facebook caption' : net === 'x' ? 'X post' : net === 'linkedin' ? 'LinkedIn post' : 'Telegram post'}</span>
           {net === 'x' ? <Counter n={xLength(text)} max={280} /> : <span className="m-field-count">{text.length} characters</span>}</span>
@@ -222,7 +225,7 @@ function SocialTab() {
         {net === 'facebook' && <span className="m-field-help">No link here: the article link is posted as the first comment.</span>}
       </label>
       <div className="me-btnrow">
-        <Button kind="tonal" icon="sparkle" busy={d.busy === 'social'} disabled={!!d.busy || !draft.headline.trim()} onClick={() => void aiWriteCaptions()}>{socialAi ? 'Write all with AI' : 'Write with AI'}</Button>
+        <Button kind="tonal" className="ai-run" icon={socialAi ? undefined : 'sparkle'} busy={d.busy === 'social'} disabled={!!d.busy || !draft.headline.trim()} onClick={() => void aiWriteCaptions()}>{socialAi && <ProviderMark id={socialAi.provider} size={18} />}{socialAi ? 'Write all with AI' : 'Write with AI'}</Button>
         {net !== 'facebook' && draft.slug.trim() && !text.includes(url) && <Button kind="outlined" icon="link" onClick={() => setCap(net, `${text.trim()}\n\n${url}`.trim())}>Add link</Button>}
         <Button kind="outlined" icon="copy" onClick={async () => snack((await platform().copyText(text)) ? 'Caption copied' : 'Could not copy')}>Copy</Button>
         <Button kind="outlined" icon="send" disabled={!text.trim()} onClick={() => void platform().shareText(text, 'Caption')}>Share</Button>
@@ -272,6 +275,7 @@ export function SitePreviewBox({ device, theme, hero, base }: { device: SiteDevi
 
 function PreviewTab() {
   const [what, setWhat] = useState<'site' | 'banners'>('site')
+  const [which, setWhich] = useState<'web' | 'fb'>('web')
   const [device, setDevice] = useState<SiteDevice>('mobile')
   const [theme, setTheme] = useState<SiteTheme>('white')
   const [hero, setHero] = useHeroMode()
@@ -282,20 +286,24 @@ function PreviewTab() {
   const fb = getFacebook()
   return (
     <div className="me-stack">
-      <Segmented<'site' | 'banners'> label="Preview" value={what} onChange={setWhat} options={[{ value: 'site', label: 'Website' }, { value: 'banners', label: 'Banners' }]} />
+      <Segmented<'site' | 'banners'> compact label="Preview" value={what} onChange={setWhat} options={[{ value: 'site', label: 'Website', icon: 'globe' }, { value: 'banners', label: 'Banners', icon: 'image' }]} />
       {what === 'site' ? (
         <>
-          <Segmented<SiteDevice> label="Device" value={device} onChange={setDevice} options={[{ value: 'mobile', label: 'Phone' }, { value: 'tablet', label: 'Tablet' }, { value: 'desktop', label: 'Desktop' }]} />
+          <Segmented<SiteDevice> compact label="Device" value={device} onChange={setDevice} options={[{ value: 'mobile', label: 'Phone', node: <DeviceMark kind="mobile" /> }, { value: 'tablet', label: 'Tablet', node: <DeviceMark kind="tablet" /> }, { value: 'desktop', label: 'Desktop', node: <DeviceMark kind="desktop" /> }]} />
           <div className="me-two">
-            <label className="m-field"><span className="m-field-label">Site theme</span><select className="m-select" value={theme} onChange={(e) => setTheme(e.target.value as SiteTheme)}>{SITE_THEMES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</select></label>
-            <label className="m-field"><span className="m-field-label">Hero</span><select className="m-select" value={hero} onChange={(e) => setHero(e.target.value as HeroMode)}><option value="banner">Web banner</option><option value="photo">Photo</option></select></label>
+            <Dropdown label="Site theme" value={theme} onChange={setTheme} options={SITE_THEMES.map((t) => ({ value: t.id as SiteTheme, label: t.label }))} />
+            <Dropdown label="Hero" value={hero} onChange={setHero} options={[{ value: 'banner' as HeroMode, label: 'Web banner', hint: 'The 16:9 banner leads the article' }, { value: 'photo' as HeroMode, label: 'Photo', hint: "The story's lead photo leads the article" }]} />
           </div>
           <SitePreviewBox device={device} theme={theme} hero={hero} base={base} />
           <p className="me-meta me-break">https://esbpowerline.com/articles/{slug || 'story-slug'}</p>
         </>
       ) : (
         <>
-          <PcHost className="me-bp"><BannerPreviews base={base} heroMode={hero} onHeroMode={setHero} photoUrl={photo} caption={fbCaption} pageName={fb ? fb.pageName || fb.pageId : null} /></PcHost>
+          <div className="m-seg bp-switch" role="radiogroup" aria-label="Banner version" style={{ '--i': which === 'web' ? 0 : 1, '--n': 2 } as React.CSSProperties}>
+            <button type="button" role="radio" aria-checked={which === 'web'} className={'m-seg-item' + (which === 'web' ? ' is-on' : '')} onClick={() => setWhich('web')}><FormatMark id="web" size={18} /><span>Website <b>16:9</b></span></button>
+            <button type="button" role="radio" aria-checked={which === 'fb'} className={'m-seg-item' + (which === 'fb' ? ' is-on' : '')} onClick={() => setWhich('fb')}><FormatMark id="fb45" size={18} /><span>Facebook <b>4:5</b></span></button>
+          </div>
+          <div className="bp-which" data-which={which}><PcHost className="me-bp"><BannerPreviews base={base} heroMode={hero} onHeroMode={setHero} photoUrl={photo} caption={fbCaption} pageName={fb ? fb.pageName || fb.pageId : null} /></PcHost></div>
           <div className="me-start-row">
             <Button kind="tonal" icon="refresh" onClick={() => { useEditorialStore.getState().applyDraftToBanner(); snack('Banner updated from the story') }}>Update banner</Button>
             <Button kind="tonal" icon="layers" onClick={() => useNav.getState().go('graphics')}>Edit in Graphics</Button>
@@ -376,22 +384,25 @@ export function StoryEditor() {
   const jobLive = d.busy != null || pubBusy
   const linked = linkedArticle()
   const wide = size === 'expanded'
+  // which way the section slides in: forward tabs come from the right, earlier ones from the left
+  const prevTab = useRef(d.tab)
+  const order = TABS.map((t) => t.id)
+  const paneDir = order.indexOf(d.tab) >= order.indexOf(prevTab.current) ? 1 : -1
+  useEffect(() => { prevTab.current = d.tab }, [d.tab])
   return (
     <div className={'me-story' + (d.writing ? ' is-writing' : '') + (d.editing ? ' is-editing' : '')}>
       <div className="me-hide-writing">
         <TopBar leading={<IconBtn icon="chevLeft" label="Back to stories" onClick={() => d.set({ view: 'home', writing: false })} />}
           title={headline.trim() || source?.title || 'Untitled story'}
-          sub={<>{story ? <StatusChip s={story.status} /> : <span className="me-status s-draft">{STATUS_LABEL.draft}</span>}<span>{words} words{linked ? ' · live' : ''}</span></>}
+          sub={<>{canCancel(d.busy) ? (story ? <StatusChip s={story.status} /> : <span className="me-status s-draft">{STATUS_LABEL.draft}</span>) : <ReadyPill />}<span>{words} words{linked ? ' · live' : ''}</span></>}
           actions={<>
-            <IconBtn icon="activity" label={jobLive ? 'Activity (a job is running)' : 'Activity'} badge={jobLive ? '•' : undefined} onClick={() => useUi.getState().openSheet('ed-activity')} />
+            {jobLive && <IconBtn icon="activity" label="Activity (a job is running)" badge="•" onClick={() => useUi.getState().openSheet('ed-activity')} />}
+            {canCancel(d.busy) && <Button kind="text" onClick={cancelJob}>Cancel</Button>}
             <Button icon="upload" className="me-pub-top" disabled={!headline.trim()} onClick={() => useUi.getState().openSheet('ed-publish')}>{linked ? 'Update' : 'Publish'}</Button>
           </>}
           overflow={storyMenu()} />
-        <nav className="me-tabs" role="tablist" aria-label="Story sections">
-          {TABS.map((t) => <button key={t.id} type="button" role="tab" aria-selected={d.tab === t.id} className={'me-tab' + (d.tab === t.id ? ' is-on' : '')} onClick={() => d.set({ tab: t.id, writing: false })}>{t.label}</button>)}
-        </nav>
       </div>
-      <div key={d.tab} className="m-scroll me-scroll">
+      <div key={d.tab} className="m-scroll me-scroll" style={{ '--dir': paneDir } as React.CSSProperties}>
         <div className={'m-wrap' + (wide ? ' m-grid me-wide' : '')}>
           <div className={wide ? 'm-span-main' : undefined}>
             {d.tab === 'story' && <StoryTab />}
@@ -403,13 +414,7 @@ export function StoryEditor() {
           {wide && !d.writing && <div className="m-span-side"><Side /></div>}
         </div>
       </div>
-      {!d.editing && !d.writing && (
-        <footer className="m-actionbar me-actionbar">
-          {canCancel(d.busy) ? <Button kind="text" onClick={cancelJob}>Cancel job</Button> : <ReadyPill />}
-          <span className="m-spacer" />
-          <Button icon="upload" disabled={!headline.trim()} onClick={() => useUi.getState().openSheet('ed-publish')}>{linked ? 'Update' : 'Publish'}</Button>
-        </footer>
-      )}
+      {!d.editing && !d.writing && <NavBar items={TABS} value={d.tab} onChange={(t) => d.set({ tab: t as Tab, writing: false })} />}
     </div>
   )
 }

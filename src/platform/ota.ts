@@ -72,6 +72,8 @@ export async function downloadAndApplyUpdate(
     })
   }
 
+  // An update replaces the whole web layer, which can read every secret the app holds: refuse one the server did not give a checksum for.
+  if (!update.checksum) throw new Error('This update has no integrity checksum, so it was not installed.')
   try {
     const bundle = await CapacitorUpdater.download({
       url: update.url,

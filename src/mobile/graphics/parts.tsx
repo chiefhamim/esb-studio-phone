@@ -1,52 +1,100 @@
 // Smaller pieces of the Graphics screen: base-asset loading, PC portals inside the PC style scope, the format and
 // category strip, the Facebook preview, the project chooser and the selection's arrange bar.
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { Assets } from '../../pc/core/render'
 import { CATEGORIES, FORMAT_LIST, getCategory } from '../../pc/core/tokens'
 import { FacebookMock } from '../../pc/components/PreviewPanel'
 import { KIND_ICON } from '../../pc/ui/Icon'
 import { useStore } from '../../pc/store'
 import { listProjects, setProjectChooser } from '../../platform/esbShim'
-import { useUi } from '../shell/core'
+import { useBackLayer, useUi } from '../shell/core'
+import { CatDot, CatName, FormatMark } from '../shell/cat'
 import { Button, Chip, Empty, FullDialog, Icon, IconBtn, Row, Segmented, Sheet, Skeleton } from '../shell/ui'
 import type { IconName } from '../shell/ui'
 
 // ---------------------------------------------------------------- format + category strip
-export function FormatStrip() {
-  const format = useStore((s) => s.format)
-  const setFormat = useStore((s) => s.setFormat)
+// The two pickers share their tiles. From the pills at the top of the canvas they drop DOWN from the pill; from the Story
+// sheet's Category row they open as a sheet that is exactly as tall as its content.
+function CatTiles({ onPick }: { onPick: () => void }) {
   const catId = useStore((s) => s.doc.content.categoryId)
-  const cat = getCategory(catId)
-  const ref = useRef<HTMLDivElement>(null)
-  // keep the current format chip in view
-  useEffect(() => { ref.current?.querySelector('.is-on')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }) }, [format])
   return (
-    <div className="gx-strip m-chips is-scroll" ref={ref} role="toolbar" aria-label="Category and banner format">
-      <button type="button" className="m-chip gx-catchip" onClick={() => useUi.getState().openSheet('gx-category')} aria-label={`Category: ${cat.name}. Change`}>
-        <span className="m-chip-dot" style={{ background: cat.accent }} /><span>{cat.id} {cat.name}</span><Icon name="chevDown" size={16} />
-      </button>
-      <span className="gx-strip-sep" aria-hidden />
-      {FORMAT_LIST.map((f) => (
-        <Chip key={f.id} on={f.id === format} onClick={() => setFormat(f.id)}>{`${f.short} ${f.ratio}`}</Chip>
+    <div className="gx-grid">
+      {CATEGORIES.map((c) => (
+        <button key={c.id} type="button" style={{ '--cc': c.accent } as React.CSSProperties} className={'gx-tile' + (c.id === catId ? ' is-on' : '')} aria-pressed={c.id === catId} onClick={() => { useStore.getState().setContent({ categoryId: c.id }); onPick() }}>
+          <CatDot cat={c} size={32} />
+          <span className="gx-tile-txt"><CatName cat={c} /></span>
+          {c.id === catId && <Icon name="check" size={16} />}
+        </button>
       ))}
     </div>
   )
 }
 
-export function CategorySheet() {
-  const catId = useStore((s) => s.doc.content.categoryId)
+function SizeTiles({ onPick }: { onPick: () => void }) {
+  const format = useStore((s) => s.format)
   return (
-    <Sheet id="gx-category" title="Category">
-      <p className="gx-help">10 desks. The colour, chip and icon on the banner follow the category.</p>
-      <div className="gx-cats">
-        {CATEGORIES.map((c) => (
-          <button key={c.id} type="button" className={'gx-cat' + (c.id === catId ? ' is-on' : '')} aria-pressed={c.id === catId} onClick={() => { useStore.getState().setContent({ categoryId: c.id }); useUi.getState().closeSheet('gx-category') }}>
-            <span className="gx-cat-dot" style={{ background: c.accent }} aria-hidden />
-            <span className="gx-cat-text"><b>{c.name}</b><small>{c.id}</small></span>
-            {c.id === catId && <Icon name="check" size={18} />}
+    <div className="gx-grid">
+      {FORMAT_LIST.map((f) => {
+        const long = Math.max(f.w, f.h)
+        return (
+          <button key={f.id} type="button" className={'gx-tile gx-tile-size' + (f.id === format ? ' is-on' : '')} aria-pressed={f.id === format} onClick={() => { useStore.getState().setFormat(f.id); onPick() }}>
+            <span className="gx-tile-glyph" aria-hidden><i style={{ width: Math.round((f.w / long) * 30), height: Math.round((f.h / long) * 30) }} /></span>
+            <span className="gx-tile-txt"><b>{f.name}</b><small><b>{f.ratio}</b>{f.w}×{f.h}</small></span>
+            {f.id === format && <Icon name="check" size={16} />}
           </button>
-        ))}
-      </div>
+        )
+      })}
+    </div>
+  )
+}
+
+export function FormatStrip() {
+  const format = useStore((s) => s.format)
+  const catId = useStore((s) => s.doc.content.categoryId)
+  const cat = getCategory(catId)
+  const f = FORMAT_LIST.find((x) => x.id === format) ?? FORMAT_LIST[0]
+  const [drop, setDrop] = useState<null | 'cat' | 'size'>(null)
+  const close = () => setDrop(null)
+  useBackLayer(drop !== null, close, 'menu')
+  const rowRef = useRef<HTMLDivElement>(null)
+  const top = rowRef.current ? rowRef.current.getBoundingClientRect().bottom + 6 : 0
+  return (
+    <div className="gx-pick" role="toolbar" aria-label="Category and banner size" ref={rowRef}>
+      <button type="button" className={'gx-drop gx-drop-cat' + (drop === 'cat' ? ' is-open' : '')} style={{ '--cc': cat.accent } as React.CSSProperties} aria-haspopup="listbox" aria-expanded={drop === 'cat'} onClick={() => setDrop(drop === 'cat' ? null : 'cat')} aria-label={`Category: ${cat.name}. Change`}>
+        <CatDot cat={cat} size={22} />
+        <CatName cat={cat} className="gx-drop-name" />
+        <Icon name="chevDown" size={18} />
+      </button>
+      <button type="button" className={'gx-drop gx-drop-size' + (drop === 'size' ? ' is-open' : '')} aria-haspopup="listbox" aria-expanded={drop === 'size'} onClick={() => setDrop(drop === 'size' ? null : 'size')} aria-label={`Size: ${f.name}, ${f.ratio}. Change`}>
+        <FormatMark id={f.id} size={20} />
+        <b>{f.ratio}</b>
+        <Icon name="chevDown" size={18} />
+      </button>
+      {drop && createPortal(
+        <div className="gx-dropscrim" onClick={close}>
+          <div className="gx-droppanel" role="listbox" aria-label={drop === 'cat' ? 'Category' : 'Size'} style={{ top }} onClick={(e) => e.stopPropagation()}>
+            {drop === 'cat' ? <CatTiles onPick={close} /> : <SizeTiles onPick={close} />}
+          </div>
+        </div>,
+        document.body,
+      )}
+    </div>
+  )
+}
+
+export function CategorySheet() {
+  return (
+    <Sheet id="gx-category" title="Category" initial="half">
+      <CatTiles onPick={() => useUi.getState().closeSheet('gx-category')} />
+    </Sheet>
+  )
+}
+
+export function SizeSheet() {
+  return (
+    <Sheet id="gx-size" title="Size" initial="half">
+      <SizeTiles onPick={() => useUi.getState().closeSheet('gx-size')} />
     </Sheet>
   )
 }

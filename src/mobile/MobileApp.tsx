@@ -13,17 +13,26 @@ import { parseShared } from '../shareIntent'
 import LockScreen from '../native/LockScreen'
 import { confirmAsk, handleBack, snack, unsavedReason, useBackLayer, useSizeClass, watchKeyboard } from './shell/core'
 import { useNav, type Route } from './shell/nav'
+import { useDesk } from './editorial/deskStore'
+import type { HomeTab } from './editorial/deskStore'
 import { useIncoming } from './shell/incoming'
 import { NavBar, UiHost, type NavItem } from './shell/ui'
 import { UpdateDialog } from './shell/UpdateDialog'
+import AccountSheet from './shell/AccountSheet'
+import { startMobileCopy } from './shell/mobileCopy'
+import { startSliderReset } from './shell/sliderReset'
 import HomeScreen from './home/HomeScreen'
 import EditorialScreen from './editorial/EditorialScreen'
 import GraphicsScreen from './graphics/GraphicsScreen'
 import SettingsScreen from './settings/SettingsScreen'
+import './polish.css' // last: the polish layer wins ties over every screen's own CSS
 
+// Five destinations: the Editorial desk's three lists are first-class (one tap each), Graphics keeps its own workspace.
 const NAV: NavItem[] = [
   { id: 'home', label: 'Home', icon: 'home' },
-  { id: 'editorial', label: 'Editorial', icon: 'newspaper' },
+  { id: 'ed-stories', label: 'Stories', icon: 'newspaper' },
+  { id: 'ed-published', label: 'Published', icon: 'globe' },
+  { id: 'ed-wire', label: 'Wire', icon: 'inbox' },
   { id: 'graphics', label: 'Graphics', icon: 'layers' },
 ]
 
@@ -34,8 +43,18 @@ export default function MobileApp() {
   const settingsOpen = useNav((s) => s.settingsOpen)
   const closeSettings = useNav((s) => s.closeSettings)
   const rail = size !== 'compact'
+  // a story open on the Editorial desk, and the Graphics workspace, are detail screens: the bottom bar steps aside (Back and the system gesture return)
+  const deskView = useDesk((s) => s.view)
+  const homeTab = useDesk((s) => s.homeTab)
+  const navValue = route === 'editorial' ? 'ed-' + homeTab : route
+  const onNav = (id: string) => {
+    if (id.startsWith('ed-')) { useDesk.getState().set({ homeTab: id.slice(3) as HomeTab, view: 'home', writing: false }); go('editorial') } else go(id as Route)
+  }
+  const detail = (route === 'editorial' && deskView !== 'home') || route === 'graphics'
 
   useEffect(() => watchKeyboard(), [])
+  useEffect(() => startSliderReset(), [])
+  useEffect(() => startMobileCopy(), []) // the PC panels' help text, in phone wording
   useBackLayer(route !== 'home', () => go('home'), 'screen')
   useBackLayer(settingsOpen, closeSettings, 'dialog')
 
@@ -91,15 +110,16 @@ export default function MobileApp() {
   }, [])
 
   return (
-    <div className={`m-app${rail ? ' has-rail' : ''}`} data-size={size}>
-      {rail && <NavBar rail items={NAV} value={route} onChange={(id) => go(id as Route)} />}
+    <div className={`m-app${rail ? ' has-rail' : ''}${detail && !rail ? ' m-nav-off' : ''}`} data-size={size}>
+      {rail && <NavBar rail items={NAV} value={navValue} onChange={onNav} />}
       <div className="m-screen m-screens">
         <div className="m-screen" hidden={route !== 'home'}><HomeScreen active={route === 'home'} /></div>
         <div className="m-screen" hidden={route !== 'editorial'}><EditorialScreen active={route === 'editorial'} /></div>
         <div className="m-screen" hidden={route !== 'graphics'}><GraphicsScreen active={route === 'graphics'} /></div>
       </div>
-      {!rail && <NavBar items={NAV} value={route} onChange={(id) => go(id as Route)} />}
+      {!rail && <NavBar items={NAV} value={navValue} onChange={onNav} />}
       {settingsOpen && <SettingsScreen onClose={closeSettings} />}
+      <AccountSheet />
       <UiHost />
       <LockScreen />
       <UpdateDialog />

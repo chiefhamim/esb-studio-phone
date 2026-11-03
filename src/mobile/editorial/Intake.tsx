@@ -9,6 +9,7 @@ import { platform } from '../../platform/platform'
 import { getLinkFetchMode } from '../../platform/fetchGuarded'
 import { Banner, Button, IconBtn, Icon, Segmented, TopBar } from '../shell/ui'
 import { useNav } from '../shell/nav'
+import { FileTypeIcon, FileTypePair } from '../shell/marks'
 import { useOnline } from '../shell/core'
 import { cancelJob, canCancel, fetchLink, readClipboardText, readFile, translatePasted, useDesk } from './deskStore'
 import type { IntakeTab } from './deskStore'
@@ -57,7 +58,7 @@ export function Intake() {
           ) : (
             <section className="me-stack">
               <div className={'me-doc' + (d.doc ? ' has' : '')}>
-                <span className="me-doc-ic" aria-hidden><Icon name={d.doc ? 'check' : 'filePlus'} size={22} /></span>
+                <span className="me-doc-ic" aria-hidden>{d.doc ? <FileTypeIcon kind={d.doc.kind === 'pdf' ? 'pdf' : 'docx'} size={44} /> : <FileTypePair size={44} />}</span>
                 <div className="me-doc-t">
                   {d.busy === 'doc' ? <><b>{d.status || 'Reading the file…'}</b><span>This takes a few seconds</span></>
                     : d.doc ? <><b className="me-break">{d.doc.name}</b><span>{d.doc.kind === 'pdf' ? `${d.doc.pages} ${d.doc.pages === 1 ? 'page' : 'pages'} · ` : ''}{fmtFileSize(d.doc.size)} · {d.doc.words.toLocaleString()} words</span></>

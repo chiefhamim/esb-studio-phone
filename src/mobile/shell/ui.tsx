@@ -51,8 +51,10 @@ export function TopBar({ title, sub, leading, actions, overflow }: { title: Reac
 // ---------------------------------------------------------------- navigation: bottom bar (compact) / rail (medium+)
 export interface NavItem { id: string; label: string; icon: IconName; badge?: string | number }
 export function NavBar({ items, value, onChange, rail }: { items: NavItem[]; value: string; onChange: (id: string) => void; rail?: boolean }) {
+  const idx = Math.max(0, items.findIndex((it) => it.id === value))
   return (
-    <nav className={rail ? 'm-rail' : 'm-navbar'} aria-label="Main">
+    <nav className={rail ? 'm-rail' : 'm-navbar'} aria-label="Main" style={{ '--i': idx, '--n': items.length } as React.CSSProperties}>
+      {!rail && <span className="m-nav-glide" aria-hidden />}
       {items.map((it) => (
         <button key={it.id} type="button" className={`m-nav-item${value === it.id ? ' is-on' : ''}`} aria-current={value === it.id ? 'page' : undefined} onClick={() => onChange(it.id)}>
           <span className="m-nav-pill"><Icon name={it.icon} size={22} />{it.badge != null && <span className="m-badge">{it.badge}</span>}</span>
@@ -209,12 +211,12 @@ export function UiHost() {
 }
 
 // ---------------------------------------------------------------- small pieces
-export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: string; icon?: IconName }[]; onChange: (v: T) => void; label: string }) {
+export function Segmented<T extends string>({ value, options, onChange, label, compact }: { value: T; options: { value: T; label: string; icon?: IconName; node?: ReactNode }[]; onChange: (v: T) => void; label: string; compact?: boolean }) {
   return (
-    <div className="m-seg" role="radiogroup" aria-label={label}>
+    <div className={'m-seg' + (compact ? ' m-seg-compact' : '')} role="radiogroup" aria-label={label} style={{ '--i': Math.max(0, options.findIndex((o) => o.value === value)), '--n': options.length } as React.CSSProperties}>
       {options.map((o) => (
         <button key={o.value} type="button" role="radio" aria-checked={value === o.value} className={`m-seg-item${value === o.value ? ' is-on' : ''}`} onClick={() => onChange(o.value)}>
-          {value === o.value && <Icon name="check" size={16} />}{o.icon && value !== o.value && <Icon name={o.icon} size={16} />}<span>{o.label}</span>
+          {compact ? (o.node ?? (o.icon && <Icon name={o.icon} size={20} />)) : <>{value === o.value && <Icon name="check" size={16} />}{o.icon && value !== o.value && <Icon name={o.icon} size={16} />}</>}<span>{o.label}</span>
         </button>
       ))}
     </div>
@@ -254,12 +256,12 @@ export function Section({ title, children, trail, id }: { title?: ReactNode; chi
 }
 
 /** Collapsible group (Inspector: Position · Size · Type …): common open, advanced one tap away. */
-export function Collapse({ title, children, defaultOpen = false, sub }: { title: string; children: ReactNode; defaultOpen?: boolean; sub?: ReactNode }) {
+export function Collapse({ title, children, defaultOpen = false, sub, lead }: { title: ReactNode; children: ReactNode; defaultOpen?: boolean; sub?: ReactNode; lead?: ReactNode }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
     <section className={`m-collapse${open ? ' is-open' : ''}`}>
       <button type="button" className="m-collapse-head" aria-expanded={open} onClick={() => setOpen(!open)}>
-        <span className="m-collapse-title">{title}{sub && <small>{sub}</small>}</span><Icon name={open ? 'chevUp' : 'chevDown'} size={20} />
+        {lead && <span className="m-collapse-lead">{lead}</span>}<span className="m-collapse-title">{title}{sub && <small>{sub}</small>}</span><Icon name={open ? 'chevUp' : 'chevDown'} size={20} />
       </button>
       {open && <div className="m-collapse-body">{children}</div>}
     </section>
@@ -273,4 +275,36 @@ export function Banner({ tone = 'info', icon, children, action }: { tone?: 'info
 /** "Planned" marker for anything not built yet (never a fake working control). */
 export function Planned({ children }: { children?: ReactNode }) {
   return <span className="m-planned">Planned{children ? <> · {children}</> : null}</span>
+}
+
+// ---------------------------------------------------------------- dropdown: a labelled pill that opens a list under itself (never the platform's select)
+export function Dropdown<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: { value: T; label: string; hint?: string; lead?: ReactNode }[]; onChange: (v: T) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLButtonElement>(null)
+  useBackLayer(open, () => setOpen(false), 'menu')
+  const cur = options.find((o) => o.value === value)
+  const r = open && ref.current ? ref.current.getBoundingClientRect() : null
+  return (
+    <>
+      <button ref={ref} type="button" className={'dd' + (open ? ' is-open' : '')} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(!open)}>
+        {cur?.lead && <span className="dd-lead" aria-hidden>{cur.lead}</span>}
+        <span className="dd-txt"><small>{label}</small><b>{cur?.label ?? value}</b></span>
+        <Icon name="chevDown" size={18} />
+      </button>
+      {open && r && createPortal(
+        <div className="gx-dropscrim" onClick={() => setOpen(false)}>
+          <div className="gx-droppanel dd-panel" role="listbox" aria-label={label} style={{ top: r.bottom + 6 }} onClick={(e) => e.stopPropagation()}>
+            {options.map((o) => (
+              <button key={o.value} type="button" role="option" aria-selected={o.value === value} className={'dd-opt' + (o.value === value ? ' is-on' : '')} onClick={() => { onChange(o.value); setOpen(false) }}>
+                <span className="dd-opt-c">{o.value === value && <Icon name="check" size={18} />}</span>
+                <span className="dd-opt-l">{o.lead && <span className="dd-lead" aria-hidden>{o.lead}</span>}{o.label}</span>
+                {o.hint && <span className="dd-opt-h">{o.hint}</span>}
+              </button>
+            ))}
+          </div>
+        </div>,
+        document.body,
+      )}
+    </>
+  )
 }

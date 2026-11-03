@@ -3,11 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStoryQueue, storyTitle, STATUS_LABEL, type StoryItem } from '../../pc/editorial/storyQueue'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
-import { fmtTime } from '../../pc/ui/time'
+import { aiFor, loadAiSettings, providerMeta } from '../../pc/editorial/aiProviders'
 import type { ScreenProps } from '../shell/nav'
 import { useNav } from '../shell/nav'
+import { useDesk } from '../editorial/deskStore'
 import { confirmAsk, snack, useOnline } from '../shell/core'
-import { Button, Empty, Icon, IconBtn, Menu, Row, TopBar } from '../shell/ui'
+import { Button, Icon, Menu, Row } from '../shell/ui'
+import { openAccount } from '../shell/AccountSheet'
+import { ProviderMark } from '../shell/marks'
 import './home.css'
 
 function ago(t: number): string {
@@ -88,65 +91,85 @@ export default function HomeScreen({ active }: ScreenProps) {
   const checkConnection = useEditorialStore((s) => s.checkConnection)
   const online = useOnline()
   const nav = useNav()
-  const recent = useMemo(() => [...stories].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 8), [stories])
+  const recent = useMemo(() => [...stories].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 4), [stories])
   const current = stories.find((s) => s.id === activeId) ?? null
 
   useEffect(() => { if (active) void checkConnection() }, [active, checkConnection])
 
   const open = (id: string) => { useStoryQueue.getState().switchTo(id); nav.intendEditorial('open') }
-  const [accountAt, setAccountAt] = useState<HTMLElement | null>(null)
-  const status = !online ? 'Offline · saved on the phone' : !session ? 'Not signed in' : site.connected ? (session.name || session.email) : site.sessionEnded ? 'Sign in again' : 'Site not reachable'
-  const dot = !online ? 'off' : session && site.connected ? 'ok' : 'warn'
+  const name = session ? (session.name || session.email).split(/[\s@]/)[0] : ''
+  const siteState = !online ? { dot: 'off', text: 'Offline' } : !session ? { dot: 'warn', text: 'Not signed in' } : site.connected ? { dot: 'ok', text: 'Site connected' } : site.sessionEnded ? { dot: 'warn', text: 'Sign in again' } : { dot: 'warn', text: 'Site unreachable' }
+  const ai = loadAiSettings()
+  const aiOk = !ai.paused && !!aiFor('main')
+  const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+  const toEditorial = () => { useDesk.getState().set({ homeTab: 'stories', view: 'home' }); nav.go('editorial') }
 
   return (
-    <>
-      <TopBar
-        leading={<img className="m-brand" src="./brand/esb-logo.png" alt="ESB Power Line" />}
-        title={<span className="m-sr">ESB Studio</span>}
-        sub={<button type="button" className="m-status m-hit-pad" onClick={(e) => setAccountAt(e.currentTarget)} aria-haspopup="menu"><span className={`m-dot m-dot-${dot}`} aria-hidden />{status}</button>}
-        actions={<>
-          <button type="button" className="m-account" aria-label={session ? `Account: ${session.name || session.email}` : 'Account'} aria-haspopup="menu" onClick={(e) => setAccountAt(e.currentTarget)}>
-            {session ? <span className="m-account-badge">{(session.name || session.email).slice(0, 1).toUpperCase()}</span> : <Icon name="user" size={22} />}
-          </button>
-          <IconBtn icon="sliders" label="Settings" onClick={() => nav.openSettings()} />
-        </>}
-      />
-      <div className="m-scroll">
-        <div className="m-wrap m-home">
-          <section className="m-home-start" aria-label="Start">
-            <button type="button" className="m-start m-start-primary" onClick={() => nav.intendEditorial('paste-link')}>
-              <Icon name="link" size={22} /><span><strong>New story</strong><small>Paste a link, text or a PDF</small></span>
-            </button>
-            <button type="button" className="m-start" onClick={() => nav.intendGraphics('new')}>
-              <Icon name="image" size={22} /><span><strong>New graphic</strong><small>Banner for all formats</small></span>
-            </button>
+    <div className="hm-shell">
+      <div className="hm-bg" aria-hidden />
+      <header className="hm-bar">
+        <span className="hm-today">{today}</span>
+        <button type="button" className="hm-me" aria-label={session ? `Account: ${session.name || session.email}` : 'Account'} onClick={openAccount}>
+          {session ? <span className="hm-me-badge">{name.slice(0, 1).toUpperCase()}</span> : <Icon name="user" size={22} />}
+        </button>
+      </header>
+      <div className="m-scroll hm-scroll">
+        <div className="m-wrap hm">
+          <section className="hm-hero" aria-label="ESB Power Line Ai Studio">
+            <h1 className="hm-title" aria-label="ESB Power Line Ai Studio">
+              <img className="hm-mark" src="./brand/esb-mark.png" alt="" draggable={false} />
+              <span className="hm-stick" aria-hidden />
+              <span className="hm-name"><span className="hm-ai">Ai</span> <span className="hm-studio">Studio</span></span>
+            </h1>
+            <p className="hm-tag">Where stories are written, imagination is designed and reality is cut</p>
+            <div className="hm-chips">
+              <button type="button" className={`hm-chip hm-chip-${siteState.dot === 'ok' ? 'ok' : 'bad'}`} onClick={openAccount}><span className={`m-dot m-dot-${siteState.dot}`} aria-hidden />{siteState.text}</button>
+              <button type="button" className={`hm-chip hm-chip-ai${aiOk ? ' is-ok' : ''}`} style={aiOk ? ({ '--pc': providerMeta(ai.provider).color } as React.CSSProperties) : undefined} onClick={() => nav.openSettings('ai')}>{aiOk ? <ProviderMark id={ai.provider} size={16} /> : <Icon name="sparkle" size={15} />}{ai.paused ? 'AI paused' : aiOk ? providerMeta(ai.provider).name : 'AI needs a key'}</button>
+            </div>
           </section>
+
+          <nav className="hm-launch hm-glass" aria-label="Workspaces">
+            <button type="button" className="hm-cell" onClick={toEditorial}>
+              <span className="hm-cell-ico"><Icon name="newspaper" size={22} /></span>
+              <span className="hm-cell-name">Editorial</span>
+              <span className="hm-cell-note">Link in, English story out</span>
+              <Icon name="chevRight" size={20} />
+            </button>
+            <button type="button" className="hm-cell" onClick={() => nav.go('graphics')}>
+              <span className="hm-cell-ico"><Icon name="layers" size={22} /></span>
+              <span className="hm-cell-name">Graphics</span>
+              <span className="hm-cell-note">Banners and cards</span>
+              <Icon name="chevRight" size={20} />
+            </button>
+          </nav>
+
           {current && (
-            <Button kind="tonal" icon="edit" wide className="m-continue" onClick={() => nav.intendEditorial('open')}>
-              Continue: {phoneStoryTitle(current)}
-            </Button>
+            <button type="button" className="hm-continue hm-glass" onClick={() => nav.intendEditorial('open')}>
+              <span className="hm-continue-ico"><Icon name="edit" size={20} /></span>
+              <span className="hm-continue-txt"><small>Continue where you left off</small><strong lang={/[ঀ-৿]/.test(phoneStoryTitle(current)) ? 'bn' : undefined}>{phoneStoryTitle(current)}</strong></span>
+              <Icon name="chevRight" size={20} />
+            </button>
           )}
-          <section className="m-section" aria-labelledby="home-recent">
-            <header className="m-section-head">
-              <h2 id="home-recent">Recent stories</h2>
-              {stories.length > 0 && <Button kind="text" onClick={() => nav.go('editorial')}>All {stories.length}</Button>}
+
+          <section className="hm-sec" aria-labelledby="home-recent">
+            <header className="hm-sech">
+              <h2 className="hm-h" id="home-recent">Recent stories</h2>
+              {stories.length > 0 && <button type="button" className="hm-link" onClick={toEditorial}>See all {stories.length}</button>}
             </header>
             {recent.length === 0
-              ? <Empty icon="newspaper" title="No stories yet" body="Start with a link from any Bengali or English news site." />
-              : <div className="m-list">{recent.map((s) => <StoryRow key={s.id} s={s} active={s.id === activeId} onOpen={() => open(s.id)} />)}</div>}
+              ? (
+                <div className="hm-empty hm-glass">
+                  <span className="hm-empty-ico"><Icon name="newspaper" size={26} /></span>
+                  <h3>No stories yet</h3>
+                  <p>Paste a link from any Bengali or English news site and it becomes an English story, ready for review.</p>
+                  <Button icon="link" onClick={() => nav.intendEditorial('paste-link')}>Paste a news link</Button>
+                </div>
+              )
+              : <div className="m-list hm-glass">{recent.map((s) => <StoryRow key={s.id} s={s} active={s.id === activeId} onOpen={() => open(s.id)} />)}</div>}
           </section>
-          {site.checkedAt && <p className="m-home-foot">Site checked {fmtTime(site.checkedAt)}</p>}
+
         </div>
       </div>
-      {accountAt && <Menu anchor={accountAt} onClose={() => setAccountAt(null)} items={[
-        session
-          ? { label: session.name || session.email, hint: `${session.email}${session.role ? ' · ' + session.role : ''} · ${site.connected ? 'connected' : 'not connected'}`, icon: 'user', onClick: () => nav.openSettings('site') }
-          : { label: 'Sign in to esbpowerline.com', hint: 'Save drafts and publish from this phone', icon: 'user', onClick: () => nav.openSettings('site') },
-        { label: 'Check the site connection', icon: 'refresh', onClick: () => { void checkConnection().then(() => snack(useEditorialStore.getState().siteStatus.connected ? 'Connected to esbpowerline.com' : 'esbpowerline.com is not reachable')) } },
-        { label: 'AI providers', icon: 'sparkle', onClick: () => nav.openSettings('ai'), hint: 'Keys and models' },
-        { divider: true, label: '', onClick: () => {} },
-        { label: 'Settings', icon: 'sliders', onClick: () => nav.openSettings() },
-      ]} />}
-    </>
+    </div>
   )
 }

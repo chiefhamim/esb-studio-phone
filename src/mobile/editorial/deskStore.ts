@@ -391,13 +391,13 @@ export async function aiFixSocial() {
 
 // ---------------------------------------------------------------- stories
 export function openStory(id: string) {
-  if (desk().busy === 'fetch' || desk().busy === 'open') { snack('Wait for the import to finish first'); return }
+  if (desk().busy) { snack('Wait for the running job to finish, or cancel it, first'); return }
   useStoryQueue.getState().switchTo(id)
   useDesk.setState({ view: 'story', tab: 'story', notice: null, undo: null, seoFixNote: null, error: null, bodyMode: 'edit' })
 }
 
 export function newStory(to: View = 'story') {
-  if (desk().busy === 'fetch' || desk().busy === 'open') { snack('Wait for the import to finish first'); return }
+  if (desk().busy) { snack('Wait for the running job to finish, or cancel it, first'); return }
   useStoryQueue.getState().newStory()
   if (ed().bannerLink) useStore.getState().newBanner(true)
   useDesk.setState({ view: to, tab: 'story', intakeTab: 'link', url: '', raw: '', doc: null, notice: null, undo: null, seoFixNote: null, error: null, bodyMode: 'edit' })

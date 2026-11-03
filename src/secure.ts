@@ -9,9 +9,11 @@ export type SecretName = 'gemini-key' | 'claude-key' | 'openai-key' | 'site-sess
 const mem = new Map<string, string>()
 const native = () => Capacitor.isNativePlatform()
 
+/** The secret, or null when there is none. A Keystore that cannot be READ throws: "unreadable" must never look like "absent",
+ *  or a migration would overwrite the editor's real settings and a later save would replace a value that was never lost. */
 export async function getSecret(name: SecretName): Promise<string | null> {
   if (!native()) return mem.get(name) ?? null
-  const v = await SecureStorage.get(name, false, false).catch(() => null)
+  const v = await SecureStorage.get(name, false, false)
   return typeof v === 'string' ? v : null
 }
 
@@ -26,7 +28,7 @@ export async function deleteSecret(name: SecretName): Promise<void> {
 }
 
 export async function hasSecret(name: SecretName): Promise<boolean> {
-  return (await getSecret(name)) !== null
+  return (await getSecret(name).catch(() => null)) !== null
 }
 
 /** Only for tests: forget everything held in memory. */

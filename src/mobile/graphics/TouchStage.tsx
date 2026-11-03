@@ -9,10 +9,30 @@ import { Stage } from '../../pc/components/Stage'
 import type { Assets } from '../../pc/core/render'
 import { slotRects } from '../../pc/core/render'
 import type { PhotosEl } from '../../pc/core/types'
+import { FORMATS } from '../../pc/core/tokens'
 import { imageAssets, useStore } from '../../pc/store'
 import { boxAt, dist, mid, pinchScale, PHOTO_ZOOM_MAX, PHOTO_ZOOM_MIN, toDesign, TouchSet } from './pinch'
 import { origin, zoomCanvas } from './zoom'
 import type { Pt } from './pinch'
+
+// The PC Stage sizes its bitmap at scale x devicePixelRatio. On this phone (3.5) that is 18 megapixels at 100 % zoom and 40
+// at 150 %, reallocated on every zoom step: a 430 ms hitch after zooming back out, and a pinch that crawls. The Stage reads
+// window.devicePixelRatio on each draw, so give it a scale-aware value instead (src/pc is vendored and stays untouched):
+// the bitmap never exceeds MAX_K canvas pixels per banner pixel (about 4 MP for a 1080x1350 banner), and at the fit zoom,
+// where scale x dpr is already below that, nothing changes.
+const MAX_K = 1.7
+function capStageDpr(): () => void {
+  const own = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio')
+  const real = () => (own?.get ? (own.get.call(window) as number) : ((own?.value as number) ?? 1))
+  // the store's scale lags one render behind the Stage's draw; the canvas's own layout width is already the new size
+  const scaleNow = () => {
+    const c = document.querySelector<HTMLCanvasElement>('.gx-canvas canvas.stage-canvas')
+    const W = FORMATS[useStore.getState().format]?.w || 1080
+    return c && c.offsetWidth > 0 ? c.offsetWidth / W : useStore.getState().scale || 1
+  }
+  Object.defineProperty(window, 'devicePixelRatio', { configurable: true, get: () => Math.min(real(), MAX_K / Math.max(0.05, scaleNow())) })
+  return () => { if (own) Object.defineProperty(window, 'devicePixelRatio', own); else delete (window as unknown as { devicePixelRatio?: number }).devicePixelRatio }
+}
 
 type Gesture =
   | { mode: 'stage'; m0: Pt; o0: Pt; s0: number; d0: number }
@@ -20,6 +40,8 @@ type Gesture =
 
 export function TouchStage({ base }: { base: Assets }) {
   const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => capStageDpr(), [])
 
   useEffect(() => {
     const root = ref.current
@@ -30,6 +52,7 @@ export function TouchStage({ base }: { base: Assets }) {
     let at: { doc: unknown; past: number } | null = null
     let synthetic = false
     let raf = 0
+    let pending: { s: number; m: Pt } | null = null
     const pt = (e: PointerEvent): Pt => ({ x: e.clientX, y: e.clientY })
 
     const begin = () => {
@@ -63,7 +86,23 @@ export function TouchStage({ base }: { base: Assets }) {
         useStore.getState().setSlot(g.slot, { zoom: pinchScale(g.z0, g.d0, d, PHOTO_ZOOM_MIN, PHOTO_ZOOM_MAX) }, true)
         return
       }
-      zoomCanvas(pinchScale(g.s0, g.d0, d), mid(a, b), g)
+      // live: move the canvas with a GPU transform only; the real zoom (one re-render) happens when the fingers lift
+      const s1 = pinchScale(g.s0, g.d0, d), m = mid(a, b)
+      const wrap = root.querySelector<HTMLElement>('.stage-wrap')
+      if (wrap) {
+        const r = s1 / g.s0
+        wrap.style.transformOrigin = '0 0'
+        wrap.style.willChange = 'transform'
+        wrap.style.transform = `translate3d(${m.x - g.o0.x - r * (g.m0.x - g.o0.x)}px, ${m.y - g.o0.y - r * (g.m0.y - g.o0.y)}px, 0) scale(${r})`
+      }
+      pending = { s: s1, m }
+    }
+    const commit = () => {
+      if (!g || g.mode !== 'stage') return
+      const wrap = root.querySelector<HTMLElement>('.stage-wrap')
+      if (wrap) { wrap.style.transform = ''; wrap.style.transformOrigin = ''; wrap.style.willChange = '' }
+      if (pending) zoomCanvas(pending.s, pending.m, g)
+      pending = null
     }
 
     const onDown = (e: PointerEvent) => {
@@ -100,7 +139,7 @@ export function TouchStage({ base }: { base: Assets }) {
       if (synthetic || e.pointerType !== 'touch') return
       const had = touches.up(e.pointerId)
       if (swallow && had) { e.stopPropagation(); e.preventDefault() }
-      if (touches.size < 2) { if (raf) { cancelAnimationFrame(raf); apply() } g = null }
+      if (touches.size < 2) { if (raf) { cancelAnimationFrame(raf); apply() } commit(); g = null }
       if (touches.size === 0) { swallow = false; at = null }
     }
     const opts = { capture: true, passive: false } as const

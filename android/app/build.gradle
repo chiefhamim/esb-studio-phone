@@ -42,6 +42,9 @@ android {
         }
     }
     buildTypes {
+        debug {
+            applicationIdSuffix '.dev'   // installs beside the real app; live-reload build
+        }
         release {
             if (keystoreFile.exists()) signingConfig signingConfigs.release
             minifyEnabled false

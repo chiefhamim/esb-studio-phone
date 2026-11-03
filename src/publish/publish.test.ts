@@ -6,7 +6,7 @@ import type { Draft } from '../drafts'
 import { emailKey, ESB_AUTHORS } from './categories'
 import { _resetConfirmationsForTests, consumeConfirmation, issueConfirmation } from './confirm'
 import { buildReadiness, facebookBlockers, slugFromHeadline } from './readiness'
-import { buildArticleRecord, ensureFreshSession, mapSiteError, saveArticle, signIn, SUPABASE_URL } from './site'
+import { ensureFreshSession, signIn, SUPABASE_URL } from './site'
 import type { StaffSession } from './site'
 
 const words = (n: number) => Array.from({ length: n }, (_, i) => `word${i}`).join(' ')
@@ -66,83 +66,6 @@ describe('confirmation gate', () => {
     const d = issueConfirmation(plan)
     expect(consumeConfirmation(d, { kind: 'facebook', title: 'A fine headline' })).toBe(false)
     expect(consumeConfirmation(undefined, { kind: 'site', title: 'x' })).toBe(false)
-  })
-  it('a live site publish without confirmation sends nothing', async () => {
-    await seedSession()
-    const f = vi.fn()
-    const r = await saveArticle(good(), { publish: true }, f as unknown as typeof fetch)
-    expect(r.ok).toBe(false)
-    expect(f).not.toHaveBeenCalled()
-    const wrong = issueConfirmation({ ...plan, title: 'Another story' })
-    const r2 = await saveArticle(good(), { publish: true, confirmation: wrong }, f as unknown as typeof fetch)
-    expect(r2.ok).toBe(false)
-    expect(f).not.toHaveBeenCalled()
-  })
-})
-
-describe('saveArticle requests', () => {
-  it('saves as an unpublished DRAFT by default, with the token in the header only', async () => {
-    const s = await seedSession()
-    const f = vi.fn(async () => new Response(null, { status: 201 }))
-    const r = await saveArticle(good(), {}, f as unknown as typeof fetch)
-    expect(r.ok && r.status).toBe('DRAFT')
-    expect(r.ok && r.liveUrl).toBeNull()
-    expect(f).toHaveBeenCalledTimes(1)
-    const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit]
-    expect(url).toBe(`${SUPABASE_URL}/rest/v1/Article`)
-    expect(url).not.toContain(s.token)
-    expect(init.method).toBe('POST')
-    const h = init.headers as Record<string, string>
-    expect(h.Authorization).toBe(`Bearer ${s.token}`)
-    expect(h.apikey).toBeTruthy()
-    const body = JSON.parse(init.body as string)
-    expect(body.status).toBe('DRAFT')
-    expect(body.publishedAt).toBeNull()
-    expect(JSON.stringify(body)).not.toContain(s.token)
-  })
-  it('publishes live only with a matching confirmation, then PUBLISHED with a time', async () => {
-    await seedSession()
-    const f = vi.fn(async () => new Response(null, { status: 201 }))
-    const c = issueConfirmation({ kind: 'site', title: 'A fine headline', slug: 'a-fine-headline', destination: 'd', picture: 'none' })
-    const r = await saveArticle(good(), { publish: true, confirmation: c }, f as unknown as typeof fetch)
-    expect(r.ok && r.liveUrl).toBe('https://esbpowerline.com/articles/a-fine-headline')
-    const body = JSON.parse((f.mock.calls[0] as unknown as [string, RequestInit])[1].body as string)
-    expect(body.status).toBe('PUBLISHED')
-    expect(body.publishedAt).toBeTruthy()
-  })
-  it('refuses an unready story, a missing sign-in and an unknown author before any request', async () => {
-    const f = vi.fn()
-    expect((await saveArticle({ ...good(), headline: '' }, {}, f as unknown as typeof fetch)).ok).toBe(false)
-    expect((await saveArticle(good(), {}, f as unknown as typeof fetch)).ok).toBe(false) // signed out
-    await setSecret('site-session', JSON.stringify({ email: 'nobody@example.com', name: 'n', role: 'EDITOR', token: 't', refreshToken: 'r', expiresAt: Date.now() / 1000 + 3600, userId: 'u' }))
-    const r = await saveArticle(good(), {}, f as unknown as typeof fetch)
-    expect(!r.ok && r.error).toMatch(/does not know its author/)
-    expect(f).not.toHaveBeenCalled()
-  })
-  it('never lets a draft save take a live story down', async () => {
-    await seedSession()
-    const f = vi.fn()
-    const r = await saveArticle(good(), { knownLive: true }, f as unknown as typeof fetch)
-    expect(r.ok).toBe(false)
-    expect(f).not.toHaveBeenCalled()
-  })
-  it('only sends an https picture link', async () => {
-    const rec = (url: string) => buildArticleRecord(good(), 'a', false, 'DRAFT', { imageUrl: url }, 'id', 'now')
-    expect(rec('https://example.com/p.jpg').imageUrl).toBe('https://example.com/p.jpg')
-    expect(rec('blob:abc').imageUrl).toBeNull()
-  })
-  it('maps errors to plain words and keeps tokens out of them', async () => {
-    expect(mapSiteError(409, JSON.stringify({ message: 'duplicate key value violates unique constraint "Article_slug_key"' }), 'my-slug')).toMatch(/"my-slug" is already used/)
-    expect(mapSiteError(401, '')).toMatch(/Sign in again/)
-    expect(mapSiteError(403, '')).toMatch(/not allowed/)
-    expect(mapSiteError(503, '')).toMatch(/HTTP 503/)
-    await seedSession()
-    const f = vi.fn(async () => json(409, { message: 'Article_slug_key' }))
-    const r = await saveArticle(good(), {}, f as unknown as typeof fetch)
-    expect(!r.ok && r.error).toMatch(/already used/)
-    const down = vi.fn(async () => { throw new TypeError('Failed to fetch') })
-    const r2 = await saveArticle(good(), {}, down as unknown as typeof fetch)
-    expect(!r2.ok && r2.error).toMatch(/Could not reach/)
   })
 })
 

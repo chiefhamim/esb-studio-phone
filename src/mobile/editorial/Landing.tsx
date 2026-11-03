@@ -3,6 +3,9 @@
 // (open one to update it, never a duplicate) and the Wire inbox of followed feeds.
 import { useEffect, useMemo, useState } from 'react'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
+import { aiFor } from '../../pc/editorial/aiProviders'
+import { FileTypeIcon, ProviderMark } from '../shell/marks'
+import { CatDot, CatName, catOf } from '../shell/cat'
 import { useStoryQueue, storyTitle, STATUS_LABEL, STORY_STATUSES } from '../../pc/editorial/storyQueue'
 import type { StoryItem, StoryStatus } from '../../pc/editorial/storyQueue'
 import { CATEGORIES } from '../../pc/core/tokens'
@@ -10,11 +13,11 @@ import { fmtPublished } from '../../pc/editorial/fmtPublished'
 import { useWire, filterItems, relTime, sourceStatus, DEFAULT_INTERVAL } from '../../pc/editorial/wire'
 import type { LiveArticleSummary } from '../../pc/editorial/siteApi'
 import { getLinkFetchMode } from '../../platform/fetchGuarded'
-import { Banner, Button, Chip, Empty, ErrorState, IconBtn, Icon, MenuButton, Row, Segmented, Sheet, Skeleton, TopBar } from '../shell/ui'
+import { Banner, Button, Chip, Empty, ErrorState, IconBtn, Icon, MenuButton, Row, Sheet, Skeleton, TopBar } from '../shell/ui'
 import type { MenuItem } from '../shell/ui'
 import { confirmAsk, snack, useOnline, useUi } from '../shell/core'
 import { useNav } from '../shell/nav'
-import { editLive, newStory, openStory, useDesk } from './deskStore'
+import { editLive, fetchLink, newStory, openStory, readClipboardText, useDesk } from './deskStore'
 import type { HomeTab } from './deskStore'
 import { ago, hasStoryContent, hostOf } from './useStory'
 
@@ -108,10 +111,20 @@ function PublishedList({ active }: { active: boolean }) {
         <IconBtn icon="refresh" label="Sync from esbpowerline.com" onClick={() => void load()} disabled={state === 'loading'} className={state === 'loading' ? 'me-spin' : ''} />
       </div>
       <div className="me-list">
-        {shown.slice(0, 60).map((a) => (
-          <Row key={a.slug || a.link} tall lead={<Thumb src={a.imageUrl} cat={a.category} />} title={a.title} meta={<span>{a.category} · {fmtPublished(a.publishedAt)}</span>}
-            onClick={() => { if (!busy) void open(a) }} trail={busy === 'open' ? <span className="m-spin" aria-label="Opening" /> : <Icon name="edit" size={20} />} />
-        ))}
+        {shown.slice(0, 60).map((a) => {
+          const c = catOf(a.category)
+          return (
+            <button key={a.slug || a.link} type="button" className="pb-row" onClick={() => { if (!busy) void open(a) }}>
+              <Thumb src={a.imageUrl} cat={a.category} />
+              <span className="pb-txt">
+                <b className="pb-title" lang={/[ঀ-৿]/.test(a.title) ? 'bn' : undefined}>{a.title}</b>
+                <span className="pb-meta">{c ? <><CatDot cat={c} size={20} /><CatName cat={c} /></> : <span>{a.category}</span>}</span>
+                <small className="pb-time">{fmtPublished(a.publishedAt)}</small>
+              </span>
+              {busy === 'open' ? <span className="m-spin" aria-label="Opening" /> : <Icon name="chevRight" size={20} />}
+            </button>
+          )
+        })}
         {!shown.length && <p className="me-hint">No published stories match.</p>}
       </div>
     </>
@@ -151,7 +164,17 @@ function WireList({ onUse }: { onUse: (url: string) => void }) {
       </div>
       {note && <p className="me-hint" role="status">{note}</p>}
       {!sources.length ? (
-        <Empty icon="inbox" title="No feed sources yet" body="Add the RSS, Atom or news sitemap address of a site you follow. New stories are listed here." action={<Button kind="tonal" icon="plus" onClick={() => useUi.getState().openSheet('ed-wire-sources')}>Add a source</Button>} />
+        <div className="wr-empty">
+          <span className="wr-empty-ico"><Icon name="inbox" size={28} /></span>
+          <h3>No feed sources yet</h3>
+          <p>Follow the sites you watch. New stories from them appear here.</p>
+          <ol className="wr-steps">
+            <li><i>1</i><span><b>Add a feed</b><small>RSS, Atom or a news sitemap address</small></span></li>
+            <li><i>2</i><span><b>Check now</b><small>New stories are listed, newest first</small></span></li>
+            <li><i>3</i><span><b>Tap a story</b><small>It opens as a new story to translate</small></span></li>
+          </ol>
+          <Button icon="plus" wide onClick={() => useUi.getState().openSheet('ed-wire-sources')}>Add a source</Button>
+        </div>
       ) : (
         <div className="me-list">
           {shown.map((it) => (
@@ -177,10 +200,11 @@ export function WireSourcesSheet() {
   const [err, setErr] = useState<string | null>(null)
   const now = Date.now()
   return (
-    <Sheet id="ed-wire-sources" title="Feed sources" initial="full">
+    <Sheet id="ed-wire-sources" title="Feed sources" initial="half">
       <div className="me-stack">
-        <label className="m-field"><span className="m-field-label">Feed address (RSS, Atom or sitemap)</span><input type="url" inputMode="url" className="m-input" value={url} onChange={(e) => { setUrl(e.target.value); setErr(null) }} spellCheck={false} /></label>
-        <label className="m-field"><span className="m-field-label">Name (optional)</span><input type="text" className="m-input" value={name} onChange={(e) => setName(e.target.value)} /></label>
+        <p className="wr-help">Paste the RSS, Atom or news-sitemap address of a site you follow. New stories from it are listed in Wire, ready to start a story from.</p>
+        <label className="m-field"><span className="m-field-label">Feed address (RSS, Atom or sitemap)</span><input type="url" inputMode="url" className="m-input" placeholder="https://site.com/feed.xml" value={url} onChange={(e) => { setUrl(e.target.value); setErr(null) }} spellCheck={false} /></label>
+        <label className="m-field"><span className="m-field-label">Name (optional)</span><input type="text" className="m-input" placeholder="e.g. the site's name" value={name} onChange={(e) => setName(e.target.value)} /></label>
         {err && <Banner tone="error">{err}</Banner>}
         <Button icon="plus" disabled={!url.trim()} onClick={() => { const r = add({ url, name, intervalMin: DEFAULT_INTERVAL }); if (!r.ok) setErr(r.error); else { setUrl(''); setName('') } }}>Add source</Button>
         {sources.map((s) => {
@@ -203,6 +227,55 @@ export function WireSourcesSheet() {
   )
 }
 
+const TAB_TITLE: Record<HomeTab, string> = { stories: 'Stories', published: 'Published', wire: 'Wire' }
+
+/** The PC's "Editorial Story Desk" launcher: paste a link (or a PDF / Word file), and the story is read, translated and laid out. */
+function Launcher() {
+  const set = useDesk((s) => s.set)
+  const ai = useEditorialStore((s) => s.ai)
+  const main = aiFor('main', ai)
+  const online = useOnline()
+  const [link, setLink] = useState('')
+  const go = () => { const u = link.trim(); if (!u) return; newStory('intake'); set({ intakeTab: 'link' }); void fetchLink(u) }
+  return (
+    <section className="me-desk" aria-label="Start a story" data-provider={main?.provider}>
+      <header className="me-desk-head">
+        <span className="me-desk-ic" aria-hidden><Icon name="newspaper" size={22} /></span>
+        <div><h2>Editorial Story Desk</h2><p>Translate Bengali reporting into newsroom English, check every figure against the source, and publish to esbpowerline.com.</p></div>
+      </header>
+      <label className="me-link">
+        <Icon name="link" size={18} />
+        <input type="url" inputMode="url" autoComplete="off" spellCheck={false} placeholder="Paste a news story link" aria-label="News story link" value={link} onChange={(e) => setLink(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') go() }} />
+        {link
+          ? <button type="button" className="me-link-x" aria-label="Clear the link" onClick={() => setLink('')}><Icon name="x" size={16} /></button>
+          : <button type="button" className="me-link-paste" onClick={async () => { const t = (await readClipboardText()).trim(); if (t) setLink(t) }}><Icon name="copy" size={15} /><span>Paste</span></button>}
+      </label>
+      <button type="button" className="me-go" disabled={!link.trim() || !online} onClick={go}>
+        {main ? <ProviderMark id={main.provider} size={18} /> : <Icon name="sparkle" size={18} />}<span>Fetch &amp; Process</span>
+      </button>
+      {!online && <p className="me-hint">You are offline. Links need the network; you can still paste text or a file.</p>}
+      <div className="me-or" aria-hidden><span>or start from</span></div>
+      <button type="button" className="me-rowbtn" onClick={() => { newStory('intake'); set({ intakeTab: 'text' }) }}>
+        <span className="me-file-icons" aria-hidden><FileTypeIcon kind="pdf" size={42} /><FileTypeIcon kind="docx" size={42} /></span>
+        <span className="me-rowbtn-txt"><b>PDF or Word file</b><small>or paste the text</small></span>
+        <Icon name="chevRight" size={20} />
+      </button>
+      <button type="button" className="me-rowbtn" onClick={() => newStory('story')}>
+        <span className="me-rowbtn-ico" aria-hidden><Icon name="plus" size={20} /></span>
+        <span className="me-rowbtn-txt"><b>Blank story</b><small>Write it from scratch</small></span>
+        <Icon name="chevRight" size={20} />
+      </button>
+      <ol className="me-pipe" aria-label="What happens next">
+        <li className="parse"><span className="pipe-top"><span className="pipe-ic"><Icon name="newspaper" size={16} /></span><i>01</i></span><b>Parse</b><small>Text &amp; photos are extracted</small></li>
+        <li className="pipe-arrow" aria-hidden><svg viewBox="0 0 36 24" width="34" height="23"><path d="M1 17C9 6 22 5 29 11" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeDasharray="2.4 3.6" /><path d="M0 0L-8-3.7Q-5.8 0-8 3.7Z" transform="translate(32 12.4) rotate(34)" fill="currentColor" strokeLinejoin="round" /></svg></li>
+        <li className="polish"><span className="pipe-top"><span className="pipe-ic"><Icon name="sparkle" size={16} /></span><i>02</i></span><b>Polish</b><small>AI refines it for the newsroom</small></li>
+        <li className="pipe-arrow" aria-hidden><svg viewBox="0 0 36 24" width="34" height="23"><path d="M1 12C7 18 11 5 18 8C23 10 26 12 29 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeDasharray="2.4 3.6" /><path d="M0 0L-8-3.7Q-5.8 0-8 3.7Z" transform="translate(32 9.4) rotate(-10)" fill="currentColor" strokeLinejoin="round" /></svg></li>
+        <li className="publish"><span className="pipe-top"><span className="pipe-ic"><Icon name="upload" size={16} /></span><i>03</i></span><b>Publish</b><small>Review &amp; publish right away</small></li>
+      </ol>
+    </section>
+  )
+}
+
 export function Landing({ active }: { active: boolean }) {
   const homeTab = useDesk((s) => s.homeTab)
   const set = useDesk((s) => s.set)
@@ -213,31 +286,26 @@ export function Landing({ active }: { active: boolean }) {
   const site = useEditorialStore((s) => s.siteStatus)
   const staff = useEditorialStore((s) => s.staffSession)
   const onDesk = hasStoryContent({ source, draft })
-  const startLink = () => { newStory('intake'); set({ intakeTab: 'link', focusUrlAt: Date.now() }) }
   return (
     <>
-      <TopBar title="Editorial" sub={<><i className={'me-dot' + (site.connected ? ' is-on' : '')} aria-hidden />{site.connected ? (staff ? `esbpowerline.com · ${staff.name || staff.email}` : 'esbpowerline.com · not signed in') : 'esbpowerline.com not reachable'}</>}
+      <TopBar title={TAB_TITLE[homeTab]} sub={<><i className={'me-dot' + (site.connected ? ' is-on' : '')} aria-hidden />{site.connected ? (staff ? `esbpowerline.com · ${staff.name || staff.email}` : 'esbpowerline.com · not signed in') : 'esbpowerline.com not reachable'}</>}
         actions={<IconBtn icon="activity" label="Activity" onClick={() => useUi.getState().openSheet('ed-activity')} />} overflow={homeMenu()} />
       <div className="m-scroll">
-        <div className="m-wrap me-home">
-          <section className="me-start" aria-label="Start a story">
-            <Button wide icon="link" onClick={startLink}>Paste a news link</Button>
-            <div className="me-start-row">
-              <Button kind="tonal" icon="edit" onClick={() => { newStory('intake'); set({ intakeTab: 'text' }) }}>Text or file</Button>
-              <Button kind="outlined" icon="plus" onClick={() => newStory('story')}>Blank story</Button>
-            </div>
-          </section>
-          {onDesk && (
-            <section className="me-continue" aria-label="Continue editing">
-              <h2 className="me-h2">Continue editing</h2>
-              <Row tall onClick={() => set({ view: 'story' })} lead={<Thumb src={source?.images?.[0]?.src} />} title={draft.headline.trim() || source?.title || 'Untitled story'}
-                meta={<>{story && <StatusChip s={story.status} />}<span>{hostOf(source?.url)}{story ? ` · ${ago(story.updatedAt)}` : ''}</span></>} trail={<Icon name="chevRight" size={20} />} />
-            </section>
+        <div className="m-wrap me-home" key={homeTab}>
+          {homeTab === 'stories' && (
+            <>
+              <Launcher />
+              {onDesk && (
+                <section className="me-continue" aria-label="Continue editing">
+                  <h2 className="me-h2">Continue editing</h2>
+                  <Row tall onClick={() => set({ view: 'story' })} lead={<Thumb src={source?.images?.[0]?.src} />} title={draft.headline.trim() || source?.title || 'Untitled story'}
+                    meta={<>{story && <StatusChip s={story.status} />}<span>{hostOf(source?.url)}{story ? ` · ${ago(story.updatedAt)}` : ''}</span></>} trail={<Icon name="chevRight" size={20} />} />
+                </section>
+              )}
+              <h2 className="me-h2">Continue a story</h2>
+              <StoriesList key={activeId ?? 'none'} />
+            </>
           )}
-          <div className="me-hometabs">
-            <Segmented<HomeTab> label="Lists" value={homeTab} onChange={(v) => set({ homeTab: v })} options={[{ value: 'stories', label: 'Stories' }, { value: 'published', label: 'Published' }, { value: 'wire', label: 'Wire' }]} />
-          </div>
-          {homeTab === 'stories' && <StoriesList key={activeId ?? 'none'} />}
           {homeTab === 'published' && <PublishedList active={active && homeTab === 'published'} />}
           {homeTab === 'wire' && <WireList onUse={(u) => { newStory('intake'); set({ intakeTab: 'link', url: u, focusUrlAt: Date.now() }) }} />}
         </div>

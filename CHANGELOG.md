@@ -2,6 +2,24 @@
 
 All notable changes to the ESB Studio Phone project.
 
+## [Unreleased] - 2026-11-04
+
+### PC-parity redesign
+- Full phone UI rebuilt to match the PC app: Home, Editorial, Graphics, Settings, Account sheet, five bottom tabs, light and dark themes, concentric corner radii, opaque sticky bars, provider-coloured AI chip, Facebook connected card.
+- AI settings: one key box per provider (keys persist across provider switches), Check / Save / Remove.
+- Live preview on the Graphics screen; touch stage pinch/pan.
+
+### Security and reliability (full code audit)
+- OTA workflow: secrets and the commit message are passed through `env:` (no shell injection); `permissions: contents: read`.
+- OTA: `notifyAppReady` is sent only after the first paint, so a bundle that fails to boot rolls back; a bundle without a checksum is refused.
+- Boot failure now shows a "Try again" screen instead of a white page.
+- Storage: an unreadable Keystore or IndexedDB is an error, never "empty"; secrets are moved to the Keystore only after reading back the same value; one bad key no longer blocks boot.
+- App lock: a phone with no screen lock can turn the app lock off from the lock screen.
+- Link fetching tolerates incomplete replies; a new project never overwrites a saved one with the same name.
+- A running AI job blocks switching stories (no cross-story writes); the story editor text is never rewritten by the "this phone" wording pass; sign-in / Facebook connect no longer leave a stuck spinner on a network error.
+- Live preview and the DPR cap use the stage canvas, not the ruler strips.
+- Removed dead code: the phone's unused article-saving path and its tests, the unused drafts list, the unused share listener.
+
 ## [0.2.0] - 2026-11-03
 
 ### Mobile-Native Redesign from First Principles (Galaxy S25 Ultra)

@@ -164,7 +164,7 @@ export function ExportSheet({ open, onClose, base, settings, setSettings }: { op
               return (
                 <button key={f.id} type="button" className={'gx-card gx-fcard' + (on ? ' is-on' : '')} aria-pressed={on} onClick={() => patch({ formats: toggleIn(s.formats, f.id) })}>
                   <span className={'gx-ratio'} style={{ aspectRatio: `${f.w} / ${f.h}` }} aria-hidden />
-                  <span className="gx-fcard-text"><b>{f.name}</b><small>{f.ratio} · {f.w} × {f.h}</small></span>
+                  <span className="gx-fcard-text"><b>{f.name}</b><small><b className="gx-pill">{f.ratio}</b><span className="gx-dims">{f.w}×{f.h}</span></small></span>
                   {on && <Icon name="check" size={18} />}
                 </button>
               )

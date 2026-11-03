@@ -23,13 +23,15 @@ import { PcHost } from '../PcHost'
 import { confirmAsk, snack, useSizeClass, useUi } from '../shell/core'
 import { useIncoming } from '../shell/incoming'
 import { useNav } from '../shell/nav'
+import { SelectionTray } from './SelectionTray'
+import { LivePreview } from './LivePreview'
 import type { ScreenProps } from '../shell/nav'
 import { Banner, Button, ErrorState, Icon, IconBtn, Planned, Sheet, Skeleton, TopBar } from '../shell/ui'
 import type { IconName } from '../shell/ui'
 import { ExportSheet } from './ExportSheet'
 import { saveFiles, shareOut } from './saveShare'
 import { renderAll } from './exportRun'
-import { ArrangeBar, CategorySheet, FormatStrip, PreviewDialog, ProjectsSheet } from './parts'
+import { ArrangeBar, CategorySheet, FormatStrip, PreviewDialog, ProjectsSheet, SizeSheet } from './parts'
 import { setDockTab, useBaseAssets, usePcPortals } from './hooks'
 import { TouchStage } from './TouchStage'
 import { zoomBy, zoomCanvas } from './zoom'
@@ -183,7 +185,7 @@ export default function GraphicsScreen({ active }: ScreenProps) {
     handled.current = intent.at
     if (intent.kind === 'photos') { openSheet('gx-photos'); void importShared() }
     else if (intent.kind === 'export') setShowExport(true)
-    else if (intent.kind === 'new') void newBanner(false)
+    else if (intent.kind === 'new') void newBanner(false).then(() => { if (intent.format) useStore.getState().setFormat(intent.format as never) })
   }, [intent, base, openSheet, newBanner])
 
   // ---------------------------------------------------------------- hardware keyboard (DeX, tablets): the PC shortcuts that apply
@@ -314,6 +316,7 @@ export default function GraphicsScreen({ active }: ScreenProps) {
   return (
     <div className="m-screen gx" data-size={size} style={{ '--gx-side': side ? '1' : '0' } as CSSProperties}>
       <TopBar
+        leading={size === 'compact' ? <IconBtn icon="chevLeft" label="Back to Home" onClick={() => useNav.getState().go('home')} /> : undefined}
         title={projectName ?? 'Untitled banner'}
         sub={sub}
         actions={<>
@@ -330,6 +333,7 @@ export default function GraphicsScreen({ active }: ScreenProps) {
           {assets.kind === 'loading' && <div className="gx-loading"><div className="gx-skel-art" aria-hidden /><Skeleton rows={2} /><p className="gx-help">Loading fonts and artwork…</p></div>}
           {assets.kind === 'error' && <ErrorState title="The banner engine could not start" body={`Fonts or the logo did not load: ${assets.message}`} onRetry={retry} />}
           {base && <PcHost className="gx-stagehost"><TouchStage base={base} /></PcHost>}
+          {base && <SelectionTray />}
         </main>
         {side && (
           <aside className="gx-side" aria-label="Inspector">
@@ -372,6 +376,7 @@ export default function GraphicsScreen({ active }: ScreenProps) {
       {base && <Sheets />}
       <MoreSheet groups={groups} />
       <CategorySheet />
+      <SizeSheet />
       <ProjectsSheet />
       {base && <ExportSheet open={showExport} onClose={() => setShowExport(false)} base={base} settings={exp} setSettings={setExp} />}
       {base && <PreviewDialog open={showPreview} onClose={() => setShowPreview(false)} base={base} />}
@@ -386,7 +391,11 @@ function Sheets() {
   return (
     <>
       <Sheet id="gx-story" title="Story" wide>
-        <PcHost className="gx-panel"><StoryPanel /></PcHost>
+        {/* the PC's Category row opens the phone's category sheet (numbered dots) instead of its own cramped grid */}
+        <div onClickCapture={(e) => { if ((e.target as HTMLElement).closest('.pnl[data-panel="Category"] > header')) { e.stopPropagation(); e.preventDefault(); useUi.getState().openSheet('gx-category') } }}>
+          <LivePreview />
+          <PcHost className="gx-panel"><StoryPanel /></PcHost>
+        </div>
       </Sheet>
       <Sheet id="gx-photos" title="Photos" wide actions={<span className="gx-sheet-count">{images ? `${images} in library` : ''}</span>}>
         <div className="gx-photo-actions">
@@ -407,6 +416,7 @@ function Sheets() {
         <PcHost className="gx-panel gx-dockhost"><Dock key="layers" /></PcHost>
       </Sheet>
       <Sheet id="gx-inspector" title={selCount > 1 ? `Inspector · ${selCount} layers` : 'Inspector'} wide>
+        <LivePreview />
         <PcHost className="gx-panel"><Inspector /></PcHost>
       </Sheet>
     </>

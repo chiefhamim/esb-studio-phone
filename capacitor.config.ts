@@ -6,7 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     androidScheme: 'https',
-    cleartext: false
+    // CAP_LIVE=1 is the dev live-reload build only: the WebView loads the PC's Vite server through `adb reverse`.
+    ...(process.env.CAP_LIVE ? { url: 'http://localhost:5173', cleartext: true } : { cleartext: false })
   },
   android: {
     allowMixedContent: false

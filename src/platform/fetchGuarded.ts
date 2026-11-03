@@ -1,5 +1,8 @@
 // fetchUrl / fetchImageData for the phone, matching the PC bridge's result shapes (electron/net-guard.cjs).
 //
+// KNOWN LIMIT (Android): in 'device' mode the native HTTP stack follows redirects itself and does not report the final address,
+// so a public page that redirects to a private address cannot be refused AFTER the fact; only the address the editor pasted is
+// checked. The reply goes to the editor's own screen and their chosen AI provider, never to a third party.
 // Link fetching has two modes (Settings > Link fetching):
 //   'site'   (default, owner rule): pages are read by esbpowerline.com's staff route POST /api/staff/fetch-article
 //            (branch phone-bearer-api). Until that route is live the answer is an honest "not connected" error.
@@ -71,9 +74,11 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 
 /** The site route returns extracted text; the PC extractor reads HTML. Rebuild a minimal, faithful page from it. */
 export function articleToHtml(a: FetchedArticle): string {
-  const imgs = a.images.map((i) => `<figure><img src="${esc(i.src)}" alt="${esc(i.alt)}"></figure>`).join('')
-  const meta = [`<meta property="og:title" content="${esc(a.title)}">`, a.deck ? `<meta property="og:description" content="${esc(a.deck)}">` : '', a.images[0] ? `<meta property="og:image" content="${esc(a.images[0].src)}">` : '', `<link rel="canonical" href="${esc(a.url)}">`].join('')
-  const paras = (a.paragraphs.length ? a.paragraphs : a.text.split(/\n{2,}/)).map((p) => `<p>${esc(p)}</p>`).join('')
+  const images = a.images ?? []
+  const paragraphs = a.paragraphs ?? []
+  const imgs = images.map((i) => `<figure><img src="${esc(i.src)}" alt="${esc(i.alt)}"></figure>`).join('')
+  const meta = [`<meta property="og:title" content="${esc(a.title)}">`, a.deck ? `<meta property="og:description" content="${esc(a.deck)}">` : '', images[0] ? `<meta property="og:image" content="${esc(a.images[0].src)}">` : '', `<link rel="canonical" href="${esc(a.url)}">`].join('')
+  const paras = (paragraphs.length ? paragraphs : (a.text ?? '').split(/\n{2,}/)).map((p) => `<p>${esc(p)}</p>`).join('')
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(a.title)}</title>${meta}</head><body><article><h1>${esc(a.title)}</h1>${a.deck ? `<p class="deck">${esc(a.deck)}</p>` : ''}${imgs}${paras}</article></body></html>`
 }
 

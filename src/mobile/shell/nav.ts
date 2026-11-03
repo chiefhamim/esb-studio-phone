@@ -13,9 +13,9 @@ interface NavState {
   settingsSection: string | null
   /** A request for the Editorial screen (e.g. Home's "Paste a link" opens Editorial intake with focus on the URL). */
   editorialIntent: { kind: 'new' | 'paste-link' | 'open'; at: number } | null
-  graphicsIntent: { kind: 'new' | 'photos' | 'export'; at: number } | null
+  graphicsIntent: { kind: 'new' | 'photos' | 'export'; at: number; format?: string } | null
   intendEditorial: (kind: 'new' | 'paste-link' | 'open') => void
-  intendGraphics: (kind: 'new' | 'photos' | 'export') => void
+  intendGraphics: (kind: 'new' | 'photos' | 'export', format?: string) => void
 }
 
 export const useNav = create<NavState>((set) => ({
@@ -28,5 +28,5 @@ export const useNav = create<NavState>((set) => ({
   editorialIntent: null,
   graphicsIntent: null,
   intendEditorial: (kind) => set({ route: 'editorial', editorialIntent: { kind, at: Date.now() } }),
-  intendGraphics: (kind) => set({ route: 'graphics', graphicsIntent: { kind, at: Date.now() } }),
+  intendGraphics: (kind, format) => set({ route: 'graphics', graphicsIntent: { kind, at: Date.now(), format } }),
 }))

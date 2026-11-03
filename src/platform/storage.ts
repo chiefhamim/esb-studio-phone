@@ -64,19 +64,39 @@ export async function flushStorage(): Promise<void> {
 const isRouted = (k: string) => k in SECRET_KEYS || LARGE_KEYS.has(k)
 
 /** Load routed keys into memory, moving any copy found in plain localStorage to its proper home first. */
+function reportHydrate(key: string, e: unknown) {
+  lastError = `Could not load saved data (${key}): ${e instanceof Error ? e.message : String(e)}`
+  window.dispatchEvent(new CustomEvent('esb-storage-error', { detail: lastError }))
+}
+
 export async function hydrateStorage(): Promise<void> {
   const ls = window.localStorage
+  // Each key is its own step: one unreadable key is reported and skipped, it does not stop the app from starting. A plain
+  // localStorage copy is removed ONLY after the secure home has been read back with the same value; if anything fails
+  // the plain copy stays, and the next launch tries again.
   for (const [key, secret] of Object.entries(SECRET_KEYS)) {
-    const plain = ls.getItem(key)
-    if (plain != null) { await setSecret(secret, plain); ls.removeItem(key) }
-    const v = await getSecret(secret)
-    if (v != null) mem.set(key, v)
+    try {
+      const plain = ls.getItem(key)
+      if (plain != null) {
+        await setSecret(secret, plain)
+        if ((await getSecret(secret)) === plain) ls.removeItem(key)
+        else mem.set(key, plain)
+      }
+      const v = await getSecret(secret)
+      if (v != null) mem.set(key, v)
+    } catch (e) { reportHydrate(key, e) }
   }
   for (const key of LARGE_KEYS) {
-    const plain = ls.getItem(key)
-    if (plain != null) { await kvSet(key, plain); ls.removeItem(key) }
-    const v = await kvGet(key)
-    if (v != null) mem.set(key, v)
+    try {
+      const plain = ls.getItem(key)
+      if (plain != null) {
+        await kvSet(key, plain)
+        if ((await kvGet(key)) === plain) ls.removeItem(key)
+        else mem.set(key, plain)
+      }
+      const v = await kvGet(key)
+      if (v != null) mem.set(key, v)
+    } catch (e) { reportHydrate(key, e) }
   }
   installRouter()
 }
