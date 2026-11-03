@@ -1,5 +1,5 @@
-// Settings sheet, in groups: AI, Facebook Page, Site account, Appearance, About. Secrets only through secure.ts; a stored value
-// is never read back into a field (only "Saved" / "Not set" is shown).
+// Settings sheet, in groups: AI, Facebook Page, Site account, Appearance, Privacy, About.
+// Secrets only through secure.ts; a stored value is never read back into a field (only "Saved" / "Not set" is shown).
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { deleteSecret, hasSecret, setSecret, type SecretName } from './secure'
@@ -14,6 +14,15 @@ import type { Availability, Feature } from './sync/endpoints'
 import { applyTheme, readTheme } from './theme'
 import type { ThemeChoice } from './theme'
 import { isAppLockEnabled, isBiometricAvailable, setAppLockEnabled } from './native/biometric'
+import {
+  IconChevronRight,
+  IconSparkle,
+  IconGlobe,
+  IconSun,
+  IconLock,
+  IconInfo,
+  IconLink
+} from './shell/icons'
 import './ui/settings.css'
 
 function AppLock() {
@@ -29,7 +38,7 @@ function AppLock() {
   }
   return (
     <div className="card">
-      <button type="button" className="secondary" role="switch" aria-checked={on} disabled={can === false} onClick={() => void toggle()}>{on ? 'App lock: on. Tap to turn off' : 'Turn on app lock'}</button>
+      <button type="button" className="secondary" role="switch" aria-checked={on} disabled={can === false} onClick={() => void toggle()}>{on ? 'App lock: ON (tap to turn off)' : 'Turn on app lock'}</button>
       <p className="note">{can === false ? 'This phone has no fingerprint, face or screen lock available to this app.' : 'Asks for your fingerprint, face or screen lock when the app opens and after 30 seconds in the background.'}</p>
       {msg && <p className="note" role="status">{msg}</p>}
     </div>
@@ -64,7 +73,7 @@ function SecretField({ name, label, hint, onSaved }: { name: SecretName; label: 
   return (
     <div className="card set-field">
       <label htmlFor={id}>{label}</label>
-      <p className={`st-pill st-${status}`} role="status">{status === 'loading' ? 'Checking...' : status === 'saved' ? 'Saved' : 'Not set'}</p>
+      <p className={`st-pill st-${status}`} role="status">{status === 'loading' ? 'Checking...' : status === 'saved' ? 'Saved in Keystore' : 'Not set'}</p>
       {showInput && (
         <input id={id} type="password" autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
           value={value} onChange={(e) => { setValue(e.target.value); setMsg('') }} placeholder={hint ?? 'Paste here'} aria-describedby={`${id}-msg`} />
@@ -80,11 +89,16 @@ function SecretField({ name, label, hint, onSaved }: { name: SecretName; label: 
   )
 }
 
-function Group({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
+function Group({ id, title, icon, children }: { id: string; title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section className="st-group" aria-labelledby={`st-${id}`}>
-      <h2 id={`st-${id}`}>{title}</h2>
-      {children}
+      <div className="st-group-h">
+        {icon && <span className="st-group-ic" aria-hidden>{icon}</span>}
+        <h2 id={`st-${id}`}>{title}</h2>
+      </div>
+      <div className="st-group-card">
+        {children}
+      </div>
     </section>
   )
 }
@@ -121,7 +135,6 @@ function SiteAccount() {
   useEffect(() => { void loadSession().then(setSession).catch(() => setSession(null)) }, [])
   useEffect(() => {
     let live = true
-    setConn('checking')
     void checkConnection().then((c) => { if (live) setConn(c) }).catch(() => { if (live) setConn('offline') })
     if (session) for (const k of ['upload', 'revalidate', 'fetchArticle'] as const) void probeFeature(k, { force: true }).then((a) => { if (live) setFeat((o) => ({ ...o, [k]: a })) })
     return () => { live = false }
@@ -176,6 +189,14 @@ export default function Settings({ onClose }: { onClose: () => void }) {
   useEffect(() => () => abort.current?.abort(), [])
 
   useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  useEffect(() => {
     let live = true
     if (!Capacitor.isNativePlatform()) { void Promise.resolve().then(() => { if (live) setVersion('Browser preview (no app version outside the installed app)') }); return () => { live = false } }
     import('@capacitor/app').then(({ App }) => App.getInfo()).then((i) => { if (live) setVersion(`${i.version} (build ${i.build})`) }).catch(() => { if (live) setVersion('Could not read the app version.') })
@@ -198,48 +219,59 @@ export default function Settings({ onClose }: { onClose: () => void }) {
   return (
     <section className="settings" role="dialog" aria-modal="true" aria-label="Settings">
       <header className="settings-head">
-        <h1>Settings</h1>
-        <button type="button" className="secondary" onClick={onClose} aria-label="Close settings">Close</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
+          <button
+            type="button"
+            className="kit-iconbtn"
+            onClick={onClose}
+            aria-label="Back"
+            style={{ transform: 'rotate(180deg)' }}
+          >
+            <IconChevronRight />
+          </button>
+          <h1>Settings</h1>
+        </div>
+        <button type="button" className="kit-btn kit-btn-tonal" onClick={onClose} aria-label="Done with settings" style={{ minHeight: 40, padding: '0 var(--sp-4)' }}>Done</button>
       </header>
       <div className="settings-body">
-        <Group id="ai" title="AI">
+        <Group id="ai" title="AI Configuration" icon={<IconSparkle />}>
           <SecretField name="gemini-key" label="Gemini API key" hint="AIza..." onSaved={() => setTest({ state: 'idle', text: '' })} />
-          <button type="button" className="secondary" onClick={() => { void runTest() }} disabled={test.state === 'running'}>Test key</button>
+          <button type="button" className="secondary" onClick={() => { void runTest() }} disabled={test.state === 'running'}>Test Gemini connection</button>
           <p className={`note set-test set-${test.state}`} role="status" aria-live="polite">{test.text}</p>
           <p className="note">Claude and OpenAI keys: Planned.</p>
         </Group>
 
-        <Group id="fb" title="Facebook Page">
+        <Group id="fb" title="Facebook Page Integration" icon={<IconLink />}>
           <SecretField name="fb-page-id" label="Page ID" hint="Numeric Page ID" />
           <SecretField name="fb-page-token" label="Page access token" hint="Paste the Page token" />
           <FacebookCheck />
         </Group>
 
-        <Group id="site" title="Site account (esbpowerline.com)">
+        <Group id="site" title="Site Account (esbpowerline.com)" icon={<IconGlobe />}>
           <SiteAccount />
         </Group>
 
-        <Group id="look" title="Appearance">
+        <Group id="look" title="Appearance & Theme" icon={<IconSun />}>
           <div className="st-seg" role="radiogroup" aria-label="Theme">
             {THEMES.map((t) => (
               <button key={t.id} type="button" role="radio" aria-checked={theme === t.id} className={theme === t.id ? 'on' : ''} onClick={() => { setTheme(t.id); applyTheme(t.id) }}>{t.label}</button>
             ))}
           </div>
-          <p className="note">Auto follows the phone's light or dark setting. Light and Dark override it on this phone.</p>
+          <p className="note">Auto follows Android dark/light system preference. Light and Dark override it on this phone.</p>
         </Group>
 
-        <Group id="lock" title="Privacy">
+        <Group id="lock" title="Privacy & Security" icon={<IconLock />}>
           <AppLock />
         </Group>
 
-        <Group id="about" title="About">
+        <Group id="about" title="About ESB Studio" icon={<IconInfo />}>
           <div className="card">
-            <p className="note"><b>ESB Studio Phone</b>, the phone companion to ESB AI Studio.</p>
+            <p className="note"><b>ESB Studio Phone</b>, the newsroom companion to ESB AI Studio.</p>
             <p className="note">Version: {version}</p>
           </div>
         </Group>
 
-        <p className="note set-where">Keys and tokens are kept in the phone's secure storage (Android Keystore). They are never shown again after saving, never put in a link, and never written to a log. In a desktop browser test they are held in memory only and lost on reload.</p>
+        <p className="note set-where">Keys and tokens are kept strictly in the phone&apos;s hardware-backed secure storage (Android Keystore via SecureStorage). They are never shown again after saving, never exposed in URLs, and never written to logs.</p>
       </div>
     </section>
   )
