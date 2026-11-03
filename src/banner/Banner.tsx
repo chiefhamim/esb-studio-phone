@@ -297,7 +297,7 @@ function BannerFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) => 
                 <div className="bn-tpls" role="radiogroup" aria-label="Template">
                   {templatesFor(size).map((t) => (
                     <button key={t.id} type="button" role="radio" aria-checked={cfg.template === t.id} className={`bn-tpl${cfg.template === t.id ? ' on' : ''}`} onClick={() => patch({ template: t.id as TemplateId })}>
-                      <span className="bn-thumb" style={{ aspectRatio: `${size.w} / ${size.h}` }}>{thumbs[`${cfg.size}:${t.id}`] ? <img src={thumbs[`${cfg.size}:${t.id}`]} alt="" /> : <i>...</i>}</span>
+                      <span className="bn-thumb" style={{ aspectRatio: `${size.w} / ${size.h}` }}>{thumbs[`${cfg.size}:${t.id}`] ? <img src={thumbs[`${cfg.size}:${t.id}`]} alt="" /> : <TemplateWireframe id={t.id} />}</span>
                       <b>{t.name}</b><small>{t.note}</small>
                     </button>
                   ))}
@@ -381,5 +381,41 @@ function Slider({ id, label, min, max, step, value, fmt, onChange }: { id: strin
       <label htmlFor={`bn-s-${id}`}>{label}<output>{fmt(value)}</output></label>
       <input id={`bn-s-${id}`} type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} />
     </div>
+  )
+}
+
+function TemplateWireframe({ id }: { id: string }) {
+  if (id === 'photo-overlay') {
+    return (
+      <svg className="bn-wireframe" viewBox="0 0 100 125" preserveAspectRatio="none" aria-hidden="true">
+        <rect width="100" height="125" fill="var(--fill-active)" />
+        <rect y="55" width="100" height="70" fill="rgba(0,0,0,0.45)" />
+        <rect x="10" y="70" width="30" height="4" rx="2" fill="var(--accent)" />
+        <rect x="10" y="80" width="80" height="6" rx="3" fill="#ffffff" opacity="0.9" />
+        <rect x="10" y="90" width="60" height="6" rx="3" fill="#ffffff" opacity="0.9" />
+      </svg>
+    )
+  }
+  if (id === 'news-link') {
+    return (
+      <svg className="bn-wireframe" viewBox="0 0 100 125" preserveAspectRatio="none" aria-hidden="true">
+        <rect width="100" height="125" fill="var(--surface-raised)" />
+        <rect x="8" y="8" width="84" height="46" rx="4" fill="var(--fill-active)" />
+        <rect x="8" y="62" width="28" height="4" rx="2" fill="var(--accent)" />
+        <rect x="8" y="72" width="84" height="6" rx="3" fill="var(--text-primary)" opacity="0.85" />
+        <rect x="8" y="82" width="70" height="6" rx="3" fill="var(--text-primary)" opacity="0.85" />
+        <rect x="8" y="92" width="50" height="5" rx="2.5" fill="var(--text-tertiary)" opacity="0.6" />
+      </svg>
+    )
+  }
+  return (
+    <svg className="bn-wireframe" viewBox="0 0 100 125" preserveAspectRatio="none" aria-hidden="true">
+      <rect width="100" height="125" fill="var(--surface-raised)" />
+      <rect width="100" height="62" fill="var(--fill-active)" />
+      <rect x="10" y="72" width="24" height="4" rx="2" fill="var(--accent)" />
+      <rect x="10" y="82" width="80" height="6" rx="3" fill="var(--text-primary)" opacity="0.85" />
+      <rect x="10" y="92" width="60" height="6" rx="3" fill="var(--text-primary)" opacity="0.85" />
+      <rect x="10" y="106" width="20" height="3" rx="1.5" fill="var(--text-tertiary)" opacity="0.5" />
+    </svg>
   )
 }

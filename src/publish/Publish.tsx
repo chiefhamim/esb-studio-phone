@@ -29,9 +29,9 @@ import type { IconName } from '../edit/icons'
 type Outcome = { tone: 'ok' | 'bad'; text: string; link?: string } | null
 
 /** One screen per story: switching stories remounts it, so nothing typed for one story leaks into another. */
-export default function Publish({ draft, onChange }: { draft: Draft | null; onChange: (d: Draft) => void }) {
+export default function Publish({ draft, onChange, onGo }: { draft: Draft | null; onChange: (d: Draft) => void; onGo?: (tab: 'edit' | 'banner') => void }) {
   if (!draft) return (<><h1>Publish</h1><p>Open or start a story in Stories first.</p></>)
-  return <PublishFor key={draft.id} draft={draft} onChange={onChange} />
+  return <PublishFor key={draft.id} draft={draft} onChange={onChange} onGo={onGo} />
 }
 
 function PHead({ id, icon, children, tag }: { id: string; icon: IconName; children: string; tag?: string }) {
@@ -52,7 +52,7 @@ function Ring({ done, total, fraction }: { done: number; total: number; fraction
   )
 }
 
-function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) => void }) {
+function PublishFor({ draft, onChange, onGo }: { draft: Draft; onChange: (d: Draft) => void; onGo?: (tab: 'edit' | 'banner') => void }) {
   const [step, setStep] = useState<StepId>('check')
   const [session, setSession] = useState<StaffSession | null>(null)
   const [fb, setFb] = useState<FacebookConfig | null>(null)
@@ -201,7 +201,18 @@ function PublishFor({ draft, onChange }: { draft: Draft; onChange: (d: Draft) =>
             <ul className="pub-checks">
               {ready.checks.map((c) => (
                 <li key={c.id} className={`pub-check pub-${c.status}`}>
-                  <span className="pub-mark" aria-hidden="true">{mark(c.status)}</span>
+                  {c.status !== 'ok' && onGo ? (
+                    <button
+                      type="button"
+                      className="pub-mark"
+                      onClick={() => onGo(c.id === 'picture' ? 'banner' : 'edit')}
+                      aria-label={`Fix ${c.label}. Tap to jump`}
+                    >
+                      {mark(c.status)}
+                    </button>
+                  ) : (
+                    <span className="pub-mark" aria-hidden="true">{mark(c.status)}</span>
+                  )}
                   <span><b>{c.label}.</b> <span className="sr-only">{c.status === 'ok' ? 'Done. ' : c.status === 'warn' ? 'Worth checking. ' : 'Must fix. '}</span>{c.detail}</span>
                 </li>
               ))}

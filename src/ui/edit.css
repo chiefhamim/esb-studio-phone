@@ -335,13 +335,28 @@
 /* notice: floats above the bar at the bottom, so it is seen wherever the page is scrolled */
 .ed-flash { position: sticky; bottom: 40px; z-index: 7; margin: 0; }
 
-/* next-step bar: flush with the bottom edge, no floating card */
-.ed-actions, .ed[data-wide='1'] .ed-actions { position: sticky; bottom: calc(-1 * var(--s-8)); z-index: 6; max-width: none; width: auto; justify-self: stretch; margin: 0 calc(-1 * var(--s-6)) calc(-1 * var(--s-8)); padding: var(--s-2) var(--s-6) var(--s-2); border-radius: 0; background: var(--surface-panel); box-shadow: none; border-top: 1px solid var(--card-line); gap: var(--s-3); }
+/* next-step bar: calm card at the end of the story, never floating or obscuring text */
+.ed-actions, .ed[data-wide='1'] .ed-actions {
+  position: relative;
+  z-index: 5;
+  max-width: none;
+  width: auto;
+  margin: var(--sp-6) 0 var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-3);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
 .ed-actions .ed-btn { min-height: 44px; }
 .ed-ready { height: 44px; }
 .ed[data-typing='1'] .ed-actions { display: none; }
 .ed[data-typing='1'] .ed-flash { bottom: var(--s-3); }
-.ed-cols { padding-bottom: var(--s-6); }
+.ed-cols { padding-bottom: calc(var(--s-8) + 72px); }
 
 /* keyboard open (html.kb-open is set by the shell): only the slim strip stays; the tools row and next-step bar step aside */
 html.kb-open .ed-toprow, html.kb-open .ed-actions { display: none; }
@@ -360,3 +375,68 @@ html.kb-open .ed-stick .ed-ib { width: 44px; height: 44px; }
 .phone-main > .ed { display: flex; flex-direction: column; min-height: 100%; }
 .ed-actions, .ed[data-wide='1'] .ed-actions { margin-top: auto; }
 .ed-findbar { top: 32px; }
+
+.ed textarea { resize: none !important; }
+
+/* keyboard accessory bar: docked directly above the virtual keyboard */
+.ed-kb-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  min-height: 48px;
+  padding: var(--sp-1) max(var(--sp-2), env(safe-area-inset-right)) max(var(--sp-1), env(safe-area-inset-bottom)) max(var(--sp-2), env(safe-area-inset-left));
+  background: var(--surface-panel);
+  border-top: 1px solid var(--border-subtle);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.ed-kb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--r-2);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--t-state) var(--ease), color var(--t-state) var(--ease);
+}
+
+.ed-kb-btn:active:not(:disabled) {
+  background: var(--fill-active);
+  color: var(--text-primary);
+}
+
+.ed-kb-btn:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+}
+
+.ed-kb-btn.ed-kb-danger {
+  color: var(--danger);
+}
+
+.ed-kb-btn.ed-kb-done {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* when typing, inline paragraph tools step aside in favour of the docked accessory bar */
+html.kb-open .ed-ptools,
+.ed[data-typing='1'] .ed-ptools {
+  display: none !important;
+}
+
+.ed[data-typing='1'] .ed-cols {
+  padding-bottom: calc(var(--s-8) + 64px);
+}

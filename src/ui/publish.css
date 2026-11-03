@@ -145,3 +145,8 @@
 .pub-sheet button.secondary { border: 1px solid var(--border-default); background: var(--surface-raised); color: var(--text-primary); }
 .pub-sheet button.primary { background: var(--accent); color: var(--on-accent); border: 0; }
 .pub form { display: grid; gap: var(--s-4); }
+
+.pub { padding-bottom: calc(var(--sp-9) + var(--sp-6)); }
+
+.pub-check button.pub-mark { cursor: pointer; border-radius: var(--r-pill); min-height: 32px; min-width: 48px; font-weight: 700; transition: transform var(--t-hover) var(--ease); }
+.pub-check button.pub-mark:active { transform: scale(0.95); }

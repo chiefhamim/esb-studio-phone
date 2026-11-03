@@ -9,7 +9,7 @@ import './ui/refine.css'
 import { buildReadiness, slugFromHeadline } from './publish/readiness'
 import { cleanSource } from './translate'
 import { AiError, errorMessage } from './aiProviders'
-import { joinBlocks, insertBlock, parseBody, parseSource, setBlock, splitOnBlankLine } from './edit/blocks'
+import { joinBlocks, insertBlock, moveBlock, splitBlock, mergeUp, removeBlock, parseBody, parseSource, setBlock, splitOnBlankLine } from './edit/blocks'
 import { UndoStack } from './edit/undo'
 import { findFactMarks, locateInSource, unplacedFlags, summarize, type FactMark, type Span } from './edit/factMap'
 import { banglaTools, findAll, readMinutes, replaceAll, replaceAt, wordCount } from './edit/editTools'
@@ -80,13 +80,108 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
   const paraAbort = useRef<AbortController | null>(null)
   const root = useRef<HTMLDivElement | null>(null)
   const [typing, setTyping] = useState(false)
+  const [kbOpen, setKbOpen] = useState(() => typeof document !== 'undefined' && document.documentElement.classList.contains('kb-open'))
   const scrolls = useRef<{ english: number; source: number }>({ english: 0, source: 0 })
+
+  useEffect(() => {
+    const mo = new MutationObserver(() => {
+      setKbOpen(document.documentElement.classList.contains('kb-open'))
+    })
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => mo.disconnect()
+  }, [])
 
   // A text field has focus = the keyboard is up: the next-step bar steps aside so the writing gets the screen.
   const syncTyping = () => {
     const a = document.activeElement as HTMLElement | null
     const isText = !!a && !!root.current?.contains(a) && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/^(checkbox|radio|button|submit)$/i.test((a as HTMLInputElement).type)))
     setTyping(isText)
+    if (a && (a.id === 'ed-headline' || a.id === 'ed-deck' || a.id === 'ed-slug' || a.id === 'ed-cat')) {
+      setSelEn(null)
+      setSelSrc(null)
+    }
+  }
+
+  const moveActivePara = (dir: -1 | 1) => {
+    if (mode === 'english') {
+      if (selEn === null) return
+      const next = selEn + dir
+      if (next < 0 || next >= enBlocks.length) return
+      setEn(moveBlock(enBlocks, selEn, dir), 'move')
+      setSelEn(next)
+      setTimeout(() => goTo(`ed-e-${next}`, true), 50)
+    } else {
+      if (selSrc === null) return
+      const next = selSrc + dir
+      if (next < 0 || next >= srcBlocks.length) return
+      setSrc(moveBlock(srcBlocks, selSrc, dir), 'move')
+      setSelSrc(next)
+      setTimeout(() => goTo(`ed-s-${next}`, true), 50)
+    }
+  }
+
+  const splitActivePara = () => {
+    const a = document.activeElement as HTMLTextAreaElement | null
+    const at = a?.selectionStart ?? 0
+    if (mode === 'english') {
+      if (selEn === null) return
+      const b = splitBlock(enBlocks, selEn, at)
+      if (b !== enBlocks) {
+        setEn(b, 'split')
+        setSelEn(selEn + 1)
+        setTimeout(() => goTo(`ed-e-${selEn + 1}`, true), 50)
+      }
+    } else {
+      if (selSrc === null) return
+      const b = splitBlock(srcBlocks, selSrc, at)
+      if (b !== srcBlocks) {
+        setSrc(b, 'split')
+        setSelSrc(selSrc + 1)
+        setTimeout(() => goTo(`ed-s-${selSrc + 1}`, true), 50)
+      }
+    }
+  }
+
+  const mergeActivePara = () => {
+    if (mode === 'english') {
+      if (selEn === null || selEn === 0) return
+      const b = mergeUp(enBlocks, selEn)
+      setEn(b, 'merge')
+      setSelEn(selEn - 1)
+      setTimeout(() => goTo(`ed-e-${selEn - 1}`, true), 50)
+    } else {
+      if (selSrc === null || selSrc === 0) return
+      const b = mergeUp(srcBlocks, selSrc)
+      setSrc(b, 'merge')
+      setSelSrc(selSrc - 1)
+      setTimeout(() => goTo(`ed-s-${selSrc - 1}`, true), 50)
+    }
+  }
+
+  const addActivePara = () => {
+    if (mode === 'english') {
+      const at = selEn !== null ? selEn + 1 : enBlocks.length
+      setEn(insertBlock(enBlocks, at), 'add')
+      setSelEn(at)
+      setTimeout(() => goTo(`ed-e-${at}`, true), 50)
+    } else {
+      const at = selSrc !== null ? selSrc + 1 : srcBlocks.length
+      setSrc(insertBlock(srcBlocks, at), 'add')
+      setSelSrc(at)
+      setTimeout(() => goTo(`ed-s-${at}`, true), 50)
+    }
+  }
+
+  const deleteActivePara = () => {
+    if (mode === 'english') {
+      if (selEn === null) return
+      setEn(enBlocks.length > 1 ? removeBlock(enBlocks, selEn) : [''], 'del')
+      setSelEn(Math.max(0, selEn - 1))
+    } else {
+      if (selSrc === null) return
+      setSrc(srcBlocks.length > 1 ? removeBlock(srcBlocks, selSrc) : [''], 'del')
+      setSelSrc(Math.max(0, selSrc - 1))
+    }
   }
   const scroller = () => root.current?.closest('.phone-main') as HTMLElement | null
   const say = (m: string) => { setFlash(m) }
@@ -459,6 +554,117 @@ function Desk({ draft, onChange, onOpenSettings, onGo }: Props & { draft: Draft 
         <button type="button" className="ed-btn" onClick={() => onGo('publish')}>Publish</button>
         <p className="ed-actions-note">{blockers.length ? `${blockers.length} to fix: ${blockers.slice(0, 2).map((b) => b.label).join(', ')}${blockers.length > 2 ? '…' : ''}` : 'Required fields are filled.'}</p>
       </footer>
+
+      {(typing || kbOpen) && (
+        <div className="ed-kb-bar" role="toolbar" aria-label="Keyboard accessory tools" onMouseDown={(e) => e.preventDefault()}>
+          {(mode === 'english' ? selEn !== null : selSrc !== null) ? (
+            <>
+              <button
+                type="button"
+                className="ed-kb-btn"
+                disabled={(mode === 'english' ? selEn : selSrc) === 0}
+                onClick={() => moveActivePara(-1)}
+                aria-label="Move paragraph up"
+                title="Move up"
+              >
+                <Icon name="up" size={18} />
+              </button>
+              <button
+                type="button"
+                className="ed-kb-btn"
+                disabled={(mode === 'english' ? selEn! >= enBlocks.length - 1 : selSrc! >= srcBlocks.length - 1)}
+                onClick={() => moveActivePara(1)}
+                aria-label="Move paragraph down"
+                title="Move down"
+              >
+                <Icon name="down" size={18} />
+              </button>
+              <button
+                type="button"
+                className="ed-kb-btn"
+                onClick={splitActivePara}
+                aria-label="Split paragraph at cursor"
+                title="Split"
+              >
+                <Icon name="split" size={18} />
+              </button>
+              <button
+                type="button"
+                className="ed-kb-btn"
+                disabled={(mode === 'english' ? selEn : selSrc) === 0}
+                onClick={mergeActivePara}
+                aria-label="Merge with paragraph above"
+                title="Merge"
+              >
+                <Icon name="merge" size={18} />
+              </button>
+              <button
+                type="button"
+                className="ed-kb-btn"
+                onClick={addActivePara}
+                aria-label="Add paragraph below"
+                title="Add paragraph"
+              >
+                <Icon name="plus" size={18} />
+              </button>
+              <button
+                type="button"
+                className="ed-kb-btn ed-kb-danger"
+                onClick={deleteActivePara}
+                aria-label="Delete paragraph"
+                title="Delete"
+              >
+                <Icon name="trash" size={18} />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="ed-kb-btn"
+                disabled={!undo.canUndo}
+                onClick={doUndo}
+                aria-label="Undo"
+                title="Undo"
+              >
+                <Icon name="undo" size={18} />
+              </button>
+              <button
+                type="button"
+                className="ed-kb-btn"
+                disabled={!undo.canRedo}
+                onClick={doRedo}
+                aria-label="Redo"
+                title="Redo"
+              >
+                <Icon name="redo" size={18} />
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            className="ed-kb-btn"
+            aria-pressed={!!find}
+            onClick={() => {
+              setFindMsg('')
+              setFind((f) => (f ? null : { query: '', by: '', caseSensitive: false, scope: mode, cur: 0 }))
+            }}
+            aria-label="Find and replace"
+            title="Find"
+          >
+            <Icon name="search" size={18} />
+          </button>
+          <button
+            type="button"
+            className="ed-kb-btn ed-kb-done"
+            onClick={() => (document.activeElement as HTMLElement)?.blur()}
+            aria-label="Done (close keyboard)"
+            title="Done"
+          >
+            <Icon name="check" size={18} />
+          </button>
+        </div>
+      )}
 
       {sheet === 'replace' && (
         <Sheet title="Replace the current English?" onClose={() => setSheet(null)}>
