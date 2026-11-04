@@ -19,7 +19,7 @@ import { FormatMark, RoleChip } from '../shell/cat'
 import { JOURNALISTIC_TRANSLATOR_PROMPT } from '../../pc/editorial/translator'
 import { platform } from '../../platform/platform'
 
-const STATE_LABEL: Record<SiteFeatureState, string> = { live: 'Works', 'not-live': 'Planned · site update needed', unknown: 'Not checked (sign in first)' }
+const STATE_LABEL: Record<SiteFeatureState, string> = { live: 'Works', 'not-live': 'Planned · site update needed', unknown: 'Not checked yet' }
 
 /** The PC's About: what it is, who made it. */
 function AboutCard() {
@@ -67,6 +67,9 @@ function SiteAccount() {
     } finally { setProbing(false) }
   }
   useEffect(() => { void check() }, [check])
+  // signed in: find out what the site can do as soon as Settings opens (these probes store nothing), instead of showing "not checked"
+  const signedIn = !!session
+  useEffect(() => { if (signedIn) void reprobe() }, [signedIn]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!session) {
     return (
