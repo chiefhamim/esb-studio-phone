@@ -422,7 +422,6 @@ export function storyMenu(): MenuItem[] {
 export function StoryEditor() {
   const d = useDesk()
   const headline = useEditorialStore((s) => s.draft.headline)
-  const source = useEditorialStore((s) => s.source)
   const story = useStoryQueue((s) => s.stories.find((x) => x.id === s.activeId))
   const { words } = useStoryNumbers()
   const size = useSizeClass()
@@ -439,7 +438,7 @@ export function StoryEditor() {
     <div className={'me-story' + (d.writing ? ' is-writing' : '') + (d.editing ? ' is-editing' : '')}>
       <div className="me-hide-writing">
         <TopBar leading={<IconBtn icon="chevLeft" label="Back to stories" onClick={() => d.set({ view: 'home', writing: false })} />}
-          title={headline.trim() || source?.title || 'Untitled story'}
+          title={TABS.find((t) => t.id === d.tab)?.label ?? 'Story'}
           sub={<>{canCancel(d.busy) ? (story ? <StatusChip s={story.status} /> : <span className="me-status s-draft">{STATUS_LABEL.draft}</span>) : <ReadyPill />}<span>{words} words{linked ? ' · live' : ''}</span></>}
           actions={<>
             {jobLive && <IconBtn icon="activity" label="Activity (a job is running)" badge="•" onClick={() => useUi.getState().openSheet('ed-activity')} />}

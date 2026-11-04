@@ -1575,3 +1575,22 @@ html:not(.kb-open) .me-toolbar { bottom: calc(var(--m-navbar) + var(--m-safe-bot
 .gx-panel .pnl h3 small { white-space: nowrap !important; max-width: 100%; }
 /* Home tagline: exactly as wide as the lockup above it, edge to edge */
 .hm-tag { font-size: 3.05cqw !important; text-align: justify; text-align-last: justify; letter-spacing: 0; }
+
+/* Story top bar: back / tab name + status line / Publish. The headline is never repeated here (it is in the field below), so nothing is cut. */
+.me-story .m-topbar-row { height: auto; min-height: 64px; padding-block: 8px; align-items: center; }
+.me-story .m-topbar-title { display: block; }
+.me-story .m-topbar-title h1 { white-space: nowrap !important; overflow: visible !important; font: 700 18px/1.2 var(--font-ui); }
+.me-story .m-topbar-sub { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin-top: 5px; white-space: nowrap !important; overflow: visible !important; }
+.me-story .m-topbar-sub > span:not(.me-status) { white-space: nowrap !important; flex: none; }
+.me-story .m-topbar-sub .me-ready, .me-story .m-topbar-sub .me-status { flex: none; white-space: nowrap; }
+.me-story .m-topbar-sub .me-ready { min-height: 26px; padding: 0 9px 0 7px; border-radius: 9px; font: 650 12px/1 var(--font-ui); }
+/* two rows so the status line has the full width under the Publish button's row */
+.me-story .m-topbar-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; row-gap: 6px; padding-block: 8px 12px; }
+.me-story .m-topbar-row > :first-child { grid-column: 1; grid-row: 1; }
+.me-story .m-topbar-title { display: contents; }
+.me-story .m-topbar-title h1 { grid-column: 2; grid-row: 1; padding-left: 6px; }
+.me-story .m-topbar-actions { grid-column: 3; grid-row: 1; margin-right: 0; }
+.me-story .m-topbar-sub { grid-column: 1 / -1; grid-row: 2; margin: 0; padding-left: 14px; }
+/* headlines are shown whole, never cut with an ellipsis */
+.pb-title, .m-row-title, .hm-continue-txt strong, .gx-tile-txt b { display: block !important; -webkit-line-clamp: unset !important; line-clamp: unset !important; overflow: visible !important; text-overflow: clip !important; }
+.me-story .m-topbar-actions { margin-right: 8px; }
