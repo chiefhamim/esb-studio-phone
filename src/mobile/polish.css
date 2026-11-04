@@ -1517,3 +1517,28 @@ html:not(.kb-open) .me-toolbar { bottom: calc(var(--m-navbar) + var(--m-safe-bot
 .sa-site-t small { font: 500 13px/1.3 var(--font-ui); color: var(--text-secondary); }
 .sa-site .fbc-pill { min-width: 0; white-space: normal; font-variant-numeric: tabular-nums; }
 .sa-site .fbc-recheck { flex: none; background: var(--surface-panel); box-shadow: 0 0 0 .5px var(--m-hair); }
+
+/* ------------------------------------------------------------------------------------------------------------------------------
+   No half-words: a label either shows in full or is not there. The desktop panels cut long text with an ellipsis ("Shown on the
+   ban…"); on a phone those labels wrap onto a second line instead. Single-line inputs, the app bar title and the short dock
+   and tray captions are the only things left to ellipsize.
+   ------------------------------------------------------------------------------------------------------------------------------ */
+.pnl h3 .t, .pnl h3 small, .slot-meta small, .el-row .name, .layer .name, .ex-dest span,
+.progress small, .status-info, .asp-thumb-lbl, .img-cap, .g-preview-url, .g-preview-title,
+.select-label, .ed-head-host, .ed-feed-text b, .ed-src-url > .mono, .fi-meta span:first-child,
+.ed-outputs-meta .mono, .seo-serp-site span, .sq-meta, .acct-id h2, .acct-id p, .acct-title b,
+.ed-card-tag, .ed-steps li span, .rb-idea-add span, .es-dest-t b, .ed-ins-age, .ed-wire-srcname,
+.pnl > header .pnl-actions .count, .ed-social-url, .ed-tp-by, .ed-tp-step, .pub-stats dd,
+.bp-card figcaption span, .eng-model, .eng-head .hint, .eng-model > span, .pcard-t span,
+.ed-doc-text b, .ed-doc-text span, .ed-statusbar .sb-text,
+.gx-drop-txt b, .gx-tile-txt small, .dd-txt b, .gx-panel .pnl h3 small, .gx-empty-text b,
+.gx-empty-text small, .gx-arrange-head b, .gx-progress small, .ac-me-txt strong, .ac-me-txt small,
+.m-row-meta, .m-row-meta > span:last-child, .me-idea .m-chip span, .gx-catchip span:nth-child(2),
+.hm-chips .hm-chip, .m-sheet-head h2, .m-btn-label, .m-topbar-sub, .m-topbar-sub > span:not(.me-status) {
+  white-space: normal !important; overflow: visible !important; text-overflow: clip !important; overflow-wrap: anywhere; min-width: 0;
+  -webkit-line-clamp: unset; line-clamp: unset;
+}
+/* a dropdown whose label wraps grows instead of clipping it */
+.select { height: auto; min-height: 44px; }
+.pnl > header h3 { align-items: flex-start; }
+.hm-chips .hm-chip { height: auto; min-height: 40px; padding-block: 8px; }
