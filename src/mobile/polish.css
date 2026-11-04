@@ -1594,3 +1594,6 @@ html:not(.kb-open) .me-toolbar { bottom: calc(var(--m-navbar) + var(--m-safe-bot
 /* headlines are shown whole, never cut with an ellipsis */
 .pb-title, .m-row-title, .hm-continue-txt strong, .gx-tile-txt b { display: block !important; -webkit-line-clamp: unset !important; line-clamp: unset !important; overflow: visible !important; text-overflow: clip !important; }
 .me-story .m-topbar-actions { margin-right: 8px; }
+/* card-type slider: the selected thumb is the button itself; it must sit centred in the 4px padding, not run to the bottom edge */
+.gx-panel .card-type-seg { box-sizing: border-box; height: 52px; align-items: stretch; }
+.gx-panel .card-type-seg > button { min-height: 0 !important; height: auto !important; align-self: stretch; margin: 0; }
