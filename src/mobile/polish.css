@@ -1569,3 +1569,9 @@ html:not(.kb-open) .me-toolbar { bottom: calc(var(--m-navbar) + var(--m-safe-bot
 .hm-hero { container-type: inline-size; }
 .hm-title { font-size: min(12.4cqw, 76px); gap: .3em; justify-content: space-between; }
 .hm-tag { max-width: none; white-space: nowrap; font-size: clamp(10px, 2.78cqw, 17px); letter-spacing: -.005em; }
+
+/* Panel subtitle pill: one line. If it cannot fit beside the title it drops under it whole (h3 wraps), never splits mid-phrase. */
+.gx-panel .pnl > header h3 { flex: 1 1 0; min-width: 0; }
+.gx-panel .pnl h3 small { white-space: nowrap !important; max-width: 100%; }
+/* Home tagline: exactly as wide as the lockup above it, edge to edge */
+.hm-tag { font-size: 3.05cqw !important; text-align: justify; text-align-last: justify; letter-spacing: 0; }
