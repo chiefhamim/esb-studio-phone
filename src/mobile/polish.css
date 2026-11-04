@@ -1265,3 +1265,15 @@ body:has(.gx-dropscrim) .gx-live-top { display: none; }
 .hm-chips .hm-chip { flex: 1 1 0; min-width: 0; justify-content: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hm-chip.hm-chip-ai.is-ok { background: color-mix(in srgb, var(--pc) 15%, var(--h-glass)); box-shadow: 0 0 0 .5px color-mix(in srgb, var(--pc) 40%, transparent); color: var(--pc); }
 .hm-chip.hm-chip-ai > svg { flex: none; }
+
+/* ================================================================ narrower side gutters on phones (16 -> 12) and one layer less of padding inside nested cards: the content gets about 10% more of the width. Tablets keep their own wider margins from grid.css. */
+@media (max-width: 599px) {
+  :root { --m-margin: 12px; }
+  .m-settings .m-section { padding: 4px 14px 14px; border-radius: 22px; }
+  .st-key { padding: 12px; border-radius: 16px; gap: 12px; }
+  .st-others .m-collapse { padding: 0 10px; }
+  .me-desk { padding: 14px; border-radius: 20px; }
+  .me-card, .me-seo .ed-field, .me-seo .seo-ai, .me-seo .seo-checks, .me-social > *, .me-linkrow, .me-seo .seo-serp { padding: 14px; }
+  .gx-ex-sec { padding: 14px; }
+  .gx-export { padding-inline: 12px; }
+}
