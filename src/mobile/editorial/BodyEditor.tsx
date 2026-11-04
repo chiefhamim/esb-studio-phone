@@ -25,9 +25,9 @@ const ALIGNS = [{ value: 'default', label: 'Std' }, { value: 'full', label: 'Ful
 type Align = (typeof ALIGNS)[number]['value']
 
 /** A toolbar button that never takes focus from the story (so the keyboard and the selection stay). */
-function TB({ icon, text, label, on, disabled, onTap }: { icon?: IconName; text?: string; label: string; on?: boolean; disabled?: boolean; onTap: () => void }) {
+function TB({ icon, text, label, on, disabled, onTap, group, primary }: { icon?: IconName; text?: string; label: string; on?: boolean; disabled?: boolean; onTap: () => void; group?: boolean; primary?: boolean }) {
   return (
-    <button type="button" className={'me-tb' + (on ? ' is-on' : '')} aria-label={label} title={label} aria-pressed={on ?? undefined} disabled={disabled}
+    <button type="button" className={'me-tb' + (on ? ' is-on' : '') + (group ? ' g-start' : '') + (primary ? ' is-primary' : '')} aria-label={label} title={label} aria-pressed={on ?? undefined} disabled={disabled}
       onPointerDown={(e) => e.preventDefault()} onMouseDown={(e) => e.preventDefault()} onClick={onTap}>
       {icon ? <Icon name={icon} size={20} /> : <span className="me-tb-txt">{text}</span>}
     </button>
@@ -52,23 +52,23 @@ function Toolbar({ ed }: { ed: Editor }) {
         {inTable && <><TB icon="table" label="Table rows and columns" on onTap={() => open('ed-table')} /><span className="me-tb-sep" aria-hidden /></>}
         <TB icon="undo" label="Undo" disabled={!ed.can().undo()} onTap={() => c().undo().run()} />
         <TB icon="redo" label="Redo" disabled={!ed.can().redo()} onTap={() => c().redo().run()} />
-        <TB text="H2" label="Heading" on={ed.isActive('heading', { level: 2 })} onTap={() => c().toggleHeading({ level: 2 }).run()} />
+        <TB group text="H2" label="Heading" on={ed.isActive('heading', { level: 2 })} onTap={() => c().toggleHeading({ level: 2 }).run()} />
         <TB text="H3" label="Subheading" on={ed.isActive('heading', { level: 3 })} onTap={() => c().toggleHeading({ level: 3 }).run()} />
-        <TB icon="bold" label="Bold" on={ed.isActive('bold')} onTap={() => c().toggleBold().run()} />
+        <TB group icon="bold" label="Bold" on={ed.isActive('bold')} onTap={() => c().toggleBold().run()} />
         <TB icon="italic" label="Italic" on={ed.isActive('italic')} onTap={() => c().toggleItalic().run()} />
         <TB icon="underline" label="Underline" on={ed.isActive('underline')} onTap={() => c().toggleUnderline().run()} />
         <TB icon="highlight" label="Highlight" on={ed.isActive('highlightColor')} onTap={() => (ed.isActive('highlightColor') ? c().unsetMark('highlightColor').run() : c().setMark('highlightColor').run())} />
-        <TB icon="listBullet" label="Bullet points" on={ed.isActive('bulletList')} onTap={() => c().toggleBulletList().run()} />
+        <TB group icon="listBullet" label="Bullet points" on={ed.isActive('bulletList')} onTap={() => c().toggleBulletList().run()} />
         <TB icon="listOrdered" label="Numbered list" on={ed.isActive('orderedList')} onTap={() => c().toggleOrderedList().run()} />
         <TB icon="quote" label="Quotation" on={ed.isActive('blockquote')} onTap={() => c().toggleBlockquote().run()} />
-        <TB icon="link" label="Link" on={ed.isActive('link')} onTap={() => open('ed-link')} />
-        <TB icon="image" label="Add a picture" onTap={() => open('ed-pic')} />
+        <TB group icon="link" label="Link" on={ed.isActive('link')} onTap={() => open('ed-link')} />
+        <TB icon="image" label="Add a picture" onTap={() => { ed.commands.blur(); open('ed-pic') }} />
       </div>
       <div className="me-toolbar-end">
-        <TB icon="more" label="More formatting and tools" onTap={() => open('ed-more')} />
+        <TB group icon="more" label="More formatting and tools" onTap={() => open('ed-more')} />
         {writing
           ? <TB icon="x" label="Leave full-screen writing" onTap={() => { set({ writing: false }); ed.commands.blur() }} />
-          : <TB icon="check" label="Done (hide the keyboard)" onTap={() => ed.commands.blur()} />}
+          : <TB primary text="Done" label="Done (hide the keyboard)" onTap={() => ed.commands.blur()} />}
       </div>
     </div>
   )
@@ -104,19 +104,56 @@ function MoreSheet({ ed }: { ed: Editor }) {
 function LinkSheet({ ed }: { ed: Editor }) {
   const isOpen = useUi((s) => s.sheet === 'ed-link')
   const [url, setUrl] = useState('')
-  useEffect(() => { if (isOpen) setUrl((ed.getAttributes('link').href as string) ?? 'https://') }, [isOpen, ed])
+  const [label, setLabel] = useState('')
+  const [hasWords, setHasWords] = useState(false)
+  useEffect(() => {
+    if (!isOpen) return
+    const { from, to } = ed.state.selection
+    const picked = from !== to ? ed.state.doc.textBetween(from, to, ' ') : ''
+    setUrl((ed.getAttributes('link').href as string) ?? 'https://')
+    setLabel(picked)
+    setHasWords(!!picked || ed.isActive('link'))
+  }, [isOpen, ed])
   const close = () => useUi.getState().closeSheet('ed-link')
-  const ok = /^(https?:|mailto:)/i.test(url.trim()) && url.trim() !== 'https://'
+  /** "example.com" becomes https://example.com, "a@b.com" becomes mailto:a@b.com; anything else is refused. */
+  const href = (() => {
+    const v = url.trim()
+    if (!v || v === 'https://') return ''
+    if (/^(https?:|mailto:)/i.test(v)) return v
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return 'mailto:' + v
+    if (/^[^\s.]+\.[^\s]{2,}$/.test(v)) return 'https://' + v
+    return ''
+  })()
+  const apply = () => {
+    if (hasWords) ed.chain().focus().extendMarkRange('link').setLink({ href }).run()
+    else ed.chain().focus().insertContent({ type: 'text', text: label.trim() || href.replace(/^mailto:|^https?:\/\//i, ''), marks: [{ type: 'link', attrs: { href } }] }).run()
+    close()
+  }
   return (
     <Sheet id="ed-link" title="Link" footer={<>
       {ed.isActive('link') && <Button kind="text" onClick={() => { ed.chain().focus().extendMarkRange('link').unsetLink().run(); close() }}>Remove link</Button>}
       <span className="m-spacer" />
-      <Button disabled={!ok} onClick={() => { ed.chain().focus().extendMarkRange('link').setLink({ href: url.trim() }).run(); close() }}>Apply</Button>
+      <Button disabled={!href} onClick={apply}>Apply</Button>
     </>}>
-      <label className="m-field"><span className="m-field-label">Address (https:// or mailto:)</span>
-        <input type="url" inputMode="url" className="m-input" value={url} onChange={(e) => setUrl(e.target.value)} spellCheck={false} /></label>
-      <p className="me-hint">Select the words first; the link goes on the selection (or the word under the cursor).</p>
+      <div className="m-stack">
+        <label className="m-field"><span className="m-field-label">Address</span>
+          <input type="url" inputMode="url" className="m-input" value={url} onChange={(e) => setUrl(e.target.value)} spellCheck={false} autoCapitalize="none" /></label>
+        {!hasWords && (
+          <label className="m-field"><span className="m-field-label">Words to show (optional)</span>
+            <input className="m-input" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Leave empty to show the address" /></label>
+        )}
+        <p className="me-hint">{hasWords ? 'The link goes on the words you selected.' : 'No words are selected, so the link is added as new text. To link existing words, select them first.'}</p>
+      </div>
     </Sheet>
+  )
+}
+
+/** The shared icon set has no camera, so it is drawn here (same 24 px grid and stroke as the rest). */
+function CameraGlyph() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden focusable="false" style={{ marginRight: 8 }}>
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" />
+    </svg>
   )
 }
 
@@ -137,7 +174,7 @@ function PictureSheet({ ed }: { ed: Editor }) {
     <Sheet id="ed-pic" title="Add a picture">
       <div className="me-stack">
         <Button kind="tonal" icon="image" busy={busy} onClick={async () => { const fs = await platform().pickFiles({ accept: ['image/*'] }).catch(() => []); void run(fs[0] ?? null) }}>Choose from the phone</Button>
-        <Button kind="tonal" icon="photos" disabled={busy} onClick={async () => void run(await platform().takePhoto().catch(() => null))}>Take a photo</Button>
+        <Button kind="tonal" disabled={busy} onClick={async () => void run(await platform().takePhoto().catch(() => null))}><CameraGlyph />Take a photo</Button>
         {msg && <p className="me-hint" role="status">{msg}</p>}
         {err && <Banner tone={/Planned/i.test(err) ? 'planned' : 'error'}>{err}</Banner>}
         <p className="me-hint">A picture from the phone is uploaded to the site's media library first, so the story only ever holds an https link.</p>
