@@ -441,7 +441,7 @@ function MoreSheet({ groups }: { groups: CmdGroup[] }) {
           </div>
         </section>
       ))}
-      <Banner tone="info">Long-press the banner for the PC layer menu. Two fingers zoom and pan the canvas.</Banner>
+      <Banner tone="info">Tap a layer to select it; rest a finger on it a moment, then drag to move or resize. Two fingers zoom and pan the canvas.</Banner>
     </Sheet>
   )
 }

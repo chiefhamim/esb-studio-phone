@@ -198,6 +198,12 @@ export function TouchStage({ base }: { base: Assets }) {
       if (touches.size < 2) { if (raf) { cancelAnimationFrame(raf); apply() } commit(); g = null }
       if (touches.size === 0) { swallow = false; at = null }
     }
+    // A long press on Android sends a right-click ("contextmenu"), which opens the PC's layer menu in the middle of the hold. The phone
+    // has its own tray, so that menu, the text-selection callout and the long-press magnifier are all kept out of the canvas.
+    const noMenu = (e: Event) => { e.preventDefault(); e.stopPropagation() }
+    root.addEventListener('contextmenu', noMenu, true)
+    root.addEventListener('selectstart', noMenu, true)
+    root.addEventListener('dragstart', noMenu, true)
     const opts = { capture: true, passive: false } as const
     root.addEventListener('pointerdown', onDown, opts)
     root.addEventListener('pointermove', onMove, opts)
@@ -206,6 +212,9 @@ export function TouchStage({ base }: { base: Assets }) {
     return () => {
       cancelAnimationFrame(raf)
       dropGate()
+      root.removeEventListener('contextmenu', noMenu, true)
+      root.removeEventListener('selectstart', noMenu, true)
+      root.removeEventListener('dragstart', noMenu, true)
       root.removeEventListener('pointerdown', onDown, opts)
       root.removeEventListener('pointermove', onMove, opts)
       root.removeEventListener('pointerup', onUp, opts)

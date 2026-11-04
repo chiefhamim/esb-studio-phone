@@ -1415,3 +1415,12 @@ body:has(.gx-dropscrim) .gx-live-top { display: none; }
 
 /* the body editor's tools sit above the keyboard on the phone, not "above" the box */
 .ProseMirror p.is-editor-empty:first-child::before, .ProseMirror p.is-empty:first-child::before { content: 'Tap to write the full English story. Headings, bullets and bold appear in the bar above the keyboard.'; }
+
+/* the exact-size bar in the tray: [-]  56 px  [+] */
+.gx-sizebar { display: grid; grid-template-columns: 64px minmax(0, 1fr) 64px; gap: 6px; margin-top: 6px; }
+.gx-step { display: grid; place-items: center; height: 52px; border: 0; border-radius: 14px; background: var(--fill); color: var(--text-primary); cursor: pointer; touch-action: manipulation; -webkit-user-select: none; user-select: none; transition: transform .12s var(--m-spring), background .15s; }
+.gx-step:active { transform: scale(.94); background: var(--fill-active); }
+.gx-size-val { display: flex; align-items: baseline; justify-content: center; gap: 4px; height: 52px; border-radius: 14px; background: var(--fill); font: 700 22px/52px var(--font-ui); font-variant-numeric: tabular-nums; }
+.gx-size-val input { width: 4.2ch; min-width: 0; padding: 0; border: 0; outline: 0; background: transparent; color: var(--text-primary); font: inherit; text-align: right; }
+.gx-size-val input:focus { color: var(--accent); }
+.gx-size-val span { font: 600 14px/1 var(--font-ui); color: var(--text-secondary); }

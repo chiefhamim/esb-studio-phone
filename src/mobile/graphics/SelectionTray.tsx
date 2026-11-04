@@ -3,7 +3,7 @@
 // Style opens the Inspector sheet (the PC's full property panel); Edit opens the sheet that owns that layer's content.
 // "More" opens a second row with the things people reach for most while laying out a banner: lock, stacking order, centring,
 // opacity and (for text) size, alignment and weight.
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FORMATS } from '../../pc/core/tokens'
 import type { Align } from '../../pc/core/types'
 import { useStore } from '../../pc/store'
@@ -17,12 +17,50 @@ const OPACITY_STEPS = [1, 0.75, 0.5, 0.25]
 const NEXT_ALIGN: Record<Align, Align> = { left: 'center', center: 'right', right: 'left' }
 const ALIGN_ICON: Record<Align, IconName> = { left: 'alignTextLeft', center: 'alignTextCenter', right: 'alignTextRight' }
 
+const SIZE_MIN = 6, SIZE_MAX = 600
+const fmt = (n: number) => (Math.abs(n - Math.round(n)) < 0.05 ? String(Math.round(n)) : n.toFixed(1))
+
+/** Exact pixel size, like the PC's: one tap = 1 px, hold to run, or tap the number and type it. */
+function SizeBar({ id, size }: { id: string; size: number }) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const timer = useRef(0)
+  const live = useRef(size)
+  live.current = size
+  const set = (v: number) => useStore.getState().setOverride(id, { size: Math.min(SIZE_MAX, Math.max(SIZE_MIN, Math.round(v * 10) / 10)) })
+  const stop = () => { clearTimeout(timer.current); clearInterval(timer.current) }
+  useEffect(() => stop, [])
+  const press = (dir: 1 | -1) => (e: React.PointerEvent) => {
+    e.preventDefault()
+    stop()
+    set(Math.round(live.current) + dir) // the first tap lands on a whole pixel
+    let n = 0
+    timer.current = window.setTimeout(() => {
+      timer.current = window.setInterval(() => { n++; set(live.current + dir * (n > 18 ? 5 : n > 8 ? 2 : 1)) }, 70)
+    }, 380)
+  }
+  const commit = () => {
+    if (draft !== null) { const v = parseFloat(draft.replace(',', '.')); if (Number.isFinite(v)) set(v) }
+    setDraft(null)
+  }
+  return (
+    <div className="gx-sizebar" role="group" aria-label="Font size in pixels">
+      <button type="button" className="gx-step" aria-label="Smaller by 1 pixel" onPointerDown={press(-1)} onPointerUp={stop} onPointerCancel={stop} onPointerLeave={stop} onContextMenu={(e) => e.preventDefault()}><Icon name="minus" size={20} /></button>
+      <label className="gx-size-val">
+        <input inputMode="decimal" aria-label="Font size" value={draft ?? fmt(size)} onFocus={(e) => { setDraft(fmt(size)); e.currentTarget.select() }} onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }} />
+        <span>px</span>
+      </label>
+      <button type="button" className="gx-step" aria-label="Larger by 1 pixel" onPointerDown={press(1)} onPointerUp={stop} onPointerCancel={stop} onPointerLeave={stop} onContextMenu={(e) => e.preventDefault()}><Icon name="plus" size={20} /></button>
+    </div>
+  )
+}
+
 export function SelectionTray() {
   const ids = useStore((s) => s.selectedIds)
   const open = useUi((s) => s.openSheet)
   const [more, setMore] = useState(false)
+  const [sizing, setSizing] = useState(false)
   const key = ids.join(',')
-  useEffect(() => { setMore(false) }, [key]) // a new selection starts with the short tray
+  useEffect(() => { setMore(false); setSizing(false) }, [key]) // a new selection starts with the short tray
   if (ids.length === 0) return null
   const st = useStore.getState
   const single = ids.length === 1 ? st().scene().elements.find((e) => e.id === ids[0]) ?? null : null
@@ -35,10 +73,10 @@ export function SelectionTray() {
   if (single?.kind === 'photos') acts.push({ icon: 'image', label: 'Photos', run: () => open('gx-photos') })
   else if (single?.kind === 'text') acts.push({ icon: 'edit', label: 'Edit text', run: () => open('gx-story') })
   acts.push({ icon: 'sliders', label: 'Style', run: () => open('gx-inspector') })
-  acts.push({ icon: 'copy', label: 'Duplicate', run: () => st().duplicateSelected() })
+  if (single?.kind === 'text') acts.push({ icon: 'type', label: 'Size', on: sizing, run: () => { setSizing(!sizing); setMore(false) } })
   if (extra || ids.length > 1) acts.push({ icon: 'trash', label: 'Delete', danger: true, run: () => st().deleteSelected() })
   else acts.push({ icon: 'eyeOff', label: 'Hide', run: () => { st().setVisible(ids, false); st().select(null) } })
-  acts.push({ icon: more ? 'chevDown' : 'more', label: more ? 'Less' : 'More', run: () => setMore(!more), on: more })
+  acts.push({ icon: more ? 'chevDown' : 'more', label: more ? 'Less' : 'More', run: () => { setMore(!more); setSizing(false) }, on: more })
 
   const text = single?.kind === 'text' ? single : null
   const opacity = single ? single.opacity : 1
@@ -46,6 +84,7 @@ export function SelectionTray() {
   const setAll = (patch: { locked?: boolean; opacity?: number }) => { els.forEach((e) => st().setOverride(e.id, patch)) }
 
   const extras: Act[] = [
+    { icon: 'copy', label: 'Duplicate', run: () => st().duplicateSelected() },
     { icon: allLocked ? 'lock' : 'unlock', label: allLocked ? 'Unlock' : 'Lock', on: allLocked, run: () => setAll({ locked: !allLocked }) },
   ]
   if (single) {
@@ -63,8 +102,6 @@ export function SelectionTray() {
   )
   if (text) {
     extras.push(
-      { icon: 'minus', label: 'Smaller', run: () => st().setOverride(text.id, { size: Math.max(8, Math.round(text.size * 0.9)) }) },
-      { icon: 'plus', label: 'Larger', run: () => st().setOverride(text.id, { size: Math.round(text.size * 1.1) }) },
       { icon: ALIGN_ICON[text.align], label: 'Align', run: () => st().setAlignText(text.id, NEXT_ALIGN[text.align]) },
       { icon: 'bold', label: 'Bold', on: text.weight === 800, run: () => st().setOverride(text.id, { weight: text.weight === 800 ? 700 : 800 }) },
     )
@@ -88,6 +125,7 @@ export function SelectionTray() {
           </button>
         ))}
       </div>
+      {sizing && text && <SizeBar id={text.id} size={text.size} />}
       {more && (
         <div className="gx-tray-more" role="group" aria-label="More options">
           {extras.map((a) => (
