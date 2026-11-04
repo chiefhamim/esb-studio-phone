@@ -56,19 +56,46 @@ export default function MobileApp() {
   const prevRoute = useRef(route)
   // the heavy part of a screen (canvas fit, connection checks) switches on only after the slide, so the slide itself is never starved of frames
   const [liveRoute, setLive] = useState<Route>(route)
-  const [anim, setAnim] = useState<{ from: Route; to: Route; dir: 'fwd' | 'back' | 'up' | 'down' } | null>(null)
+  const screenEls = useRef<Record<Route, HTMLDivElement | null>>({ home: null, editorial: null, graphics: null })
+  const dimEl = useRef<HTMLDivElement | null>(null)
+  const running = useRef<{ done: () => void } | null>(null)
+  // Driven straight from the layout effect with the Web Animations API (no second React render, compositor-only transform/opacity),
+  // so the slide starts on the very next frame after a tap.
   useLayoutEffect(() => {
     const from = prevRoute.current
     if (from === route) return
     prevRoute.current = route
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setLive(route); return }
+    running.current?.done()
+    const inEl = screenEls.current[route], outEl = screenEls.current[from], dim = dimEl.current
+    if (!inEl || !outEl || !dim || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setLive(route); return }
     const dir = route === 'graphics' && from === 'editorial' ? 'up' : from === 'graphics' && route === 'editorial' ? 'down' : ORDER.indexOf(route) > ORDER.indexOf(from) ? 'fwd' : 'back'
-    setAnim({ from, to: route, dir })
-    const t = setTimeout(() => { setAnim(null); setLive(route) }, 480)
-    return () => clearTimeout(t)
+    const topIsIn = dir === 'fwd' || dir === 'up'
+    const lay = (el: HTMLElement, z: number) => { el.style.cssText = 'opacity:1;position:absolute;inset:0;z-index:' + z + ';background:var(--surface-app);will-change:transform;' }
+    lay(inEl, topIsIn ? 3 : 1); lay(outEl, topIsIn ? 1 : 3); dim.style.zIndex = '2'
+    const o = { duration: 460, easing: 'cubic-bezier(.32,.72,0,1)', fill: 'both' as const }
+    const T = (x: number, y: number, sc = 1) => 'translate3d(' + x + '%, ' + y + '%, 0) scale(' + sc + ')'
+    const fx: Record<string, [Keyframe[], Keyframe[]]> = {
+      fwd: [[{ transform: T(100, 0) }, { transform: T(0, 0) }], [{ transform: T(0, 0) }, { transform: T(-24, 0) }]],
+      back: [[{ transform: T(-24, 0) }, { transform: T(0, 0) }], [{ transform: T(0, 0) }, { transform: T(100, 0) }]],
+      up: [[{ transform: T(0, 100) }, { transform: T(0, 0) }], [{ transform: T(0, 0) }, { transform: T(0, -3, 0.95) }]],
+      down: [[{ transform: T(0, -3, 0.95) }, { transform: T(0, 0) }], [{ transform: T(0, 0) }, { transform: T(0, 100) }]],
+    }
+    const anims = [
+      inEl.animate(fx[dir][0], o), outEl.animate(fx[dir][1], o),
+      dim.animate(topIsIn ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }], o),
+    ]
+    let finished = false
+    const done = () => {
+      if (finished) return
+      finished = true
+      anims.forEach((x) => x.cancel())
+      inEl.style.cssText = ''; outEl.style.cssText = ''; dim.style.zIndex = ''
+      running.current = null
+      setLive(route)
+    }
+    running.current = { done }
+    anims[0].finished.then(done, () => {})
   }, [route]) // eslint-disable-line react-hooks/exhaustive-deps
-  const shown = (r: Route) => route === r || anim?.from === r
-  const slot = (r: Route) => (!shown(r) ? ' is-off' : anim?.to === r ? ' m-go-in m-dir-' + anim.dir : anim?.from === r ? ' m-go-out m-dir-' + anim.dir : '')
   const onNav = (id: string) => {
     if (id.startsWith('ed-')) { useDesk.getState().set({ homeTab: id.slice(3) as HomeTab, view: 'home', writing: false }); go('editorial') } else go(id as Route)
   }
@@ -167,9 +194,9 @@ export default function MobileApp() {
     <div className={`m-app${rail ? ' has-rail' : ''}${detail && !rail ? ' m-nav-off' : ''}`} data-size={size}>
       {rail && <NavBar rail items={NAV} value={navValue} onChange={onNav} />}
       <div className="m-screen m-screens">
-        <div className={'m-screen' + slot('home')} inert={!shown('home')}><HomeScreen active={liveRoute === 'home'} /></div>
-        <div className={'m-screen' + slot('editorial')} inert={!shown('editorial')}><EditorialScreen active={liveRoute === 'editorial'} /></div>
-        <div className={'m-screen' + slot('graphics')} inert={!shown('graphics')}><GraphicsScreen active={liveRoute === 'graphics'} /></div>
+        <div className={'m-screen' + (route === 'home' ? '' : ' is-off')} ref={(e) => { screenEls.current.home = e }} inert={route !== 'home'}><HomeScreen active={liveRoute === 'home'} /></div>
+        <div className={'m-screen' + (route === 'editorial' ? '' : ' is-off')} ref={(e) => { screenEls.current.editorial = e }} inert={route !== 'editorial'}><EditorialScreen active={liveRoute === 'editorial'} /></div>
+        <div className={'m-screen' + (route === 'graphics' ? '' : ' is-off')} ref={(e) => { screenEls.current.graphics = e }} inert={route !== 'graphics'}><GraphicsScreen active={liveRoute === 'graphics'} /></div>
       </div>
       {!rail && <NavBar items={NAV} value={navValue} onChange={onNav} />}
       {settingsOpen && <SettingsScreen onClose={closeSettings} />}
