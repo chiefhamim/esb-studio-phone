@@ -1550,3 +1550,22 @@ html:not(.kb-open) .me-toolbar { bottom: calc(var(--m-navbar) + var(--m-safe-bot
 .ab-update-t small { font: 500 13px/1.4 var(--font-ui); color: var(--text-secondary); }
 .ab-update-s.is-found, .ab-update-s.is-latest { color: var(--success); }
 .ab-update-s.is-failed { color: var(--danger); }
+/* panel headers: the title and its subtitle pill wrap together, the pill may take the full row */
+.pnl > header { height: auto; min-height: 40px; }
+.pnl h3 { flex-wrap: wrap; overflow: visible; white-space: normal; align-items: center; row-gap: 4px; }
+.pnl h3 small { flex: 0 1 auto; max-width: 100%; }
+
+/* Story panel card type (News Banner | Quote | Stat): the thumb is drawn by the control itself in equal thirds, so it is always
+   exactly centred in its slot (the measured sliding thumb sat a couple of pixels low and off to one side) */
+.gx-panel .card-type-seg { --n: 3; --i: 0; }
+.gx-panel .card-type-seg:has(> button:nth-of-type(2).on) { --i: 1; }
+.gx-panel .card-type-seg:has(> button:nth-of-type(3).on) { --i: 2; }
+.gx-panel .card-type-seg > .pill-slide { display: none !important; }
+.gx-panel .card-type-seg::before { content: ''; position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / var(--n)); border-radius: 12px; background: var(--seg-thumb); box-shadow: 0 0 0 .5px var(--m-hair), 0 1px 3px rgba(0, 0, 0, 0.14); transform: translateX(calc(var(--i) * 100%)); transition: transform .38s var(--m-spring); }
+.gx-panel .card-type-seg > button { flex: 1 1 0; justify-content: center; }
+@media (prefers-reduced-motion: reduce) { .gx-panel .card-type-seg::before { transition: none; } }
+
+/* Home: the ESB Power Line | Ai Studio lockup runs the full width and the tagline sits on one line, whole */
+.hm-hero { container-type: inline-size; }
+.hm-title { font-size: min(12.4cqw, 76px); gap: .3em; justify-content: space-between; }
+.hm-tag { max-width: none; white-space: nowrap; font-size: clamp(10px, 2.78cqw, 17px); letter-spacing: -.005em; }
