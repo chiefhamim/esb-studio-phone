@@ -1442,3 +1442,9 @@ html:not(.kb-open) .me-toolbar { bottom: calc(var(--m-navbar) + var(--m-safe-bot
 .me-toolbar .me-tb.is-primary { grid-column: span 2; background: var(--accent); color: var(--on-accent); }
 .me-toolbar .me-tb.is-primary .me-tb-txt { font: 650 14px/1 var(--font-ui); }
 .me-story.is-editing .me-scroll, .me-story.is-writing .me-scroll { padding-bottom: calc(138px + var(--m-kb) + var(--m-safe-bottom)); scroll-padding-bottom: calc(146px + var(--m-kb)); }
+
+/* the grip: a wide, finger-sized strip on top of the writing tools card */
+.me-tb-grip { grid-column: 1 / -1; display: grid; place-items: center; height: 26px; margin: -6px 0 -2px; touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none; }
+.me-tb-grip i { width: 44px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--text-primary) 28%, transparent); transition: background .15s, width .15s; }
+.me-tb-grip:active i { background: var(--text-secondary); width: 52px; }
+.me-toolbar.is-moved { box-shadow: 0 0 0 .5px var(--m-hair), 0 14px 40px rgba(0, 0, 0, 0.3); }

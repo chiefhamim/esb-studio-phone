@@ -34,7 +34,48 @@ function TB({ icon, text, label, on, disabled, onTap, group, primary }: { icon?:
   )
 }
 
+const TOOLS_POS_KEY = 'esb-phone/tools-offset'
+const readOffset = () => { try { return Math.min(0, Number(localStorage.getItem(TOOLS_POS_KEY)) || 0) } catch { return 0 } }
+
+/** The grip on top of the writing tools: drag it up or down to put the tools where the thumb reaches, double-tap to put them back. */
+function useMovableTools() {
+  const [dy, setDy] = useState(readOffset)
+  const ref = useRef<HTMLDivElement>(null)
+  const drag = useRef<{ y0: number; o0: number; max: number; moved: boolean; last: number } | null>(null)
+  const lastTap = useRef(0)
+  const clamp = (v: number, max: number) => Math.max(-max, Math.min(0, v))
+  const gripProps = {
+    onPointerDown: (e: React.PointerEvent) => {
+      const el = ref.current
+      if (!el) return
+      e.preventDefault()
+      ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+      const top = el.getBoundingClientRect().top - dy // where the card sits with no offset
+      drag.current = { y0: e.clientY, o0: dy, max: Math.max(0, top - 110), moved: false, last: dy } // never above the top bar
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      const d = drag.current
+      if (!d) return
+      if (!d.moved && Math.abs(e.clientY - d.y0) < 8) return // a tap or a wobble is not a drag
+      d.moved = true
+      d.last = clamp(d.o0 + (e.clientY - d.y0), d.max)
+      setDy(d.last)
+    },
+    onPointerUp: () => {
+      const d = drag.current
+      drag.current = null
+      if (d?.moved) { try { localStorage.setItem(TOOLS_POS_KEY, String(Math.round(d.last))) } catch { /* ignore */ }; return }
+      // two quick taps put the tools back where they started
+      const now = Date.now()
+      if (now - lastTap.current < 450) { setDy(0); lastTap.current = 0; try { localStorage.removeItem(TOOLS_POS_KEY) } catch { /* ignore */ } } else lastTap.current = now
+    },
+    onPointerCancel: () => { drag.current = null },
+  }
+  return { ref, dy, gripProps }
+}
+
 function Toolbar({ ed }: { ed: Editor }) {
+  const { ref, dy, gripProps } = useMovableTools()
   const writing = useDesk((s) => s.writing)
   const set = useDesk((s) => s.set)
   const open = (id: string) => useUi.getState().openSheet(id)
@@ -42,7 +83,8 @@ function Toolbar({ ed }: { ed: Editor }) {
   const onImage = ed.isActive('image')
   const inTable = ed.isActive('table')
   return (
-    <div className="me-toolbar" role="toolbar" aria-label="Story formatting">
+    <div ref={ref} className={'me-toolbar' + (dy ? ' is-moved' : '')} role="toolbar" aria-label="Story formatting" style={dy ? { transform: `translateY(${dy}px)` } : undefined}>
+      <div className="me-tb-grip" role="separator" aria-label="Drag to move the writing tools; double-tap to put them back" {...gripProps}><i /></div>
       <div className="me-toolbar-scroll">
         {onImage && <>
           <TB icon="image" label="Picture details: alt text, caption, credit, alignment" onTap={() => open('ed-img')} />
