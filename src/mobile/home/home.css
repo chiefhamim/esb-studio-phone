@@ -4,27 +4,20 @@
 :root[data-theme='dark'] .hm-shell { --h-glass: color-mix(in srgb, #14141c 52%, transparent); --h-hair: rgba(255, 255, 255, .12); }
 
 /* the picture, and the veil that keeps it quiet */
-.hm-bg { position: absolute; inset: 0; z-index: 0; background: center / cover no-repeat; pointer-events: none; }
-:root[data-theme='light'] .hm-bg { background-image: url('/brand/home-light.jpg'); }
-:root[data-theme='dark'] .hm-bg { background-image: url('/brand/home-dark.jpg'); background-position: 22% 50%; }
-.hm-bg::after { content: ''; position: absolute; inset: 0; background: color-mix(in srgb, var(--surface-app) 18%, transparent); }
-:root[data-theme='dark'] .hm-bg::after { background: color-mix(in srgb, var(--surface-app) 40%, transparent); }
 .hm-bar, .hm-scroll { position: relative; z-index: 1; }
-
-.hm-glass { background: var(--h-glass); border: .5px solid var(--h-hair); box-shadow: 0 1px 2px rgba(20, 20, 40, .08); -webkit-backdrop-filter: blur(10px) saturate(1.5); backdrop-filter: blur(10px) saturate(1.5); }
 
 /* top row: the date, and the account */
 .hm-bar { flex: none; display: flex; align-items: center; justify-content: space-between; padding: calc(var(--m-safe-top) + 8px) calc(var(--m-margin) + var(--m-safe-right)) 4px calc(var(--m-margin) + var(--m-safe-left)); }
-.hm-today { font: 700 12px/1 var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--text-primary); opacity: .72; }
-.hm-me { display: grid; place-items: center; width: 48px; height: 48px; border: 0; border-radius: 50%; background: var(--h-glass); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 0 0 .5px var(--h-hair); color: var(--text-primary); cursor: pointer; transition: transform .16s var(--m-spring); }
+.hm-today { opacity: .72; }
+.hm-me { display: grid; place-items: center; width: 48px; height: 48px; border: 0; border-radius: 50%; background: var(--h-glass); box-shadow: 0 0 0 .5px var(--h-hair); color: var(--text-primary); cursor: pointer; transition: transform .16s var(--m-spring); }
 .hm-me:active { transform: scale(.92); }
 .hm-me-badge { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font: 700 16px/1 var(--font-ui); }
 
-.hm { padding-top: 4px; padding-bottom: 24px; }
+.hm { padding-top: 4px; }
 
 /* the lockup: protected mark (no plate behind it), the ESB three-stripe divider, then the name */
 .hm-hero { padding: 16px 0 4px; }
-.hm-title { display: flex; align-items: center; gap: 12px; margin: 0; font: 800 36px/1.1 var(--font-ui); letter-spacing: -.028em; }
+.hm-title { display: flex; align-items: center; margin: 0; font: 800 36px/1.1 var(--font-ui); letter-spacing: -.028em; }
 .hm-mark { display: block; flex: none; height: .78em; width: auto; user-select: none; }
 .hm-stick { flex: none; width: .075em; height: .78em; border-radius: 2px; background: linear-gradient(180deg, #1f9d57 0 33.3%, #e53935 33.3% 66.6%, #f0953a 66.6%); box-shadow: inset 1px 0 0 rgba(255, 255, 255, .3); }
 .hm-name { flex: none; white-space: nowrap; }
@@ -35,17 +28,16 @@
 :root[data-theme='dark'] .hm-studio { background-image: linear-gradient(100deg, #8cb6ff 0%, #b3a0ff 34%, #ff8cff 62%, #b3a0ff 82%, #8cb6ff 100%); }
 @keyframes hm-sheen { to { background-position: 100% 0; } }
 @media (prefers-reduced-motion: reduce) { .hm-ai, .hm-studio { animation: none; } }
-.hm-tag { margin: 10px 0 0; max-width: 34ch; font: 500 14px/1.45 var(--font-ui); color: var(--text-primary); opacity: .78; }
-.hm-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-.hm-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px 0 12px; border: 0; border-radius: 12px; background: var(--h-glass); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 0 0 .5px var(--h-hair); color: var(--text-primary); font: 600 13px/1 var(--font-ui); cursor: pointer; transition: transform .14s var(--m-spring); }
-.hm-chip:active { transform: scale(.96); }
+.hm-tag { margin: 10px 0 0; font: 500 14px/1.45 var(--font-ui); color: var(--text-primary); opacity: .78; }
+.hm-chips { display: flex; gap: 8px; }
+.hm-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; border: 0; border-radius: 12px; background: var(--h-glass); box-shadow: 0 0 0 .5px var(--h-hair); color: var(--text-primary); font: 600 13px/1 var(--font-ui); cursor: pointer; }
 .hm-chip .m-dot { width: 8px; height: 8px; }
 .hm-chip .m-dot-ok { background: #2fbf71; }
 .hm-chip .m-dot-warn { background: #f0a020; }
 .hm-chip .m-dot-off { background: #8b8b95; }
 
 /* launcher: one panel, one row per desk: the icon beside its name and note, a chevron at the end */
-.hm-launch { display: flex; flex-direction: column; margin-top: 20px; border-radius: 18px; overflow: hidden; }
+.hm-launch { flex-direction: column; border-radius: 18px; }
 .hm-cell { position: relative; display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 14px; row-gap: 1px; align-items: center; min-height: 80px; padding: 14px 16px; border: 0; background: transparent; color: var(--text-primary); text-align: left; cursor: pointer; transition: background .15s; }
 .hm-cell + .hm-cell::before { content: ''; position: absolute; top: 0; left: 78px; right: 0; height: .5px; background: var(--h-hair); }
 .hm-cell:active { background: color-mix(in srgb, var(--text-primary) 7%, transparent); }
@@ -54,36 +46,27 @@
 .hm-cell-note { align-self: start; font: 500 13px/1.35 var(--font-ui); color: var(--text-secondary); }
 .hm-cell > svg { grid-row: 1 / 3; grid-column: 3; color: var(--text-tertiary); }
 
-.hm-continue { display: flex; align-items: center; gap: 14px; width: 100%; margin-top: 12px; padding: 12px 16px; min-height: 64px; border-radius: 16px; color: var(--text-primary); text-align: left; cursor: pointer; transition: transform .16s var(--m-spring); }
-.hm-continue:active { transform: scale(.985); }
+.hm-continue { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; color: var(--text-primary); text-align: left; cursor: pointer; }
 .hm-continue-ico { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: color-mix(in srgb, var(--text-primary) 8%, transparent); }
 .hm-continue-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .hm-continue-txt small { font: 600 12px/1.3 var(--font-ui); color: var(--text-secondary); letter-spacing: .02em; }
-.hm-continue-txt strong { font: 600 15px/1.4 var(--font-ui); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hm-continue-txt strong { font: 600 15px/1.4 var(--font-ui); -webkit-box-orient: vertical; }
 .hm-continue > svg { flex: none; color: var(--text-tertiary); }
 
 /* sections */
-.hm-sec { margin-top: 24px; }
-.hm-sech { display: flex; align-items: center; justify-content: space-between; }
-.hm-h { margin: 0 0 10px; font: 700 12px/1.3 var(--font-ui); letter-spacing: .07em; text-transform: uppercase; color: var(--text-primary); opacity: .72; }
+.hm-sech { display: flex; justify-content: space-between; }
+.hm-h { margin: 0 0 10px; opacity: .72; }
 .hm-sech .hm-h { margin-bottom: 0; }
-.hm-link { min-height: 44px; padding: 0 4px 0 12px; border: 0; background: none; color: var(--text-primary); font: 650 13px/1 var(--font-ui); cursor: pointer; }
+.hm-link { border: 0; background: none; color: var(--text-primary); font: 650 13px/1 var(--font-ui); cursor: pointer; }
 
 /* formats: a row that glides sideways and settles on a card */
-.hm-formats { display: flex; gap: 10px; margin-inline: calc(-1 * var(--m-margin)); padding: 2px var(--m-margin) 6px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--m-margin); scrollbar-width: none; overscroll-behavior-x: contain; }
-.hm-formats::-webkit-scrollbar { display: none; }
-.hm-fmt { flex: none; width: 168px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px; border-radius: 16px; color: var(--text-primary); text-align: left; cursor: pointer; scroll-snap-align: start; transition: transform .16s var(--m-spring); }
-.hm-fmt:active { transform: scale(.97); }
-.hm-fmt-glyph { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 8px; }
-.hm-fmt-glyph i { display: block; border-radius: 4px; background: color-mix(in srgb, var(--text-primary) 14%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text-primary) 55%, transparent); }
-.hm-fmt-name { font: 700 14px/1.25 var(--font-ui); }
-.hm-fmt-meta { display: flex; align-items: center; gap: 8px; white-space: nowrap; font: 500 12px/1.3 var(--font-ui); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
-.hm-fmt-meta b { padding: 2px 6px; border-radius: 6px; background: color-mix(in srgb, var(--text-primary) 9%, transparent); color: var(--text-primary); font-weight: 700; }
 
 /* recents + empty */
-.hm .m-list.hm-glass { border-radius: 18px; background: var(--h-glass); box-shadow: 0 1px 2px rgba(20, 20, 40, .08); }
-.hm-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px 22px; border-radius: 18px; text-align: center; }
-.hm-empty-ico { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 18px; background: color-mix(in srgb, var(--text-primary) 8%, transparent); }
-.hm-empty h3 { margin: 4px 0 0; font: 700 18px/1.3 var(--font-ui); }
-.hm-empty p { margin: 0 0 6px; max-width: 30ch; color: var(--text-secondary); font: 400 14px/1.5 var(--font-ui); }
 @media (min-width: 840px) { .hm { max-width: 720px; } }
+
+/* the official Home pictures (light / dark), under a veil of the theme's own colour */
+.hm-bg { position: absolute; inset: 0; z-index: 0; background: center / cover no-repeat; pointer-events: none; }
+:root[data-theme='light'] .hm-bg { background-image: url('/brand/home-light.jpg'); }
+:root[data-theme='dark'] .hm-bg { background-image: url('/brand/home-dark.jpg'); background-position: 22% 50%; }
+.hm-bg::after { content: ''; position: absolute; inset: 0; background: color-mix(in srgb, var(--surface-app) 18%, transparent); }
+:root[data-theme='dark'] .hm-bg::after { background: color-mix(in srgb, var(--surface-app) 40%, transparent); }

@@ -9,15 +9,10 @@
 .gx .m-topbar-title { padding-inline: var(--s-4) 0; }
 
 /* ---------------------------------------------------------------- format + category strip */
-.gx-strip, .gx-strip.m-chips.is-scroll { flex: none; align-items: center; gap: var(--s-4); margin-inline: 0; padding-inline: calc(var(--m-margin) + var(--m-safe-left)) calc(var(--m-margin) + var(--m-safe-right)); border-bottom: 1px solid var(--border-subtle); }
-.gx-strip .m-chip { margin-block: 8px; }
-.gx-catchip .m-chip-dot { width: 12px; height: 12px; }
-.gx-catchip span:nth-child(2) { max-width: 30vw; overflow: hidden; text-overflow: ellipsis; }
-.gx-strip-sep { flex: none; width: 1px; height: 24px; background: var(--border-subtle); }
 
 /* ---------------------------------------------------------------- canvas */
 .gx-body { flex: 1; min-height: 0; display: flex; }
-.gx-main { position: relative; flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
+.gx-main { flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
 .gx-stagehost { position: absolute; inset: 0; }
 .gx-canvas { position: absolute; inset: 0; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; overscroll-behavior: none; }
 /* the PC fits the banner inside a 40 px margin; on a phone that margin is reclaimed (the scroller reaches 32 px past
@@ -40,7 +35,7 @@
 .gx-empty { flex: none; display: flex; align-items: center; gap: var(--s-4); min-height: 56px; padding: var(--s-2) calc(var(--s-4) + var(--m-safe-right)) var(--s-2) calc(var(--m-margin) + var(--m-safe-left)); background: var(--surface-panel); border-top: 1px solid var(--border-subtle); }
 .gx-empty-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .gx-empty-text b { font: var(--m-t-body-strong); }
-.gx-empty-text small { font: var(--m-t-caption); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gx-empty-text small { font: var(--m-t-caption); color: var(--text-secondary); }
 
 /* ---------------------------------------------------------------- side inspector (medium toggle, expanded always) */
 .gx-side { flex: none; width: 340px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; border-left: 1px solid var(--border-subtle); background: var(--surface-panel); padding: var(--s-4) var(--s-4) calc(var(--s-8) + var(--m-safe-right)); }
@@ -49,20 +44,17 @@
 .gx-side { overflow-x: hidden; }
 
 /* ---------------------------------------------------------------- zoom + export, dock */
-.gx-tools { flex: none; display: flex; align-items: center; gap: var(--s-2); min-height: 56px; padding: var(--s-2) calc(var(--m-margin) + var(--m-safe-right)) var(--s-2) calc(var(--s-2) + var(--m-safe-left)); background: var(--surface-panel); border-top: 1px solid var(--border-subtle); }
-.gx-tools .m-spacer { flex: 1; }
-.gx-zoom { min-width: 88px; min-height: var(--m-touch); padding: 0 var(--s-4); border: 0; border-radius: var(--r-pill); background: transparent; font: var(--m-t-label); font-variant-numeric: tabular-nums; cursor: pointer; }
+.gx-tools { flex: none; padding: var(--s-2) calc(var(--m-margin) + var(--m-safe-right)) var(--s-2) calc(var(--s-2) + var(--m-safe-left)); }
+.gx-zoom { padding: 0 var(--s-4); border: 0; background: transparent; font: var(--m-t-label); font-variant-numeric: tabular-nums; cursor: pointer; }
 .gx-zoom:active { background: var(--fill-active); }
 .gx-zoom:disabled { color: var(--text-disabled); }
 
-.gx-dock { flex: none; display: flex; height: var(--m-navbar); padding-inline: var(--m-safe-left) var(--m-safe-right); background: var(--surface-panel); border-top: 1px solid var(--border-subtle); }
-.gx-dock-item { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: var(--m-touch); border: 0; background: none; color: var(--text-secondary); cursor: pointer; padding: var(--s-2) 0; }
+.gx-dock { flex: none; display: flex; height: var(--m-navbar); padding-inline: var(--m-safe-left) var(--m-safe-right); }
+.gx-dock-item { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: var(--m-touch); border: 0; background: none; cursor: pointer; padding: var(--s-2) 0; }
 .gx-dock-item:disabled { color: var(--text-disabled); }
-.gx-dock-pill { position: relative; display: grid; place-items: center; width: 56px; height: 32px; border-radius: 16px; transition: background var(--m-dur) var(--m-ease); }
+.gx-dock-pill { position: relative; display: grid; place-items: center; }
 .gx-dock-pill .m-badge { top: -4px; right: 4px; }
-.gx-dock-item.is-on { color: var(--text-primary); }
-.gx-dock-item.is-on .gx-dock-pill { background: var(--fill-active); }
-.gx-dock-label { font: var(--m-t-caption); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.gx-dock-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 html.kb-open .gx-dock, html.kb-open .gx-tools { display: none; }
 @media (min-width: 600px) {
   .gx-dock { justify-content: center; }
@@ -70,11 +62,10 @@ html.kb-open .gx-dock, html.kb-open .gx-tools { display: none; }
 }
 
 /* ---------------------------------------------------------------- sheets with PC panels */
-.gx-help { margin: var(--s-2) 0 var(--s-4); font: var(--m-t-body); font-size: 14px; color: var(--text-secondary); }
+.gx-help { font-size: 14px; }
 .gx-sheet-count { font: var(--m-t-caption); color: var(--text-secondary); padding-inline: var(--s-4); }
-.gx-photo-actions { display: flex; gap: var(--s-4); flex-wrap: wrap; }
+.gx-photo-actions { flex-wrap: wrap; }
 .gx-photo-actions .m-btn { flex: 1 1 140px; }
-.gx-panel { min-width: 0; }
 /* PC panel controls at touch size (geometry only) */
 .pc-host.pc-touch.gx-panel .icon-btn, .pc-host.pc-touch .gx-panel .icon-btn,
 .pc-host.pc-touch.gx-panel .layer .icon-btn { min-width: 44px; min-height: 44px; }
@@ -94,18 +85,10 @@ html.kb-open .gx-dock, html.kb-open .gx-tools { display: none; }
 /* layers arrange bar */
 .gx-arrange { display: flex; flex-direction: column; gap: var(--s-2); padding-bottom: var(--s-4); margin-bottom: var(--s-4); border-bottom: 1px solid var(--border-subtle); }
 .gx-arrange-head { display: flex; align-items: center; gap: var(--s-4); min-height: 32px; font: var(--m-t-body-strong); }
-.gx-arrange-head b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gx-arrange-row { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .gx-arrange-row .m-btn { flex: 1 1 140px; }
 
 /* category sheet */
-.gx-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--s-2); }
-.gx-cat { display: flex; align-items: center; gap: var(--s-6); min-height: var(--m-row-dense); padding: var(--s-2) var(--s-4); border: 1px solid transparent; border-radius: var(--r-2); background: none; text-align: left; cursor: pointer; }
-.gx-cat.is-on { background: var(--fill-active); }
-.gx-cat-dot { flex: none; width: 20px; height: 20px; border-radius: 50%; }
-.gx-cat-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.gx-cat-text b { font: var(--m-t-body-strong); }
-.gx-cat-text small { font: var(--m-t-caption); color: var(--text-secondary); }
 
 /* more sheet */
 .gx-more-sec { margin-bottom: var(--s-6); }
@@ -119,18 +102,14 @@ html.kb-open .gx-dock, html.kb-open .gx-tools { display: none; }
 .gx-more-text small { font: var(--m-t-caption); color: var(--text-secondary); }
 
 /* ---------------------------------------------------------------- export dialog */
-.gx-export { display: flex; flex-direction: column; gap: var(--s-2); padding-top: var(--s-4); max-width: 760px; }
-.gx-ex-sec { display: flex; flex-direction: column; gap: var(--s-4); padding-block: var(--s-6); border-bottom: 1px solid var(--border-subtle); }
-.gx-ex-title { display: flex; align-items: baseline; gap: var(--s-4); flex-wrap: wrap; margin: 0; font: var(--m-t-title); }
-.gx-ex-title small { font: var(--m-t-caption); color: var(--text-secondary); }
-.gx-ex-presets, .gx-ex-formats { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--s-4); }
-.gx-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: var(--m-row-dense); padding: var(--s-4) var(--s-6); border: 1px solid var(--border-strong); border-radius: var(--r-2); background: transparent; text-align: left; cursor: pointer; color: var(--text-primary); }
-.gx-card b { font: var(--m-t-body-strong); }
-.gx-card small { font: var(--m-t-caption); color: var(--text-secondary); }
-.gx-card.is-on { background: var(--fill-active); border-color: var(--text-primary); }
-.gx-fcard { flex-direction: row; align-items: center; gap: var(--s-6); }
-.gx-fcard-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.gx-ratio { flex: none; width: 28px; max-height: 36px; border: 1.5px solid currentColor; border-radius: 3px; opacity: .7; }
+.gx-export { display: flex; flex-direction: column; padding-top: var(--s-4); }
+.gx-ex-sec { display: flex; flex-direction: column; padding-block: var(--s-6); border-bottom: 1px solid var(--border-subtle); }
+.gx-ex-title { display: flex; align-items: baseline; flex-wrap: wrap; margin: 0; }
+.gx-ex-presets, .gx-ex-formats { display: grid; }
+.gx-card { position: relative; display: flex; flex-direction: column; cursor: pointer; }
+.gx-fcard { flex-direction: row; align-items: center; }
+.gx-fcard-text { display: flex; flex-direction: column; }
+.gx-ratio { flex: none; border: 1.5px solid currentColor; border-radius: 3px; opacity: .7; }
 .gx-ex-row { display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap; }
 .gx-ex-row .m-btn-outlined { width: var(--m-touch); padding: 0; }
 .gx-num { min-width: 48px; text-align: center; font: var(--m-t-label); font-variant-numeric: tabular-nums; }
@@ -139,7 +118,7 @@ html.kb-open .gx-dock, html.kb-open .gx-tools { display: none; }
 .gx-mono { font-family: var(--font-mono, ui-monospace, monospace); }
 .gx-stack { display: flex; flex-direction: column; gap: var(--s-4); }
 .gx-ex-files, .gx-ex-results { display: flex; flex-direction: column; }
-.gx-ex-file, .gx-ex-result { display: flex; align-items: center; gap: var(--s-4); min-height: var(--m-row-dense); border-bottom: 1px solid var(--border-subtle); }
+.gx-ex-file, .gx-ex-result { display: flex; align-items: center; gap: var(--s-4); }
 .gx-ex-file > span, .gx-ex-rtext { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .gx-ex-file b, .gx-ex-rtext b { font: var(--m-t-body-strong); font-size: 14px; overflow-wrap: anywhere; }
 .gx-ex-file small, .gx-ex-rtext small { font: var(--m-t-caption); color: var(--text-secondary); overflow-wrap: anywhere; }
@@ -148,7 +127,7 @@ html.kb-open .gx-dock, html.kb-open .gx-tools { display: none; }
 .gx-ex-state.is-saved { background: var(--success-soft); color: var(--success); }
 .gx-ex-state.is-failed { background: var(--danger-soft); color: var(--danger); }
 .gx-progress { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--s-2); }
-.gx-progress small { font: var(--m-t-caption); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gx-progress small { font: var(--m-t-caption); color: var(--text-secondary); }
 .gx-progress-bar { height: 6px; border-radius: 3px; background: var(--fill-active); overflow: hidden; }
 .gx-progress-bar i { display: block; height: 100%; background: var(--accent); transition: width var(--m-dur) var(--m-ease); }
 
@@ -156,9 +135,8 @@ html.kb-open .gx-dock, html.kb-open .gx-tools { display: none; }
 .gx-switch-row { display: flex; align-items: center; gap: var(--s-6); width: 100%; min-height: var(--m-row-dense); padding: 0; border: 0; background: none; text-align: left; cursor: pointer; color: var(--text-primary); }
 .gx-switch-text { flex: 1; min-width: 0; display: flex; flex-direction: column; font: var(--m-t-body); }
 .gx-switch-text small { font: var(--m-t-caption); color: var(--text-secondary); }
-.gx-switch { flex: none; position: relative; width: 52px; height: 32px; border-radius: 16px; border: 2px solid var(--border-strong); background: var(--fill); transition: background var(--m-dur) var(--m-ease); }
 .gx-switch i { position: absolute; top: 50%; left: 6px; width: 16px; height: 16px; margin-top: -8px; border-radius: 50%; background: var(--text-secondary); transition: transform var(--m-dur) var(--m-ease), background var(--m-dur); }
-.gx-switch.is-on { background: var(--accent); border-color: var(--accent); }
+.gx-switch.is-on { border-color: var(--accent); }
 .gx-switch.is-on i { transform: translateX(20px); background: var(--on-accent); }
 
 /* preview */
@@ -177,7 +155,6 @@ html.kb-open .gx-dock, html.kb-open .gx-tools { display: none; }
 .pc-host .gx-canvas .qb-text { white-space: nowrap; }
 .pc-host.pc-touch .gx-canvas .qbar .qb-i, .pc-host.pc-touch .gx-canvas .qbar .qb-text { height: 40px; min-height: 40px; }
 .pc-host.pc-touch .gx-canvas .qbar .qb-i { width: 40px; }
-.gx-empty-text b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 419px) { .gx-empty-text small { display: none; } }
 .pc-host.pc-touch.gx-panel .align-bar { flex-wrap: wrap; max-width: 100%; }
 /* PC switches keep their shape (pcHost.css gives every PC button a 40 px min-height); the hit area grows instead */
@@ -189,7 +166,7 @@ html.kb-open .gx-dock, html.kb-open .gx-tools { display: none; }
    the right, the "No photo yet" row folds away (Photos in the dock does the same), the top bar drops its second line. */
 @media (max-height: 520px) and (min-width: 560px) {
   .m-screen.gx { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto minmax(0, 1fr) auto; }
-  .m-screen.gx > .m-topbar, .m-screen.gx > .gx-strip { grid-column: 1 / -1; }
+  .m-screen.gx > .m-topbar { grid-column: 1 / -1; }
   .m-screen.gx > .gx-body { grid-column: 1; grid-row: 3; }
   .m-screen.gx > .gx-tools { grid-column: 1; grid-row: 4; min-height: 52px; }
   .m-screen.gx > .gx-dock { grid-column: 2; grid-row: 3 / 5; flex-direction: column; height: auto; width: 88px; padding: 0 var(--m-safe-right) 0 0; border-top: 0; border-left: 1px solid var(--border-subtle); }

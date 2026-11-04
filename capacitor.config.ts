@@ -10,7 +10,9 @@ const config: CapacitorConfig = {
     ...(process.env.CAP_LIVE ? { url: 'http://localhost:5173', cleartext: true } : { cleartext: false })
   },
   android: {
-    allowMixedContent: false
+    allowMixedContent: false,
+    // the live build only: lets the PC inspect the WebView (never in a shipped APK)
+    ...(process.env.CAP_LIVE ? { webContentsDebuggingEnabled: true } : {})
   },
   plugins: {
     CapacitorHttp: {

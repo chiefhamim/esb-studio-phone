@@ -235,8 +235,8 @@ export function Landing({ active }: { active: boolean }) {
   const draft = useEditorialStore((s) => s.draft)
   const activeId = useStoryQueue((s) => s.activeId)
   const story = useStoryQueue((s) => s.stories.find((x) => x.id === s.activeId))
+  const storyCount = useStoryQueue((s) => s.stories.length)
   const site = useEditorialStore((s) => s.siteStatus)
-  const staff = useEditorialStore((s) => s.staffSession)
   const onDesk = hasStoryContent({ source, draft })
   const TABS3 = ['stories', 'published', 'wire']
   const lastTab = useRef(homeTab)
@@ -244,13 +244,13 @@ export function Landing({ active }: { active: boolean }) {
   useEffect(() => { lastTab.current = homeTab }, [homeTab])
   return (
     <>
-      <TopBar title={TAB_TITLE[homeTab]} sub={<><i className={'me-dot' + (site.connected ? ' is-on' : '')} aria-hidden />{site.connected ? (staff ? `esbpowerline.com · ${staff.name || staff.email}` : 'esbpowerline.com · not signed in') : 'esbpowerline.com not reachable'}</>}
+      <TopBar title={TAB_TITLE[homeTab]} sub={site.connected ? undefined : <><i className="me-dot" aria-hidden />esbpowerline.com not reachable</>}
         actions={<IconBtn icon="activity" label="Activity" onClick={() => useUi.getState().openSheet('ed-activity')} />} overflow={homeMenu()} />
       <div className="m-scroll">
         <div className={'m-wrap me-home' + tabDir} key={homeTab}>
           {homeTab === 'stories' && (
             <>
-              {onDesk && (
+              {onDesk && storyCount > 1 && (
                 <section className="me-continue" aria-label="Continue editing">
                   <h2 className="me-h2">Continue editing</h2>
                   <Row tall onClick={() => set({ view: 'story' })} lead={<Thumb src={source?.images?.[0]?.src} />} title={draft.headline.trim() || source?.title || 'Untitled story'}

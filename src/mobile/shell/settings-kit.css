@@ -1,21 +1,10 @@
-.m-settings { padding-top: var(--s-4); }
-.m-settings .m-section { padding-bottom: var(--s-6); border-bottom: 1px solid var(--border-subtle); }
+.m-settings .m-section { padding-bottom: var(--s-6); }
 .m-stack { display: flex; flex-direction: column; gap: var(--s-6); }
 .m-muted { margin: 0; color: var(--text-secondary); font: var(--m-t-body); }
-.m-btnrow { display: flex; flex-wrap: wrap; gap: var(--s-4); }
 .m-input-row { display: flex; align-items: center; gap: var(--s-2); }
 .m-input-row .m-input { flex: 1; min-width: 0; }
-.m-avatar { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--fill-active); font: var(--m-t-label); }
-.m-feature-list { display: flex; flex-direction: column; border: 1px solid var(--border-subtle); border-radius: var(--r-2); }
-.m-feature { display: flex; justify-content: space-between; align-items: center; gap: var(--s-6); min-height: var(--m-row-dense); padding: var(--s-4) var(--s-6); border-bottom: 1px solid var(--border-subtle); font: var(--m-t-body); }
-.m-feature:last-child { border-bottom: 0; }
-.m-feature strong { font: var(--m-t-label); color: var(--success); text-align: right; }
-.m-feature strong.is-planned { color: var(--text-secondary); }
 /* switch: 52x32 visual, 48px hit */
-.m-switch { position: relative; flex: none; width: 52px; height: 32px; margin: 8px 0; border-radius: 16px; border: 2px solid var(--border-strong); background: var(--surface-sunken); cursor: pointer; padding: 0; transition: background var(--m-dur-fast) var(--m-ease); }
 .m-switch::after { content: ''; position: absolute; inset: -10px -4px; }
-.m-switch > span { position: absolute; top: 50%; left: 6px; width: 16px; height: 16px; border-radius: 50%; background: var(--border-strong); transform: translateY(-50%); transition: left var(--m-dur) var(--m-ease), width var(--m-dur), height var(--m-dur); }
-.m-switch.is-on { background: var(--accent); border-color: var(--accent); }
-.m-switch.is-on > span { left: 24px; width: 24px; height: 24px; background: var(--on-accent); }
+.m-switch.is-on { border-color: var(--accent); }
 .m-switch:disabled { opacity: .4; }
 .m-settings .m-row-meta { white-space: normal; }

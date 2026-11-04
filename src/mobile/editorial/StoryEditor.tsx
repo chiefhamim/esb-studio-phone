@@ -6,7 +6,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
-import { useStoryQueue, STATUS_LABEL } from '../../pc/editorial/storyQueue'
+import { useStoryQueue } from '../../pc/editorial/storyQueue'
 import { CATEGORIES } from '../../pc/core/tokens'
 import { suggestKeyphrases } from '../../pc/editorial/seo'
 import { SeoPanel } from '../../pc/editorial/SeoPanel'
@@ -19,6 +19,7 @@ import { SitePreview, SITE_THEMES } from '../../pc/editorial/SitePreview'
 import type { SiteDevice, SiteTheme } from '../../pc/editorial/SitePreview'
 import { BannerPreviews } from '../../pc/editorial/BannerPreviews'
 import { useBannerImage } from '../../pc/editorial/useBannerImage'
+import { useStore } from '../../pc/store'
 import { useHeroMode } from '../../pc/editorial/heroMode'
 import type { HeroMode } from '../../pc/editorial/heroMode'
 import { richOf } from '../../pc/editorial/richBody'
@@ -29,8 +30,7 @@ import { platform } from '../../platform/platform'
 import { PcHost } from '../PcHost'
 import { CatDot, CatName, ChannelMark, DeviceMark, FormatMark } from '../shell/cat'
 import { ProviderMark } from '../shell/marks'
-import { Banner, Button, Dropdown, Icon, IconBtn, NavBar, Planned, Segmented, Sheet, TopBar } from '../shell/ui'
-import type { NavItem } from '../shell/ui'
+import { Banner, Button, Dropdown, Icon, IconBtn, Planned, Segmented, Sheet, TopBar } from '../shell/ui'
 import type { IconName } from '../shell/ui'
 import type { MenuItem } from '../shell/ui'
 import { confirmAsk, snack, useSizeClass, useUi } from '../shell/core'
@@ -42,9 +42,9 @@ import { JobProgress } from './JobProgress'
 import { RichReview } from './RichReview'
 import { parseParagraphWithFacts } from './factSpans'
 import { baseAssets, cmsPayload, linkedArticle, usePublish } from './publish'
-import { StatusChip } from './Landing'
 import { useCategory, useFacts, useLeadPhoto, useReadiness, useStoryNumbers } from './useStory'
 import { FlowStrip } from './Pipeline'
+import { slideTo } from '../shell/slide'
 
 // The five panes, grouped the way the work goes: write the story -> make its banner (category, photo, tags) -> check it (SEO, captions, previews) -> publish.
 const TABS: { id: Tab; label: string; icon: IconName }[] = [{ id: 'story', label: 'Story', icon: 'edit' }, { id: 'details', label: 'Banner', icon: 'image' }, { id: 'seo', label: 'SEO', icon: 'search' }, { id: 'social', label: 'Social', icon: 'send' }, { id: 'preview', label: 'Preview', icon: 'eye' }]
@@ -163,20 +163,28 @@ function DetailsTab() {
   const setTags = (l: string[]) => setField('focusKeywords', l.join(', '))
   const addTag = (raw: string) => { const t = raw.trim().replace(/^#/, ''); if (t && !tags.some((x) => x.toLowerCase() === t.toLowerCase())) setTags([...tags, t]); setTagIn('') }
   const base = useBase()
-  const bannerImg = useBannerImage(base, 'fb45', 0.35)
+  // both published banners, side by side: the Facebook 4:5 and the Website 16:9 (tap one to edit it)
+  const fbImg = useBannerImage(base, 'fb45', 0.3)
+  const webImg = useBannerImage(base, 'web', 0.22)
+  const editBanner = (f?: 'fb45' | 'web') => { if (f) useStore.getState().setFormat(f); useNav.getState().go('graphics') }
   return (
     <div className="me-stack">
       <section className="me-card me-bannercard">
-        <div className="me-bannerrow">
-          <div className="me-bannerthumb" aria-hidden>{bannerImg ? <img src={bannerImg} alt="" draggable={false} /> : <Icon name="image" size={22} />}</div>
-          <div className="me-bannertxt">
-            <h3 className="me-h3">Banner</h3>
-            <p className="me-hint">{bannerLink ? 'Follows the headline, credit and photo of this story.' : 'Not linked: it keeps its own text.'}</p>
-            <div className="me-start-row">
-              <Button icon="layers" onClick={() => useNav.getState().go('graphics')}>Edit banner</Button>
-              <Button kind="tonal" icon="refresh" disabled={!draft.headline.trim()} onClick={() => { useEditorialStore.getState().applyDraftToBanner(); snack('Banner updated from the story') }}>Update</Button>
-            </div>
-          </div>
+        <div className="me-banner-head">
+          <h3 className="me-h3">Banner</h3>
+          <p className="me-hint">{bannerLink ? 'Follows the headline, credit and photo of this story.' : 'Not linked: it keeps its own text.'}</p>
+        </div>
+        <div className="me-banner-pair">
+          {([['fb45', 'Facebook', '4:5', fbImg], ['web', 'Website', '16:9', webImg]] as const).map(([id, name, ratio, img]) => (
+            <button key={id} type="button" className={'me-bp-item is-' + id} onClick={() => editBanner(id)} aria-label={`Edit the ${name} banner, ${ratio}`}>
+              <span className="me-bp-img">{img ? <img src={img} alt="" draggable={false} /> : <Icon name="image" size={22} />}</span>
+              <span className="me-bp-l"><b>{name}</b><small>{ratio}</small></span>
+            </button>
+          ))}
+        </div>
+        <div className="me-start-row">
+          <Button icon="layers" onClick={() => editBanner()}>Edit banner</Button>
+          <Button kind="tonal" icon="refresh" disabled={!draft.headline.trim()} onClick={() => { useEditorialStore.getState().applyDraftToBanner(); snack('Banner updated from the story') }}>Update</Button>
         </div>
       </section>
       <section className="me-card" id="me-details-cat">
@@ -441,8 +449,6 @@ function stepOf(tab: Tab): string { return CHECKS.includes(tab) ? 'check' : tab 
 export function StoryEditor() {
   const d = useDesk()
   const headline = useEditorialStore((s) => s.draft.headline)
-  const story = useStoryQueue((s) => s.stories.find((x) => x.id === s.activeId))
-  const { words } = useStoryNumbers()
   const size = useSizeClass()
   const pubBusy = usePublish((s) => s.busy)
   const jobLive = d.busy != null || pubBusy
@@ -452,12 +458,6 @@ export function StoryEditor() {
   const lastCheck = useRef<Tab>('seo')
   useEffect(() => { if (CHECKS.includes(d.tab)) lastCheck.current = d.tab }, [d.tab])
   const toCheck = ready.blockers > 0 ? ready.blockers : ready.warnings // the same number the strip on Check shows
-  const steps: NavItem[] = [
-    { id: 'story', label: 'Parse', icon: 'edit' },
-    { id: 'details', label: 'Banner', icon: 'image' },
-    { id: 'check', label: 'Check', icon: 'check', badge: toCheck > 0 ? toCheck : undefined, tone: ready.blockers > 0 ? 'bad' : 'warn' },
-    { id: 'publish', label: linked ? 'Update' : 'Publish', icon: 'upload', badge: ready.state === 'ready' ? '✓' : undefined, tone: 'ok' },
-  ]
   // which way the section slides in: forward tabs come from the right, earlier ones from the left
   const prevTab = useRef(d.tab)
   const order = TABS.map((t) => t.id)
@@ -466,9 +466,9 @@ export function StoryEditor() {
   return (
     <div className={'me-story' + (d.writing ? ' is-writing' : '') + (d.editing ? ' is-editing' : '')}>
       <div className="me-hide-writing">
-        <TopBar leading={<IconBtn icon="chevLeft" label="Back to stories" onClick={() => d.set({ view: 'home', writing: false })} />}
+        <TopBar leading={<IconBtn icon="chevLeft" label="Back to stories" onClick={() => slideTo(-1, () => d.set({ view: 'home', writing: false }))} />}
           title={STEP_TITLE[stepOf(d.tab)]}
-          sub={<>{story ? <StatusChip s={story.status} /> : <span className="me-status s-draft">{STATUS_LABEL.draft}</span>}<span>{words} words{linked ? ' · live' : ''}</span></>}
+          sub={linked ? <span>Live on esbpowerline.com</span> : undefined}
           actions={<>
             {jobLive && <IconBtn icon="activity" label="Activity (a job is running)" badge="•" onClick={() => useUi.getState().openSheet('ed-activity')} />}
             {canCancel(d.busy) && <Button kind="text" onClick={cancelJob}>Cancel</Button>}
@@ -476,7 +476,7 @@ export function StoryEditor() {
           overflow={storyMenu()} />
         <FlowStrip compact />
       </div>
-      {CHECKS.includes(d.tab) && <div className="me-substeps me-hide-writing"><Segmented<Tab> label="What to check" value={d.tab} onChange={(v) => { lastCheck.current = v; d.set({ tab: v }) }} options={[{ value: 'seo', label: 'SEO', icon: 'search' }, { value: 'social', label: 'Social', icon: 'send' }, { value: 'preview', label: 'Preview', icon: 'eye' }]} /><ReadyPill /></div>}
+      {CHECKS.includes(d.tab) && <div className="me-substeps me-hide-writing"><Segmented<Tab> label="What to check" value={d.tab} onChange={(v) => { const o: Tab[] = ['seo', 'social', 'preview']; lastCheck.current = v; slideTo(o.indexOf(v) >= o.indexOf(d.tab) ? 1 : -1, () => d.set({ tab: v }), 'steps') }} options={[{ value: 'seo', label: 'SEO', icon: 'search' }, { value: 'social', label: 'Social', icon: 'send' }, { value: 'preview', label: 'Preview', icon: 'eye' }]} /><ReadyPill /></div>}
       <div key={d.tab} className="m-scroll me-scroll" style={{ '--dir': paneDir } as React.CSSProperties}>
         <div className={'m-wrap' + (wide ? ' m-grid me-wide' : '')}>
           <div className={wide ? 'm-span-main' : undefined}>
@@ -489,13 +489,23 @@ export function StoryEditor() {
           {wide && !d.writing && <div className="m-span-side"><Side /></div>}
         </div>
       </div>
-      {!d.editing && !d.writing && <NavBar items={steps} value={stepOf(d.tab)} onChange={(id) => {
-        if (id === 'publish') {
+      {!d.editing && !d.writing && (() => {
+        // A wizard footer: the strip on top jumps anywhere; down here, one obvious next move within thumb reach.
+        const at = stepOf(d.tab)
+        const publish = () => {
           if (!headline.trim()) { snack('Write a headline first, then publish.'); d.set({ tab: 'story', writing: false }); return }
-          useUi.getState().openSheet('ed-publish'); return
+          useUi.getState().openSheet('ed-publish')
         }
-        d.set({ tab: id === 'check' ? lastCheck.current : (id as Tab), writing: false })
-      }} />}
+        const back = at === 'details' ? () => slideTo(-1, () => d.set({ tab: 'story' }), 'steps') : at === 'check' ? () => slideTo(-1, () => d.set({ tab: 'details' }), 'steps') : null
+        return (
+          <footer className="m-actionbar me-stepbar">
+            {back && <Button kind="text" icon="chevLeft" onClick={back}>Back</Button>}
+            {at === 'story' && <Button className="me-next" icon="chevRight" onClick={() => slideTo(1, () => d.set({ tab: 'details' }), 'steps')}>Next: Banner</Button>}
+            {at === 'details' && <Button className="me-next" icon="chevRight" onClick={() => slideTo(1, () => d.set({ tab: lastCheck.current }), 'steps')}>Next: Check</Button>}
+            {at === 'check' && <Button icon="upload" onClick={publish}>{linked ? 'Update' : 'Publish'}{toCheck > 0 ? <span className={'me-stepbar-badge is-' + (ready.blockers > 0 ? 'bad' : 'warn')}>{toCheck}</span> : null}</Button>}
+          </footer>
+        )
+      })()}
     </div>
   )
 }

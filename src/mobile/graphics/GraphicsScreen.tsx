@@ -7,7 +7,7 @@
 //   expanded >= 840   Inspector always beside the canvas
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { Dock, Inspector, PhotosPanel, StoryPanel } from '../../pc/components/Panels'
+import { Inspector, PhotosPanel, StoryPanel } from '../../pc/components/Panels'
 import { CATEGORIES, FORMATS, getFormat } from '../../pc/core/tokens'
 import type { FormatId } from '../../pc/core/types'
 import { humanBytes, loadSettings, saveSettings } from '../../pc/export'
@@ -33,8 +33,11 @@ import type { IconName } from '../shell/ui'
 import { ExportSheet } from './ExportSheet'
 import { saveFiles, shareOut } from './saveShare'
 import { renderAll } from './exportRun'
+import { ElementsBody, LayersBody } from './BannerPanels'
 import { ArrangeBar, CategorySheet, FormatStrip, PreviewDialog, ProjectsSheet, SizeSheet } from './parts'
 import { setDockTab, useBaseAssets, usePcPortals } from './hooks'
+import { FlowStrip } from '../editorial/Pipeline'
+import { slideTo } from '../shell/slide'
 import { TouchStage } from './TouchStage'
 import { zoomBy, zoomCanvas } from './zoom'
 import './graphics.css'
@@ -81,6 +84,8 @@ async function importShared() {
 
 export default function GraphicsScreen({ active }: ScreenProps) {
   const backTo = useNav((st) => st.backTo)
+  // opened from a story (Banner step): the editor joins the step sequence, same header strip and Next as the other steps
+  const fromStory = backTo === 'editorial'
   // The bridge to publishing: a story with a headline is in progress, so Graphics offers Publish / Update straight from here.
   // The banner is the story's banner (same store as the Story screens), so nothing needs saving or exporting first.
   const storyHeadline = useEditorialStore((st) => st.draft.headline)
@@ -327,7 +332,7 @@ export default function GraphicsScreen({ active }: ScreenProps) {
     <div className="m-screen gx" data-size={size} style={{ '--gx-side': side ? '1' : '0' } as CSSProperties}>
       <TopBar
         leading={size === 'compact' ? <IconBtn icon="chevLeft" label={backTo ? 'Back to the story' : 'Back to Home'} onClick={() => useNav.getState().back()} /> : undefined}
-        title={projectName ?? 'Untitled banner'}
+        title={fromStory ? 'Banner' : projectName ?? 'Untitled banner'}
         sub={sub}
         actions={<>
           <IconBtn icon="undo" label="Undo" disabled={!past} onClick={() => st().undo()} />
@@ -336,6 +341,7 @@ export default function GraphicsScreen({ active }: ScreenProps) {
           <IconBtn icon="more" label="More: File, Edit, Insert, Arrange, View" onClick={() => openSheet('gx-more')} />
         </>}
       />
+      {fromStory && <FlowStrip compact />}
       <FormatStrip />
 
       <div className="gx-body">
@@ -371,7 +377,7 @@ export default function GraphicsScreen({ active }: ScreenProps) {
         </div>
         <span className="m-spacer" />
         <Button kind="tonal" icon="download" busy={busy} disabled={!base} label="Export the banner" onClick={() => setShowExport(true)}>Export</Button>
-        {storyHeadline.trim() && <Button icon="check" disabled={!base} onClick={toCheck}>Check story</Button>}
+        {storyHeadline.trim() && <Button className="me-next" icon="chevRight" disabled={!base} onClick={() => slideTo(1, toCheck)}>Next: Check</Button>}
       </div>
 
       <nav className="gx-dock" aria-label="Graphics panels">
@@ -405,7 +411,7 @@ function Sheets() {
     <>
       <Sheet id="gx-story" title="Menu" wide>
         {/* the PC's Category row opens the phone's category sheet (numbered dots) instead of its own cramped grid */}
-        <div onClickCapture={(e) => { if ((e.target as HTMLElement).closest('.pnl[data-panel="Category"] > header')) { e.stopPropagation(); e.preventDefault(); useUi.getState().openSheet('gx-category') } }}>
+        <div onClickCapture={(e) => { const t = e.target as HTMLElement; const sheetFor = t.closest('.pnl[data-panel="Category"] > header') ? 'gx-category' : null; if (sheetFor) { e.stopPropagation(); e.preventDefault(); useUi.getState().openSheet(sheetFor) } }}>
           <LivePreview />
           <PcHost className="gx-panel"><StoryPanel /></PcHost>
         </div>
@@ -419,14 +425,15 @@ function Sheets() {
         <PcHost className="gx-panel"><PhotosPanel addPhotos={pickGallery} /></PcHost>
       </Sheet>
       <Sheet id="gx-elements" title="Elements" wide>
-        <PcHost className="gx-panel gx-dockhost"><Dock key="elements" /></PcHost>
+        <ElementsBody />
       </Sheet>
       <Sheet id="gx-layers" title="Layers" wide actions={<>
         <IconBtn icon="text" label="Add text layer" onClick={() => st().addText()} />
         <IconBtn icon="square" label="Add rectangle" onClick={() => st().addRect()} />
+        <IconBtn icon="reset" label="Reset every manual change on this banner" onClick={() => st().resetAllOverrides()} />
       </>}>
         <ArrangeBar />
-        <PcHost className="gx-panel gx-dockhost"><Dock key="layers" /></PcHost>
+        <LayersBody />
       </Sheet>
       <Sheet id="gx-inspector" title={selCount > 1 ? `Inspector · ${selCount} layers` : 'Inspector'} wide>
         <LivePreview />

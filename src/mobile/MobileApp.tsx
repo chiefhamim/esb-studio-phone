@@ -12,12 +12,13 @@ import { useStoryQueue } from '../pc/editorial/storyQueue'
 import { listenForIncoming } from '../native/shareIn'
 import { parseShared } from '../shareIntent'
 import LockScreen from '../native/LockScreen'
-import { confirmAsk, handleBack, snack, unsavedReason, useBackLayer, useSizeClass, watchKeyboard } from './shell/core'
+import { useUi, confirmAsk, handleBack, snack, unsavedReason, useBackLayer, useSizeClass, watchKeyboard } from './shell/core'
 import { useNav, type Route } from './shell/nav'
 import { useDesk } from './editorial/deskStore'
 import type { HomeTab } from './editorial/deskStore'
 import { useIncoming } from './shell/incoming'
 import { NavBar, UiHost, type NavItem } from './shell/ui'
+import { dirOf, isSliding, slideTo } from './shell/slide'
 import { UpdateDialog } from './shell/UpdateDialog'
 import AccountSheet from './shell/AccountSheet'
 import { startMobileCopy } from './shell/mobileCopy'
@@ -29,8 +30,7 @@ import HomeScreen from './home/HomeScreen'
 import EditorialScreen from './editorial/EditorialScreen'
 import GraphicsScreen from './graphics/GraphicsScreen'
 import SettingsScreen from './settings/SettingsScreen'
-import './polish.css' // the polish layer wins ties over every screen's own CSS
-import './refine.css' // last: the design language (spacing, radius, depth) that every screen follows
+import './design.css' // last: the one design file (scales, look, motion, controls) every screen follows
 
 // The bar reads left to right as the work does: find a story (Wire) -> start it (the raised Link button) -> work on it (Stories) -> done (Published).
 // Graphics is not a place on its own: a banner belongs to a story, so it is a step inside the story (and a tile on Home); the tablet rail keeps a direct entry.
@@ -70,7 +70,8 @@ export default function MobileApp() {
     prevRoute.current = route
     running.current?.done()
     const inEl = screenEls.current[route], outEl = screenEls.current[from], dim = dimEl.current
-    if (!inEl || !outEl || !dim || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setLive(route); return }
+    // a page shift (slideTo) is already moving the whole page: this screen-level slide stands aside
+    if (!inEl || !outEl || !dim || isSliding() || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setLive(route); return }
     const dir = route === 'graphics' && from === 'editorial' ? 'up' : from === 'graphics' && route === 'editorial' ? 'down' : ORDER.indexOf(route) > ORDER.indexOf(from) ? 'fwd' : 'back'
     const topIsIn = dir === 'fwd' || dir === 'up'
     const lay = (el: HTMLElement, z: number) => { el.style.cssText = 'opacity:1;position:absolute;inset:0;z-index:' + z + ';background:var(--surface-app);will-change:transform,opacity;' }
@@ -101,8 +102,14 @@ export default function MobileApp() {
     anims[0].finished.then(done, () => {})
   }, [route]) // eslint-disable-line react-hooks/exhaustive-deps
   const onNav = (id: string) => {
-    if (id === 'add') { useNav.getState().intendEditorial('paste-link'); return }
-    if (id.startsWith('ed-')) { useDesk.getState().set({ homeTab: id.slice(3) as HomeTab, view: 'home', writing: false }); go('editorial') } else go(id as Route)
+    // the whole page shifts toward the tab you tapped: right of where you are slides in from the right, left from the left
+    const here = route === 'home' ? 'home' : route === 'editorial' ? (deskView === 'home' ? 'ed-' + homeTab : 'add') : 'add'
+    const run = () => {
+      if (id === 'add') { useNav.getState().intendEditorial('paste-link'); return }
+      if (id.startsWith('ed-')) { useDesk.getState().set({ homeTab: id.slice(3) as HomeTab, view: 'home', writing: false }); go('editorial') } else go(id as Route)
+    }
+    if (id === here) { run(); return } // same tab: its own action (Engine focuses the link field), no shift
+    slideTo(dirOf(NAV.map((n) => n.id), here, id), run)
   }
   const detail = (route === 'editorial' && deskView !== 'home') || route === 'graphics'
   // the desk colour is applied once the slide has finished: restyling the whole document mid-slide would stall its first frames
@@ -192,7 +199,7 @@ export default function MobileApp() {
 
   // dev/test handle (never in a release build)
   useEffect(() => {
-    if (import.meta.env.DEV) Object.assign(window, { __store: useStore, __editorialStore: useEditorialStore, __queue: useStoryQueue, __nav: useNav })
+    if (import.meta.env.DEV) Object.assign(window, { __store: useStore, __editorialStore: useEditorialStore, __queue: useStoryQueue, __nav: useNav, __desk: useDesk, __ui: useUi })
   }, [])
 
   return (

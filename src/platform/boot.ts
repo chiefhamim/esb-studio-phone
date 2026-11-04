@@ -4,6 +4,7 @@ import { migrateSecrets } from './migrateSecrets'
 import { hydrateStorage } from './storage'
 import { loadPlatform } from './platform'
 import { installEsbShim } from './esbShim'
+import { installFetchFix } from './fetchFix'
 import { persistStorage } from './kv'
 import { migrateOldDrafts } from '../mobile/library/migrateDrafts'
 
@@ -13,6 +14,7 @@ export async function bootPlatform(): Promise<void> {
   // the phone's old drafts join the PC story queue (copied, never removed) before the queue module reads it
   try { migrateOldDrafts() } catch (e) { console.warn('draft migration skipped', e) }
   await loadPlatform()
+  installFetchFix() // aborts that really abort (CapacitorHttp ignores them on POST) + a fast Gemini 3 thinking level
   installEsbShim()
   void persistStorage()
 }

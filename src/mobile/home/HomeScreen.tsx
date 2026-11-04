@@ -8,7 +8,7 @@ import type { ScreenProps } from '../shell/nav'
 import { useNav } from '../shell/nav'
 import { useDesk } from '../editorial/deskStore'
 import { confirmAsk, snack, useOnline } from '../shell/core'
-import { Button, Icon, Menu, Row } from '../shell/ui'
+import { Button, Empty, Icon, Menu, Row } from '../shell/ui'
 import { openAccount } from '../shell/AccountSheet'
 import { ProviderMark } from '../shell/marks'
 import './home.css'
@@ -92,6 +92,8 @@ export default function HomeScreen({ active }: ScreenProps) {
   const nav = useNav()
   const recent = useMemo(() => [...stories].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 4), [stories])
   const current = stories.find((s) => s.id === activeId) ?? null
+  // the story in "Continue" is not listed again under Recent
+  const others = current ? recent.filter((s) => s.id !== current.id) : recent
 
   useEffect(() => { if (active) void checkConnection() }, [active, checkConnection])
 
@@ -150,22 +152,18 @@ export default function HomeScreen({ active }: ScreenProps) {
             </button>
           )}
 
-          <section className="hm-sec" aria-labelledby="home-recent">
+          {(stories.length === 0 || others.length > 0) && <section className="hm-sec" aria-labelledby="home-recent">
             <header className="hm-sech">
               <h2 className="hm-h" id="home-recent">Recent stories</h2>
               {stories.length > 0 && <button type="button" className="hm-link" onClick={toEditorial}>See all {stories.length}</button>}
             </header>
-            {recent.length === 0
+            {stories.length === 0
               ? (
-                <div className="hm-empty hm-glass">
-                  <span className="hm-rule" aria-hidden><i /><i /><i /></span>
-                  <h3>No stories yet</h3>
-                  <p>Paste a link from any Bengali or English news site and it becomes an English story, ready for review.</p>
-                  <Button icon="link" wide onClick={() => nav.intendEditorial('paste-link')}>Paste a news link</Button>
-                </div>
+                <Empty icon="power" title="No stories yet" body="Paste a link from any Bengali or English news site and it becomes an English story, ready for review."
+                  action={<Button icon="link" onClick={() => nav.intendEditorial('paste-link')}>Paste a news link</Button>} />
               )
-              : <div className="m-list hm-glass">{recent.map((s) => <StoryRow key={s.id} s={s} active={s.id === activeId} onOpen={() => open(s.id)} />)}</div>}
-          </section>
+              : <div className="m-list hm-glass">{others.map((s) => <StoryRow key={s.id} s={s} active={s.id === activeId} onOpen={() => open(s.id)} />)}</div>}
+          </section>}
 
         </div>
       </div>

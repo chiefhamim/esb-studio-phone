@@ -15,6 +15,7 @@ import { cancelJob, canCancel, fetchLink, readClipboardText, readFile, translate
 import { JobProgress } from './JobProgress'
 import { homeMenu } from './Landing'
 import { FlowStrip } from './Pipeline'
+import { slideTo } from '../shell/slide'
 
 export function Intake() {
   const d = useDesk()
@@ -36,7 +37,7 @@ export function Intake() {
   const link = d.intakeTab === 'link'
   return (
     <>
-      <TopBar leading={<IconBtn icon="chevLeft" label="Back to stories" onClick={() => d.set({ view: 'home', error: null })} />} title="Engine"
+      <TopBar leading={<IconBtn icon="chevLeft" label="Back to stories" onClick={() => slideTo(-1, () => d.set({ view: 'home', error: null }))} />} title="Engine"
         sub={main ? `AI: ${providerMeta(main.provider).name}` : 'Free machine translation (no AI key)'} overflow={homeMenu()} />
       <div className="m-scroll">
         <div className="m-wrap me-intake">
@@ -48,7 +49,7 @@ export function Intake() {
                 <div className="me-compose">
                   <header className="me-desk-head">
                     <span className="me-desk-ic" aria-hidden><Icon name="power" size={22} /></span>
-                    <div><h2>Engine</h2><p>Paste a Bengali or English news link. It is read, translated into newsroom English and laid out as a draft, with the original kept under Source for checking.</p></div>
+                    <div><h2>Start from a link</h2><p>Paste a Bengali or English news link. It is read, translated into newsroom English and laid out as a draft, with the original kept under Source for checking.</p></div>
                   </header>
                   <label className="me-link" htmlFor="me-url">
                     <Icon name="link" size={18} />
