@@ -26,6 +26,9 @@ import { useNav } from '../shell/nav'
 import { SelectionTray } from './SelectionTray'
 import { LivePreview } from './LivePreview'
 import type { ScreenProps } from '../shell/nav'
+import { useEditorialStore } from '../../pc/editorial/editorialStore'
+import { useDesk } from '../editorial/deskStore'
+import { linkedArticle } from '../editorial/publish'
 import { Banner, Button, ErrorState, Icon, IconBtn, Planned, Sheet, Skeleton, TopBar } from '../shell/ui'
 import type { IconName } from '../shell/ui'
 import { ExportSheet } from './ExportSheet'
@@ -79,6 +82,15 @@ async function importShared() {
 
 export default function GraphicsScreen({ active }: ScreenProps) {
   const backTo = useNav((st) => st.backTo)
+  // The bridge to publishing: a story with a headline is in progress, so Graphics offers Publish / Update straight from here.
+  // The banner is the story's banner (same store as the Story screens), so nothing needs saving or exporting first.
+  const storyHeadline = useEditorialStore((st) => st.draft.headline)
+  const liveStory = !!linkedArticle()
+  const publishFromHere = () => {
+    useDesk.getState().set({ view: 'story', writing: false })
+    useNav.setState({ route: 'editorial', backTo: null })
+    window.setTimeout(() => useUi.getState().openSheet('ed-publish'), 260)
+  }
   const size = useSizeClass()
   const [assets, retry] = useBaseAssets()
   usePcPortals()
@@ -359,7 +371,8 @@ export default function GraphicsScreen({ active }: ScreenProps) {
         </button>
         <IconBtn icon="plus" label="Zoom in" onClick={() => zoomBy(1)} disabled={!base} />
         <span className="m-spacer" />
-        <Button icon="download" busy={busy} disabled={!base} onClick={() => setShowExport(true)}>Export</Button>
+        <Button kind="tonal" icon="download" busy={busy} disabled={!base} onClick={() => setShowExport(true)}>Export</Button>
+        {storyHeadline.trim() && <Button icon="upload" disabled={!base} onClick={publishFromHere}>{liveStory ? 'Update' : 'Publish'}</Button>}
       </div>
 
       <nav className="gx-dock" aria-label="Graphics panels">

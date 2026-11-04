@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { App as CapApp } from '@capacitor/app'
 import { useStore } from '../pc/store'
+import { CATEGORIES } from '../pc/core/tokens'
 import { useEditorialStore } from '../pc/editorial/editorialStore'
 import { useStoryQueue } from '../pc/editorial/storyQueue'
 import { listenForIncoming } from '../native/shareIn'
@@ -54,6 +55,27 @@ export default function MobileApp() {
     if (id.startsWith('ed-')) { useDesk.getState().set({ homeTab: id.slice(3) as HomeTab, view: 'home', writing: false }); go('editorial') } else go(id as Route)
   }
   const detail = (route === 'editorial' && deskView !== 'home') || route === 'graphics'
+  // Like the PC: while a story is open, the app's accent (buttons, switches, selected chips) is the desk's colour.
+  const catId = useStore((s) => s.doc.content.categoryId)
+  useEffect(() => {
+    const root = document.documentElement
+    const names = ['--accent', '--on-accent', '--accent-soft']
+    const clear = () => names.forEach((n) => root.style.removeProperty(n))
+    const c = CATEGORIES.find((x) => x.id === catId)
+    if (!detail || !c) { clear(); return }
+    const paint = () => {
+      const dark = root.getAttribute('data-theme') === 'dark'
+      // light: the desk colour itself; dark: softened toward the surface so it keeps contrast (same recipe as the PC)
+      const a = dark ? `color-mix(in oklab, ${c.accent} 62%, #c9c9d1)` : c.accent
+      root.style.setProperty('--accent', a)
+      root.style.setProperty('--on-accent', dark ? '#14141a' : c.chipText)
+      root.style.setProperty('--accent-soft', `color-mix(in srgb, ${c.accent} ${dark ? 22 : 12}%, transparent)`)
+    }
+    paint()
+    const mo = new MutationObserver(paint)
+    mo.observe(root, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => { mo.disconnect(); clear() }
+  }, [detail, catId])
 
   useEffect(() => watchKeyboard(), [])
   useEffect(() => startSliderReset(), [])

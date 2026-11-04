@@ -1462,3 +1462,50 @@ html:not(.kb-open) .me-toolbar { bottom: calc(var(--m-navbar) + var(--m-safe-bot
 .gx-size-num > span { position: static; font: 600 13px/1 var(--font-ui); color: var(--text-secondary); }
 .gx-size-val em { font: 600 10px/1 var(--font-ui); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); pointer-events: none; }
 .gx-size-slider { grid-column: 1 / -1; width: 100%; height: 40px; margin: 2px 0 0; accent-color: var(--accent); }
+
+/* Headline editing bar (Highlight / Suggest / Break / Auto-Balance / Done).
+   The desktop bar is one nowrap row centred on the headline, so on a phone it ran off both edges.
+   Here it wraps into a card pinned inside the screen, above the keyboard. */
+.canvas-hl-bar {
+  position: fixed !important; left: 8px !important; right: 8px !important; top: auto !important;
+  bottom: calc(var(--m-kb, 0px) + 10px) !important; transform: none !important;
+  height: auto !important; padding: 8px !important; gap: 6px !important;
+  flex-wrap: wrap; justify-content: center; white-space: normal !important;
+  max-width: 460px; margin-inline: auto; border-radius: 16px !important;
+}
+.canvas-hl-bar .chl-btn { height: 40px; padding: 0 14px; font-size: 14px; border-radius: 10px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.canvas-hl-bar .chl-tip { flex: 1 0 100%; justify-content: center; padding: 2px 0; font-size: 13px; }
+.canvas-hl-bar .chl-btn.primary { flex: 1 0 100%; justify-content: center; }
+.canvas-hl-bar .qb-sep { display: none; }
+.canvas-hl-bar .chl-btn.done { margin-left: auto; }
+
+/* SEO title / slug / keyphrase: at rest the box shows the whole text, wrapped (the field comes back on tap) */
+.me-seo input.me-collapsed { position: absolute; width: 1px; height: 1px; min-height: 0; padding: 0; opacity: 0; pointer-events: none; }
+.me-fullval.is-box { margin: 0; padding: 13px 16px; border-radius: 14px; background: var(--field); color: var(--text-primary); font: 500 15px/1.45 var(--font-ui); cursor: text; flex: 1; min-width: 0; }
+#draft-slug ~ .me-fullval.is-box { font-family: var(--font-mono, ui-monospace, monospace); font-size: 13.5px; padding: 8px 4px; background: transparent; }
+/* meta description grows with its text instead of scrolling inside three lines */
+#draft-meta-desc { field-sizing: content; min-height: calc(3 * 1.4em + 26px); max-height: none; overflow: visible; }
+
+/* URL slug: the address on a caption line, the slug itself wrapped in the box, Check as a pill beside it */
+.me-seo .ed-slug { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; min-height: 0; padding: 10px 10px 10px 16px; border-radius: 14px; background: var(--field); }
+.me-seo .ed-slug:focus-within { box-shadow: 0 0 0 3px var(--focus-ring); background: var(--surface-panel); }
+.me-seo .ed-slug-prefix { grid-column: 1 / -1; font: 600 11.5px/1.2 var(--font-ui); letter-spacing: .04em; color: var(--text-tertiary); }
+.me-seo .ed-slug-prefix::before { content: "esbpowerline.com"; }
+.me-seo .ed-slug-prefix { font-size: 0; }
+.me-seo .ed-slug-prefix::before, .me-seo .ed-slug-prefix::after { font-size: 11.5px; }
+.me-seo .ed-slug-prefix::after { content: "/articles/"; color: var(--text-secondary); }
+.me-seo .ed-slug-input, .me-seo .ed-slug .me-fullval { grid-column: 1; grid-row: 2; }
+.me-seo .ed-slug-input { min-height: 36px; padding: 0; font: 600 14.5px/1.35 var(--font-mono, ui-monospace, monospace); color: var(--text-primary); }
+.me-seo .ed-slug .me-fullval.is-box, .me-seo .ed-slug .me-fullval { margin: 0; padding: 6px 0; background: transparent; color: var(--text-primary); font: 600 14.5px/1.4 var(--font-mono, ui-monospace, monospace); overflow-wrap: anywhere; }
+.me-seo .ed-slug .btn { grid-column: 2; grid-row: 2; align-self: start; min-height: 40px; padding: 0 16px; border-radius: 999px; font: 650 13.5px/1 var(--font-ui); }
+
+
+.gx-act { min-width: 0; }
+.gx-act span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+
+/* Graphics bottom bar: zoom on the left; Export and Publish/Update as a balanced pair on the right */
+.gx-tools { gap: 6px; }
+.gx-tools .m-iconbtn { width: 40px; height: 40px; flex: none; }
+.gx-tools .gx-zoom { min-width: 0; padding: 0 10px; flex: 0 1 auto; white-space: nowrap; }
+.gx-tools .m-btn { min-height: 46px; padding: 0 14px; gap: 6px; font-size: 14.5px; flex: none; }

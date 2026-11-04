@@ -103,6 +103,11 @@ export function SelectionTray() {
 
   const acts: Act[] = []
   if (single?.kind === 'photos') acts.push({ icon: 'image', label: 'Photos', run: () => open('gx-photos') })
+  else if (single && /^(date-|chip|label)/.test(single.id)) {
+    // the same small editors the PC opens from its quick bar: calendar, desk list, label list
+    const what = single.id.startsWith('date-') ? { icon: 'calendar' as const, label: 'Date' } : single.id.startsWith('chip') ? { icon: 'palette' as const, label: 'Category' } : { icon: 'sparkle' as const, label: 'Label' }
+    acts.push({ ...what, run: () => document.querySelector<HTMLButtonElement>('.gx-canvas .qbar .qb-text')?.click() })
+  }
   else if (single?.kind === 'text') acts.push({ icon: 'edit', label: 'Edit text', run: () => open('gx-story') })
   acts.push({ icon: 'sliders', label: 'Style', run: () => open('gx-inspector') })
   if (single?.kind === 'text') acts.push({ icon: 'type', label: 'Size', on: sizing, run: () => { setSizing(!sizing); setMore(false) } })
