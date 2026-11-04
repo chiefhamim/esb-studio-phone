@@ -69,7 +69,7 @@ export function UpdateDialog() {
           <p style={{ color: 'var(--danger, #d32f2f)' }}>{error}</p>
         ) : (
           <p>
-            A new version (<strong>v{update.version}</strong>) is available from main. Tap Update now to apply it.
+            {update.message ? <>{update.message}<br /></> : null}<small>Version {update.version}{update.needsApk ? ' · a full app file; Android will ask you to confirm the install.' : ' · downloads in a few seconds and the app restarts itself.'}</small>
           </p>
         )}
 

@@ -2,10 +2,24 @@ import { Capacitor } from '@capacitor/core'
 import { CapacitorUpdater } from '@capgo/capacitor-updater'
 import { App } from '@capacitor/app'
 
+/** Where updates are published (Cloudflare, tools/release.mjs). Not GitHub, not Capgo's service. */
+export const UPDATE_HOST = 'https://esb-studio-updates.hamim2964.workers.dev'
+
 export interface AvailableUpdate {
   version: string
   url: string
   checksum?: string
+  message?: string
+  /** True when the installed app is too old for this release's native parts: the editor installs the full APK instead. */
+  needsApk?: boolean
+}
+
+interface Manifest {
+  version: string
+  bundle?: { file: string; sha256: string }
+  apk?: { file: string; sha256: string }
+  /** Oldest installed app version that can take the web bundle; older installs need the APK. */
+  minNative?: string
   message?: string
 }
 
@@ -49,29 +63,25 @@ export function isNewer(a: string, b: string): boolean {
   return false
 }
 
-/** Check Capgo for available updates on the current channel. */
+/** Look for a newer release on our own update host. */
 export async function checkForUpdate(): Promise<AvailableUpdate | null> {
   if (!Capacitor.isNativePlatform()) return null
   try {
+    const res = await fetch(`${UPDATE_HOST}/latest.json?t=${Date.now()}`, { cache: 'no-store' })
+    if (!res.ok) return null
+    const m = (await res.json()) as Manifest
+    if (!m.version || !/^\d/.test(m.version)) return null
     const cur = await getCurrentBundle()
-    const latest = await CapacitorUpdater.getLatest()
-    if (!latest || !latest.url || !latest.version) return null
-    // If already running this version, no update needed
-    if (cur.version === latest.version || cur.id === latest.version) return null
-    // Never offer a bundle that is not newer than what is running or than the installed app itself: an old bundle left on the
-    // channel must not replace a newer install (it once offered v0.1.1 over a v0.3.0 app).
+    // Never offer a release that is not newer than what is running or than the installed app itself.
     const native = (await App.getInfo().catch(() => null))?.version ?? '0.0.0'
     const running = /^\d/.test(cur.version) ? cur.version : native
-    if (!isNewer(latest.version, native) || !isNewer(latest.version, running)) return null
-
-    return {
-      version: latest.version,
-      url: latest.url,
-      checksum: latest.checksum,
-      message: latest.message,
-    }
+    if (!isNewer(m.version, native) || !isNewer(m.version, running)) return null
+    const needsApk = !!m.minNative && isNewer(m.minNative, native)
+    const file = needsApk ? m.apk : m.bundle
+    if (!file) return null
+    return { version: m.version, url: `${UPDATE_HOST}/${file.file}`, checksum: file.sha256, message: m.message, needsApk }
   } catch (err) {
-    console.warn('OTA update check failed:', err)
+    console.warn('Update check failed:', err)
     return null
   }
 }
@@ -81,6 +91,8 @@ export async function downloadAndApplyUpdate(
   update: AvailableUpdate,
   onProgress?: (percent: number) => void,
 ): Promise<void> {
+  // A native change cannot be swapped in silently: hand the APK to Android, which shows its own Install confirmation.
+  if (update.needsApk) { window.open(update.url, '_system'); return }
   let sub: { remove: () => Promise<void> } | null = null
   if (onProgress) {
     sub = await CapacitorUpdater.addListener('download', (ev) => {
