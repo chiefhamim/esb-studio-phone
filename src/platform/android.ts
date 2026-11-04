@@ -4,6 +4,7 @@ import { registerPlugin } from '@capacitor/core'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
+import { Clipboard } from '@capacitor/clipboard'
 import { bytesToBase64, inputPick, type OutFile, type Platform, type SaveResult } from './platform'
 import { fetchImageData, fetchUrl } from './fetchGuarded'
 
@@ -57,7 +58,7 @@ export const androidPlatform: Platform = {
       throw new Error(`Sharing failed: ${msg(e)}`)
     }
   },
-  async copyText(text) { try { await navigator.clipboard.writeText(text); return true } catch { return false } },
+  async copyText(text) { try { await Clipboard.write({ string: text }); return true } catch { try { await navigator.clipboard.writeText(text); return true } catch { return false } } },
   fetchUrl,
   fetchImageData,
   async openExternal(url) { window.open(url, '_system', 'noopener') },

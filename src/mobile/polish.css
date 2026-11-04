@@ -1597,3 +1597,22 @@ html:not(.kb-open) .me-toolbar { bottom: calc(var(--m-navbar) + var(--m-safe-bot
 /* card-type slider: the selected thumb is the button itself; it must sit centred in the 4px padding, not run to the bottom edge */
 .gx-panel .card-type-seg { box-sizing: border-box; height: 52px; align-items: stretch; }
 .gx-panel .card-type-seg > button { min-height: 0 !important; height: auto !important; align-self: stretch; margin: 0; }
+
+/* A native app does not select text on long-press: only fields you type in (and text you chose to make selectable) keep selection and the copy/paste menu */
+html, body, #root { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+input, textarea, [contenteditable='true'], [contenteditable=''], .allow-select, .allow-select * { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+
+/* ---- Home: two workspace tiles side by side (a dashboard, not a list) ---- */
+.hm-launch { display: grid !important; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; }
+.hm-launch .hm-cell { position: relative; display: grid; grid-template-areas: 'ico chev' 'name name' 'note note'; grid-template-columns: 1fr auto; align-content: space-between; row-gap: 4px; min-height: 148px; padding: 16px; border: 0; border-radius: 24px; text-align: left; color: #fff; cursor: pointer; overflow: hidden; box-shadow: 0 10px 26px -12px rgba(20, 20, 40, .5); transition: transform .18s var(--m-spring); }
+.hm-launch .hm-cell:active { transform: scale(.97); }
+.hm-launch .hm-cell:nth-child(1) { background: linear-gradient(155deg, #23232c, #0c0c11); }
+.hm-launch .hm-cell:nth-child(2) { background: linear-gradient(155deg, #5b4df0, #3a2fb5); }
+.hm-launch .hm-cell::after { content: ''; position: absolute; right: -30px; bottom: -40px; width: 130px; height: 130px; border-radius: 50%; background: rgba(255, 255, 255, .07); }
+.hm-launch .hm-cell-ico { grid-area: ico; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: rgba(255, 255, 255, .16); color: #fff; }
+.hm-launch .hm-cell > svg:last-child { grid-area: chev; align-self: start; opacity: .7; color: #fff; }
+.hm-launch .hm-cell-name { grid-area: name; align-self: end; margin-top: 18px; font: 750 20px/1.2 var(--font-ui); letter-spacing: -.01em; color: #fff; }
+.hm-launch .hm-cell-note { grid-area: note; font: 500 13px/1.35 var(--font-ui); color: rgba(255, 255, 255, .72); }
+.hm-launch .hm-cell-name, .hm-launch .hm-cell-note { white-space: normal !important; }
+.hm-launch .hm-cell + .hm-cell::before { display: none; }
+.hm-launch .hm-cell > svg { grid-row: auto; grid-column: auto; }

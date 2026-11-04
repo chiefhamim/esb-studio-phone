@@ -425,6 +425,8 @@ export async function readClipboardText(): Promise<string> {
     const esb = (window as unknown as { esb?: { readClipboard?: () => Promise<string> | string } }).esb
     if (esb?.readClipboard) { const t = await esb.readClipboard(); if (typeof t === 'string' && t) return t }
   } catch { /* fall through */ }
+  // the installed app: the native clipboard (the WebView blocks navigator.clipboard.readText)
+  try { const { Capacitor } = await import('@capacitor/core'); if (Capacitor.isNativePlatform()) { const { Clipboard } = await import('@capacitor/clipboard'); const r = await Clipboard.read(); if (r.value) return String(r.value) } } catch { /* fall through */ }
   try { if (navigator.clipboard?.readText) return (await navigator.clipboard.readText()) || '' } catch { /* blocked */ }
   return ''
 }
