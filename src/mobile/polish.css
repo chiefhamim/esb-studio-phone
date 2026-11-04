@@ -1281,3 +1281,19 @@ body:has(.gx-dropscrim) .gx-live-top { display: none; }
 /* ================================================================ Settings: the cards keep the same 12 dp from the top bar as from the screen edges, also when a link jumps straight to a section */
 .m-settings .m-section { scroll-margin-top: 12px; }
 @media (max-width: 599px) { .m-settings { padding-top: 12px; } }
+
+/* ================================================================ Recent stories: the banner's own green / red / orange stripe instead of an icon tile, left-aligned like the rest of Home; a slim status bar instead of an icon tile on each row */
+.hm-empty { align-items: stretch; gap: 8px; padding: 18px 18px 18px; text-align: left; }
+.hm-empty .hm-rule { display: flex; gap: 3px; width: 56px; height: 4px; margin-bottom: 6px; }
+.hm-empty .hm-rule i { flex: 1; border-radius: 2px; }
+.hm-empty .hm-rule i:nth-child(1) { background: #1f9d57; }
+.hm-empty .hm-rule i:nth-child(2) { background: #e53935; }
+.hm-empty .hm-rule i:nth-child(3) { background: #f0953a; }
+.hm-empty h3 { margin: 0; }
+.hm-empty p { max-width: none; margin: 0 0 8px; }
+.m-row-lead:has(.hm-stat) { align-self: stretch; width: 4px; min-width: 4px; margin-block: 2px; }
+.hm-stat { display: block; width: 4px; height: 100%; min-height: 36px; border-radius: 2px; background: var(--text-tertiary); }
+.hm-stat.is-draft { background: color-mix(in srgb, var(--text-primary) 38%, transparent); }
+.hm-stat.is-review { background: #f0a020; }
+.hm-stat.is-approved { background: #1f9d57; }
+.hm-stat.is-published { background: #2563eb; }

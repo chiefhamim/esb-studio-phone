@@ -22,7 +22,6 @@ function ago(t: number): string {
   return new Date(t).toLocaleDateString()
 }
 
-const STATUS_ICON = { draft: 'edit', review: 'alert', approved: 'check', published: 'globe' } as const
 
 /** The PC's story title, or (for a story that only has its source so far) the source's first words. */
 export function phoneStoryTitle(s: StoryItem): string {
@@ -69,7 +68,7 @@ export function StoryRow({ s, onOpen, active }: { s: StoryItem; onOpen: () => vo
       <Row
         tall
         onClick={() => { if (!hold.held.current) onOpen() }}
-        lead={<span className={`m-thumb m-thumb-${s.status}`} aria-hidden><Icon name={STATUS_ICON[s.status]} size={22} /></span>}
+        lead={<span className={`hm-stat is-${s.status}`} aria-hidden />}
         title={<span lang={bn ? 'bn' : undefined}>{title}</span>}
         meta={<>{STATUS_LABEL[s.status]} · {ago(s.updatedAt)}{active ? ' · on the desk' : ''}</>}
         trail={<Icon name="chevRight" size={20} />}
@@ -159,10 +158,10 @@ export default function HomeScreen({ active }: ScreenProps) {
             {recent.length === 0
               ? (
                 <div className="hm-empty hm-glass">
-                  <span className="hm-empty-ico"><Icon name="newspaper" size={26} /></span>
+                  <span className="hm-rule" aria-hidden><i /><i /><i /></span>
                   <h3>No stories yet</h3>
                   <p>Paste a link from any Bengali or English news site and it becomes an English story, ready for review.</p>
-                  <Button icon="link" onClick={() => nav.intendEditorial('paste-link')}>Paste a news link</Button>
+                  <Button icon="link" wide onClick={() => nav.intendEditorial('paste-link')}>Paste a news link</Button>
                 </div>
               )
               : <div className="m-list hm-glass">{recent.map((s) => <StoryRow key={s.id} s={s} active={s.id === activeId} onOpen={() => open(s.id)} />)}</div>}
