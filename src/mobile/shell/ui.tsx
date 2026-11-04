@@ -284,6 +284,13 @@ export function Dropdown<T extends string>({ label, value, options, onChange }: 
   useBackLayer(open, () => setOpen(false), 'menu')
   const cur = options.find((o) => o.value === value)
   const r = open && ref.current ? ref.current.getBoundingClientRect() : null
+  // Under the field when the list fits there; otherwise it rises from the bottom of the screen so it is never cut off by the edge.
+  const below = r ? window.innerHeight - r.bottom - 6 - 12 : 0
+  const panelStyle: React.CSSProperties | undefined = r
+    ? below >= Math.min(options.length * 56 + 24, window.innerHeight * 0.5)
+      ? { top: r.bottom + 6, maxHeight: `calc(${below}px - var(--m-safe-bottom))` }
+      : { top: 'auto', bottom: 'calc(12px + var(--m-safe-bottom))', maxHeight: '72dvh', transformOrigin: 'bottom center' }
+    : undefined
   return (
     <>
       <button ref={ref} type="button" className={'dd' + (open ? ' is-open' : '')} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(!open)}>
@@ -293,7 +300,7 @@ export function Dropdown<T extends string>({ label, value, options, onChange }: 
       </button>
       {open && r && createPortal(
         <div className="gx-dropscrim" onClick={() => setOpen(false)}>
-          <div className="gx-droppanel dd-panel" role="listbox" aria-label={label} style={{ top: r.bottom + 6 }} onClick={(e) => e.stopPropagation()}>
+          <div className="gx-droppanel dd-panel" role="listbox" aria-label={label} style={panelStyle} onClick={(e) => e.stopPropagation()}>
             {options.map((o) => (
               <button key={o.value} type="button" role="option" aria-selected={o.value === value} className={'dd-opt' + (o.value === value ? ' is-on' : '')} onClick={() => { onChange(o.value); setOpen(false) }}>
                 <span className="dd-opt-c">{o.value === value && <Icon name="check" size={18} />}</span>
