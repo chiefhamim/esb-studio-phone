@@ -3,7 +3,7 @@
 // Social (four captions, 14 checks) · Preview (the site's article page and the two banners). From 840 dp the story sits
 // beside a side column with the readiness list and a live phone preview. The bottom bar: readiness (explained on tap)
 // and Publish / Update.
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import { useStoryQueue, STATUS_LABEL } from '../../pc/editorial/storyQueue'
@@ -52,6 +52,18 @@ export function useBase(): Assets | null {
   return b
 }
 
+/** A text box that always grows to show every word of what is in it (no inner scrolling, nothing hidden). */
+function AutoText({ value, ...rest }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { value: string }) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [value])
+  return <textarea ref={ref} value={value} {...rest} />
+}
+
 function Counter({ n, max }: { n: number; max: number }) {
   return <span className={'m-field-count' + (n > max ? ' is-over' : '')}>{n} / {max}{n > max ? ' · too long' : ''}</span>
 }
@@ -94,11 +106,11 @@ function StoryTab() {
         </div>
         <label className="m-field" htmlFor="me-headline">
           <span className="m-field-label"><span>Headline</span><Counter n={draft.headline.length} max={104} /></span>
-          <textarea id="me-headline" className="m-textarea me-headline" rows={2} placeholder="The English headline readers will see" value={draft.headline} onChange={(e) => setField('headline', e.target.value)} />
+          <AutoText id="me-headline" className="m-textarea me-headline me-auto" rows={1} placeholder="The English headline readers will see" value={draft.headline} onChange={(e) => setField('headline', e.target.value)} />
         </label>
         <label className="m-field" htmlFor="me-deck">
           <span className="m-field-label"><span>Deck / excerpt</span><Counter n={draft.deck.length} max={200} /></span>
-          <textarea id="me-deck" className="m-textarea" rows={3} placeholder="One or two sentences that sum up the story" value={draft.deck} onChange={(e) => setField('deck', e.target.value)} />
+          <AutoText id="me-deck" className="m-textarea me-auto" rows={2} placeholder="One or two sentences that sum up the story" value={draft.deck} onChange={(e) => setField('deck', e.target.value)} />
         </label>
         <Segmented<'edit' | 'verified'> compact label="Story view" value={d.bodyMode} onChange={(v) => d.set({ bodyMode: v })} options={[{ value: 'edit', label: 'Write', icon: 'edit' }, { value: 'verified', label: 'Verified', icon: 'eye' }]} />
       </div>
@@ -124,7 +136,7 @@ function DetailsTab() {
       <section className="me-card" id="me-details-cat">
         <div className="m-field"><span className="m-field-label">Category</span>
           <button type="button" className="me-catpick" style={{ '--cc': cat.accent } as React.CSSProperties} aria-haspopup="dialog" onClick={() => useUi.getState().openSheet('ed-category')}>
-            <CatDot cat={cat} size={36} />
+            <CatDot cat={cat} size={30} />
             <span className="me-catpick-t"><CatName cat={cat} /><small>Desk {cat.id}{deskAuto ? ' · detected from the story' : ''}</small></span>
             <Icon name="chevDown" size={20} />
           </button></div>
@@ -286,7 +298,7 @@ function PreviewTab() {
   const fb = getFacebook()
   return (
     <div className="me-stack">
-      <Segmented<'site' | 'banners'> compact label="Preview" value={what} onChange={setWhat} options={[{ value: 'site', label: 'Website', icon: 'globe' }, { value: 'banners', label: 'Banners', icon: 'image' }]} />
+      <Segmented<'site' | 'banners'> label="Preview" value={what} onChange={setWhat} options={[{ value: 'site', label: 'Website', icon: 'globe' }, { value: 'banners', label: 'Banners', icon: 'image' }]} />
       {what === 'site' ? (
         <>
           <Segmented<SiteDevice> compact label="Device" value={device} onChange={setDevice} options={[{ value: 'mobile', label: 'Phone', node: <DeviceMark kind="mobile" /> }, { value: 'tablet', label: 'Tablet', node: <DeviceMark kind="tablet" /> }, { value: 'desktop', label: 'Desktop', node: <DeviceMark kind="desktop" /> }]} />

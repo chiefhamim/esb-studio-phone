@@ -1297,3 +1297,79 @@ body:has(.gx-dropscrim) .gx-live-top { display: none; }
 .hm-stat.is-review { background: #f0a020; }
 .hm-stat.is-approved { background: #1f9d57; }
 .hm-stat.is-published { background: #2563eb; }
+
+/* ================================================================ Headline and deck: the box is exactly as tall as its words (see AutoText), with even padding top and bottom */
+.m-textarea.me-auto { overflow: hidden; min-height: 52px; padding-block: 14px; }
+.m-textarea.me-headline.me-auto { line-height: 1.35; }
+
+/* ================================================================ Top bar: the title gets the room, the status is a small tag, Publish/Update and More are 40 dp controls (the More glyph is a real icon with round vertical dots, not typed text) */
+.m-topbar-row { gap: 4px; }
+.m-topbar-title { padding-inline: 6px 4px; }
+.m-topbar-title h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-topbar-sub { display: flex; align-items: center; gap: 8px; margin-top: 2px; font: 500 12.5px/1.2 var(--font-ui); color: var(--text-secondary); white-space: nowrap; overflow: hidden; }
+.m-topbar-sub .me-status { height: 20px; padding: 0 8px; border-radius: 7px; font: 650 11.5px/20px var(--font-ui); }
+.m-topbar-sub .me-ready { min-height: 22px; padding: 0 8px 0 6px; border-radius: 7px; font-size: 11.5px; }
+.m-topbar-actions { display: flex; align-items: center; gap: 6px; }
+.m-topbar-actions .m-btn, .m-topbar-actions .me-pub-top { height: 40px; min-height: 40px; padding: 0 14px; gap: 6px; border-radius: 12px; font: 650 14px/1 var(--font-ui); }
+.m-topbar-actions .m-iconbtn { width: 40px; height: 40px; border-radius: 12px; }
+.m-topbar-actions .m-iconbtn[aria-label='More options'] svg { stroke-width: 3.2; transform: rotate(90deg); }
+
+/* ================================================================ Details tab: smaller, even controls (44 dp inputs, 40 dp buttons), tighter cards, no resize grips */
+.me-stack .me-card { gap: 10px; padding: 12px 14px; border-radius: 18px; }
+.me-stack .me-card .m-input { min-height: 44px; padding: 10px 14px; font-size: 15px; border-radius: 12px; }
+.me-stack .me-card > .m-btn, .me-stack .me-card .m-btn-text { min-height: 40px; padding-inline: 14px; border-radius: 12px; font-size: 14px; }
+.me-stack .me-urlrow > .m-btn { min-height: 44px; padding: 0 16px; border-radius: 12px; }
+.me-catpick { gap: 10px; padding: 8px 12px; border-radius: 14px; min-height: 0; }
+.me-catpick-t b, .me-catpick-t > :first-child { font-size: 15px; }
+.me-catpick-t small { font-size: 12px; }
+.me-switchrow { padding-block: 8px; gap: 12px; }
+.me-switchrow b { font-size: 15px; }
+.me-switchrow small { font-size: 12.5px; line-height: 1.35; }
+.me-stack textarea { resize: none; }
+.me-stack .ed-field textarea, .me-stack .fi textarea { border-radius: 12px; font-size: 15px; }
+.me-fi textarea, .me-fi .ed-field textarea, .pc-host .me-fi textarea { resize: none !important; }
+
+/* ================================================================ Featured image controls: Fill / Fit whole / Reset framing as one tidy row of 40 dp buttons; thumbnails, tone sliders and the Graphics button in the same family */
+.me-fi .fi-row { display: flex; align-items: center; gap: 8px; }
+.me-fi .fi-row .btn.sm { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: var(--fill-hover); color: var(--text-primary); font: 650 14px/1 var(--font-ui); box-shadow: none; }
+.me-fi .fi-row .btn-link { flex: none; min-height: 40px; padding: 0 10px; border-radius: 12px; font: 600 13px/1 var(--font-ui); color: var(--text-secondary); text-decoration: none; }
+.me-fi .fi-meta { font: 500 12.5px/1.3 var(--font-ui); color: var(--text-secondary); }
+.me-fi .fi-thumbs { gap: 8px; }
+.me-fi .fi-thumb { width: 56px; height: 56px; border-radius: 12px; }
+.me-fi .fi-text { min-height: 44px; }
+.me-fi .fi-open { min-height: 44px; border-radius: 12px; font: 650 14px/1 var(--font-ui); }
+/* the PC rules for these buttons and tiles are stronger than the block above; the sizes here must win */
+.me-fi .fi-row .btn.sm { height: 40px !important; min-height: 40px !important; padding: 0 12px !important; border-radius: 12px !important; font: 650 14px/1 var(--font-ui) !important; }
+.me-fi .scrub { height: 44px !important; min-height: 44px !important; padding: 0 12px !important; border-radius: 12px !important; }
+.me-fi .scrub .scrub-label { font-size: 13px; }
+.me-fi .scrub input { font-size: 16px; }
+.me-fi .fi-open { height: 44px !important; min-height: 44px !important; }
+.me-fi .input { min-height: 44px !important; border-radius: 12px !important; }
+/* lighter weight: outlined buttons instead of dark slabs, quieter tone tiles */
+.me-fi .fi-row .btn.sm { height: 38px !important; min-height: 38px !important; background: transparent !important; box-shadow: inset 0 0 0 1px var(--border-default) !important; border-radius: 11px !important; font-weight: 600 !important; }
+.me-fi .fi-row .btn.sm:active { background: var(--fill) !important; }
+.me-fi .scrub { height: 40px !important; min-height: 40px !important; border-radius: 11px !important; }
+.me-fi .grid2 { gap: 8px; }
+
+/* ================================================================ Preview tab: slimmer toggles (40 dp) and a one-line pair of selectors */
+.me-stack > .m-seg { min-height: 40px; padding: 3px; border-radius: 13px; }
+.me-stack > .m-seg .m-seg-item { min-height: 34px; border-radius: 10px; font-size: 14px; }
+.me-stack > .m-seg::before { top: 3px; bottom: 3px; left: 3px; border-radius: 10px; width: calc((100% - 6px - (var(--n) - 1) * 2px) / var(--n)); }
+.me-two .dd { min-height: 52px; padding-block: 8px; }
+.me-two .dd-txt small { font-size: 11px; }
+.me-two .dd-txt b { font-size: 15px; }
+
+/* ================================================================ Publish: the checklist is one card (rows inset, dot on the title line, a pill action, a quiet "ignore" icon) and the capability chips wrap instead of overlapping */
+.me-checks { border-radius: 18px; background: var(--surface-panel); box-shadow: var(--m-card-shadow); overflow: hidden; }
+.me-checks li { align-items: flex-start; gap: 10px; min-height: 0; padding: 12px 8px 12px 14px; border-bottom: 0; position: relative; }
+.me-checks li + li::before { content: ''; position: absolute; top: 0; left: 14px; right: 0; height: .5px; background: var(--border-default); }
+.me-checks-dot { width: 8px; height: 8px; margin-top: 7px; }
+.me-checks-t { padding-block: 0; gap: 2px; }
+.me-checks-t b { font: 650 15px/1.35 var(--font-ui); }
+.me-checks-t span { font: 500 13px/1.4 var(--font-ui); }
+.me-checks li > .m-btn { flex: none; align-self: center; min-height: 34px; height: 34px; padding: 0 12px; border-radius: 10px; background: var(--fill); color: var(--text-primary); font: 650 13px/1 var(--font-ui); }
+.me-checks li > .m-iconbtn { flex: none; align-self: center; width: 34px; height: 34px; border-radius: 10px; background: transparent; color: var(--text-tertiary); }
+.me-checks li > .m-iconbtn svg { width: 18px; height: 18px; }
+.me-caps { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
+.me-caps > :nth-child(odd):not(:first-child) { margin-top: 10px; }
+.me-cap .m-planned, .m-planned { height: auto; min-height: 22px; padding: 4px 10px; line-height: 1.3; white-space: normal; text-align: left; border-radius: 9px; }

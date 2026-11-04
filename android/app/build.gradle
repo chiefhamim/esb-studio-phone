@@ -43,7 +43,7 @@ android {
     }
     buildTypes {
         debug {
-            applicationIdSuffix '.dev'   // installs beside the real app; live-reload build
+            if (!project.hasProperty('sameId')) applicationIdSuffix '.dev'   // installs beside the real app; -PsameId builds the live-reload app over the real one (same data)
         }
         release {
             if (keystoreFile.exists()) signingConfig signingConfigs.release
