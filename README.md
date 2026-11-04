@@ -12,3 +12,5 @@ npm run dev      # http://localhost:5173, open it on the phone's browser or in C
 npm run build    # type-check + production build
 npm run lint
 ```
+
+
