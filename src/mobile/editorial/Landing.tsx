@@ -1,7 +1,7 @@
 // The Editorial landing: start a story (link, text/file, blank), continue the one on the desk, and the three lists the
 // PC desk keeps — the story queue (Draft / Needs check / Approved / Published), the articles live on esbpowerline.com
 // (open one to update it, never a duplicate) and the Wire inbox of followed feeds.
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import { aiFor } from '../../pc/editorial/aiProviders'
 import { FileTypeIcon, ProviderMark } from '../shell/marks'
@@ -286,12 +286,16 @@ export function Landing({ active }: { active: boolean }) {
   const site = useEditorialStore((s) => s.siteStatus)
   const staff = useEditorialStore((s) => s.staffSession)
   const onDesk = hasStoryContent({ source, draft })
+  const TABS3 = ['stories', 'published', 'wire']
+  const lastTab = useRef(homeTab)
+  const tabDir = lastTab.current === homeTab ? '' : TABS3.indexOf(homeTab) > TABS3.indexOf(lastTab.current) ? ' m-tab-fwd' : ' m-tab-back'
+  useEffect(() => { lastTab.current = homeTab }, [homeTab])
   return (
     <>
       <TopBar title={TAB_TITLE[homeTab]} sub={<><i className={'me-dot' + (site.connected ? ' is-on' : '')} aria-hidden />{site.connected ? (staff ? `esbpowerline.com · ${staff.name || staff.email}` : 'esbpowerline.com · not signed in') : 'esbpowerline.com not reachable'}</>}
         actions={<IconBtn icon="activity" label="Activity" onClick={() => useUi.getState().openSheet('ed-activity')} />} overflow={homeMenu()} />
       <div className="m-scroll">
-        <div className="m-wrap me-home" key={homeTab}>
+        <div className={'m-wrap me-home' + tabDir} key={homeTab}>
           {homeTab === 'stories' && (
             <>
               <Launcher />

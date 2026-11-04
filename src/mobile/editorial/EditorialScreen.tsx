@@ -2,7 +2,7 @@
 // publish logic), laid out one task per screen. Landing (stories, published, wire) -> Intake (link / text / file) ->
 // the story (Story · Details · SEO · Social · Preview) -> Review & publish. Stays mounted while hidden, so the editor,
 // its undo history and a running job survive switching to Graphics.
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { ScreenProps } from '../shell/nav'
 import { useNav } from '../shell/nav'
 import { useIncoming } from '../shell/incoming'
@@ -84,11 +84,16 @@ export default function EditorialScreen({ active }: ScreenProps) {
     return b ? 'A translation or AI job is still running for this story.' : usePublish.getState().busy ? 'A publish is still running.' : null
   })
 
+  const seen = useRef(view)
+  const dir = seen.current === view ? '' : view === 'home' ? ' m-view-down' : ' m-view-up'
+  useEffect(() => { seen.current = view }, [view])
   return (
     <div className="m-screen me-root">
-      {view === 'home' && <Landing active={active} />}
-      {view === 'intake' && <Intake />}
-      {view === 'story' && <StoryEditor />}
+      <div key={view} className={'m-view' + dir}>
+        {view === 'home' && <Landing active={active} />}
+        {view === 'intake' && <Intake />}
+        {view === 'story' && <StoryEditor />}
+      </div>
       <ActivitySheet />
       <LibrarySheet />
       <SourceReview />

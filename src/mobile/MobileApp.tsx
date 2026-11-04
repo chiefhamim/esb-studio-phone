@@ -2,7 +2,7 @@
 // Home · Editorial · Graphics (bottom bar on phones, navigation rail from 600 dp). Screens stay mounted so the editor,
 // the canvas and their undo history survive switching. Android back: menu -> sheet -> dialog -> screen -> home ->
 // minimise (never exits; work is autosaved, and an unfinished job asks first).
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { App as CapApp } from '@capacitor/app'
 import { useStore } from '../pc/store'
@@ -51,6 +51,22 @@ export default function MobileApp() {
   const deskView = useDesk((s) => s.view)
   const homeTab = useDesk((s) => s.homeTab)
   const navValue = route === 'editorial' ? 'ed-' + homeTab : route
+  // page transitions: the screen you leave slides away while the new one slides in like a card (sideways between destinations, up/down into and out of a detail)
+  const ORDER: Route[] = ['home', 'editorial', 'graphics']
+  const prevRoute = useRef(route)
+  const [anim, setAnim] = useState<{ from: Route; to: Route; dir: 'fwd' | 'back' | 'up' | 'down' } | null>(null)
+  useLayoutEffect(() => {
+    const from = prevRoute.current
+    if (from === route) return
+    prevRoute.current = route
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const dir = route === 'graphics' && from === 'editorial' ? 'up' : from === 'graphics' && route === 'editorial' ? 'down' : ORDER.indexOf(route) > ORDER.indexOf(from) ? 'fwd' : 'back'
+    setAnim({ from, to: route, dir })
+    const t = setTimeout(() => setAnim(null), 380)
+    return () => clearTimeout(t)
+  }, [route]) // eslint-disable-line react-hooks/exhaustive-deps
+  const slot = (r: Route) => (anim?.to === r ? ' m-go-in m-dir-' + anim.dir : anim?.from === r ? ' m-go-out m-dir-' + anim.dir : '')
+  const shown = (r: Route) => route === r || anim?.from === r
   const onNav = (id: string) => {
     if (id.startsWith('ed-')) { useDesk.getState().set({ homeTab: id.slice(3) as HomeTab, view: 'home', writing: false }); go('editorial') } else go(id as Route)
   }
@@ -147,9 +163,9 @@ export default function MobileApp() {
     <div className={`m-app${rail ? ' has-rail' : ''}${detail && !rail ? ' m-nav-off' : ''}`} data-size={size}>
       {rail && <NavBar rail items={NAV} value={navValue} onChange={onNav} />}
       <div className="m-screen m-screens">
-        <div className="m-screen" hidden={route !== 'home'}><HomeScreen active={route === 'home'} /></div>
-        <div className="m-screen" hidden={route !== 'editorial'}><EditorialScreen active={route === 'editorial'} /></div>
-        <div className="m-screen" hidden={route !== 'graphics'}><GraphicsScreen active={route === 'graphics'} /></div>
+        <div className={'m-screen' + slot('home')} hidden={!shown('home')}><HomeScreen active={route === 'home'} /></div>
+        <div className={'m-screen' + slot('editorial')} hidden={!shown('editorial')}><EditorialScreen active={route === 'editorial'} /></div>
+        <div className={'m-screen' + slot('graphics')} hidden={!shown('graphics')}><GraphicsScreen active={route === 'graphics'} /></div>
       </div>
       {!rail && <NavBar items={NAV} value={navValue} onChange={onNav} />}
       {settingsOpen && <SettingsScreen onClose={closeSettings} />}
