@@ -49,15 +49,16 @@ export function TopBar({ title, sub, leading, actions, overflow }: { title: Reac
 }
 
 // ---------------------------------------------------------------- navigation: bottom bar (compact) / rail (medium+)
-export interface NavItem { id: string; label: string; icon: IconName; badge?: string | number }
+export interface NavItem { id: string; label: string; icon: IconName; badge?: string | number; /** the one raised action in the bar (it starts something, it is not a place) */ primary?: boolean; /** colour of the badge: the default is the accent */ tone?: 'ok' | 'warn' | 'bad' }
 export function NavBar({ items, value, onChange, rail }: { items: NavItem[]; value: string; onChange: (id: string) => void; rail?: boolean }) {
-  const idx = Math.max(0, items.findIndex((it) => it.id === value))
+  const found = items.findIndex((it) => it.id === value)
+  const idx = Math.max(0, found)
   return (
-    <nav className={rail ? 'm-rail' : 'm-navbar'} aria-label="Main" style={{ '--i': idx, '--n': items.length } as React.CSSProperties}>
+    <nav className={(rail ? 'm-rail' : 'm-navbar') + (found < 0 ? ' no-sel' : '')} aria-label="Main" style={{ '--i': idx, '--n': items.length } as React.CSSProperties}>
       {!rail && <span className="m-nav-glide" aria-hidden />}
       {items.map((it) => (
-        <button key={it.id} type="button" className={`m-nav-item${value === it.id ? ' is-on' : ''}`} aria-current={value === it.id ? 'page' : undefined} onClick={() => onChange(it.id)}>
-          <span className="m-nav-pill"><Icon name={it.icon} size={22} />{it.badge != null && <span className="m-badge">{it.badge}</span>}</span>
+        <button key={it.id} type="button" className={`m-nav-item${value === it.id ? ' is-on' : ''}${it.primary ? ' is-primary' : ''}`} aria-current={value === it.id ? 'page' : undefined} onClick={() => onChange(it.id)}>
+          <span className="m-nav-pill"><Icon name={it.icon} size={it.primary ? 24 : 22} />{it.badge != null && <span className={'m-badge' + (it.tone ? ' is-' + it.tone : '')}>{it.badge}</span>}</span>
           <span className="m-nav-label">{it.label}</span>
         </button>
       ))}

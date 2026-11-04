@@ -22,7 +22,7 @@ android {
         applicationId "com.esbpowerline.studio.phone"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode computedVersionCode
+        versionCode (project.hasProperty("buildStamp") ? project.property("buildStamp").toInteger() : computedVersionCode)
         versionName pkg.version
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

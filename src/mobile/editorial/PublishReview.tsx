@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import { BannerPreviews } from '../../pc/editorial/BannerPreviews'
+import { ImageOptions } from '../../pc/editorial/ImageOptions'
 import { useHeroMode } from '../../pc/editorial/heroMode'
 import { getFacebook, useFacebookPrefs } from '../../pc/editorial/facebook'
 import { useIgnoredChecks } from '../../pc/editorial/ignoredChecks'
@@ -26,6 +27,7 @@ import { useBase } from './StoryEditor'
 import { FormatMark } from '../shell/cat'
 import { detailOf, FIX_LABEL, useLeadPhoto, useReadiness, useStoryNumbers } from './useStory'
 import { useTapGate } from './tapGate'
+import { keepBanners, keepOn, setKeep } from './pictureKeep'
 
 /** Take the editor to where an open item is fixed (the PC sidebar's fixReady). */
 export function fixReady(fix: ReadyFix) {
@@ -113,6 +115,8 @@ export function PublishReview() {
   const [fb, setFb] = useState(() => getFacebook())
   const [which, setWhich] = useState<'web' | 'fb'>('web')
   const [fbOn, setFbOn] = useState(false)
+  const [keep, setKeepState] = useState(keepOn)
+  const [keeping, setKeeping] = useState(false)
   useEffect(() => {
     if (!open) return
     const f = getFacebook()
@@ -187,7 +191,13 @@ export function PublishReview() {
           <button type="button" role="radio" aria-checked={which === 'web'} className={'m-seg-item' + (which === 'web' ? ' is-on' : '')} onClick={() => setWhich('web')}><FormatMark id="web" size={18} /><span>Website <b>16:9</b></span></button>
           <button type="button" role="radio" aria-checked={which === 'fb'} className={'m-seg-item' + (which === 'fb' ? ' is-on' : '')} onClick={() => setWhich('fb')}><FormatMark id="fb45" size={18} /><span>Facebook <b>4:5</b></span></button>
         </div>
-        <div className="bp-which" data-which={which}><PcHost className="me-bp"><BannerPreviews base={base} heroMode={hero} onHeroMode={setHero} photoUrl={photo} caption={willFb || !fb ? draft.social.facebook : undefined} pageName={fb ? fb.pageName || fb.pageId : null} /></PcHost></div>
+        <div className="bp-which" data-which={which}><PcHost className="me-bp"><BannerPreviews base={base} heroMode={hero} onHeroMode={setHero} photoUrl={photo} caption={willFb || !fb ? draft.social.facebook : undefined} pageName={fb ? fb.pageName || fb.pageId : null} webExtra={<ImageOptions dest="web" base={base} />} fbExtra={<ImageOptions dest="fb" base={base} />} /></PcHost></div>
+
+        <section className="me-card">
+          <h3 className="me-h3">Keep a copy</h3>
+          <label className="me-switchrow"><span><b>Save both banners to this phone</b><small>The exact website and Facebook files, saved to Pictures when you {verb.toLowerCase()}. Named after the story.</small></span><input type="checkbox" role="switch" checked={keep} onChange={(e) => { setKeepState(e.target.checked); setKeep(e.target.checked) }} /></label>
+          <Button kind="tonal" icon="download" busy={keeping} disabled={keeping || !base} onClick={async () => { setKeeping(true); const note = await keepBanners(base, draft.slug); setKeeping(false); snack(note, { tone: /not saved/.test(note) ? 'error' : 'success', ms: 7000 }) }}>Save both now</Button>
+        </section>
 
         <section className="me-card">
           <h3 className="me-h3">Facebook</h3>

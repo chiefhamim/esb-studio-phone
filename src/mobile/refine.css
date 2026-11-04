@@ -10,8 +10,8 @@
 :root {
   --g1: 4px; --g2: 8px; --g3: 12px; --g4: 16px; --g5: 20px; --g6: 24px; --g8: 32px;
   --rc: 12px; --rd: 16px; --rh: 22px;
-  --e1: 0 0 0 .5px rgba(16, 18, 40, .06), 0 1px 2px rgba(16, 18, 40, .04), 0 4px 14px -4px rgba(16, 18, 40, .06);
-  --e2: 0 0 0 .5px rgba(16, 18, 40, .07), 0 2px 4px rgba(16, 18, 40, .05), 0 14px 28px -10px rgba(16, 18, 40, .16);
+  --e1: inset 0 1px 0 rgba(255, 255, 255, .9), 0 0 0 .5px rgba(16, 18, 40, .06), 0 1px 2px rgba(16, 18, 40, .04), 0 4px 14px -4px rgba(16, 18, 40, .06);
+  --e2: inset 0 1px 0 rgba(255, 255, 255, .9), 0 0 0 .5px rgba(16, 18, 40, .07), 0 2px 4px rgba(16, 18, 40, .05), 0 14px 28px -10px rgba(16, 18, 40, .16);
   --m-card-shadow: var(--e1);
   --m-card-raise: var(--e1);
   --m-card-bg: var(--surface-panel);
@@ -30,12 +30,6 @@
 
 /* ---------------- Home ---------------- */
 .hm-hero { padding-bottom: 0; }
-/* status: a quiet line of text, not two boxes */
-.hm-chips { display: flex; justify-content: flex-start; gap: var(--g5); margin-top: var(--g3); }
-.hm-chips .hm-chip { flex: none; min-height: 32px; padding: 0; border: 0; border-radius: 0; background: none !important; box-shadow: none !important; font: 600 13px/1 var(--font-ui); color: var(--text-secondary); gap: 7px; }
-.hm-chips .hm-chip-ok { color: var(--text-secondary); }
-.hm-chips .hm-chip-ai.is-ok { color: var(--text-secondary); }
-.hm-chips .hm-chip:active { opacity: .6; transform: none; }
 .hm-launch { gap: var(--g3); margin-top: var(--g6); }
 .hm-launch .hm-cell { min-height: 136px; padding: var(--g4); border-radius: var(--rh); }
 .hm-launch .hm-cell:nth-child(1) { box-shadow: var(--e2); }
@@ -50,40 +44,301 @@
 .hm-empty p { margin: 0 0 var(--g4); color: var(--text-secondary); font: 400 15px/1.5 var(--font-ui); }
 .hm-empty .m-btn { width: auto; min-height: 48px; padding: 0 var(--g5); border-radius: var(--rc); }
 
-/* ---------------- Stories: the story desk ---------------- */
+/* ---------------- Stories: the story desk ----------------
+ * Signature: the three-colour rule from the banner header (green · red · orange) marks the one object you act on. */
+:root { --sig-g: #1e9e57; --sig-r: #e03b32; --sig-o: #f09030; --sig: linear-gradient(90deg, var(--sig-g) 0 33.33%, var(--sig-r) 33.33% 66.66%, var(--sig-o) 66.66%); }
 .me-desk { padding: 0; margin-top: var(--g2); gap: 0; background: none; box-shadow: none; border-radius: 0; }
-.me-desk-head { gap: 0; margin-bottom: var(--g5); }
-.me-desk-ic { display: none; }
-.me-desk-head h2 { margin: 0 0 var(--g1); font: 700 22px/1.25 var(--font-ui); letter-spacing: -.015em; }
-.me-desk-head p { font: 400 15px/1.5 var(--font-ui); }
-.me-desk .me-link { min-height: 52px; padding: 0 var(--g2) 0 var(--g4); border-radius: var(--rc); background: var(--surface-panel); box-shadow: var(--e1); border: 0; }
-.me-desk .me-link-paste { height: 36px; padding: 0 var(--g3); border-radius: 9px; background: var(--fill); font: 600 13px/1 var(--font-ui); }
-.me-desk .me-go { margin-top: var(--g3); min-height: 52px; border-radius: var(--rc); font: 650 16px/1 var(--font-ui); box-shadow: none; }
+.me-compose { position: relative; overflow: hidden; padding: var(--g5) var(--g4) var(--g4); border-radius: var(--rh); background: var(--surface-panel); box-shadow: var(--e2); }
+.me-desk-head { display: flex; gap: var(--g3); align-items: flex-start; margin-bottom: var(--g4); }
+.me-desk-ic { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 13px; color: #fff; background: linear-gradient(155deg, #6a5cf0, #3b2fc0); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 10px -3px rgba(60, 48, 190, .5); }
+.me-desk-head h2 { margin: 0 0 var(--g1); font: 700 19px/1.25 var(--font-ui); letter-spacing: -.015em; }
+.me-desk-head p { margin: 0; font: 400 14px/1.45 var(--font-ui); color: var(--text-secondary); }
+.me-compose .me-link { min-height: 52px; padding: 0 var(--g2) 0 var(--g4); border-radius: var(--rc); background: var(--fill); box-shadow: inset 0 0 0 .5px var(--hair); border: 0; }
+.me-compose .me-link-paste { height: 36px; padding: 0 var(--g3); border-radius: 9px; background: var(--surface-panel); box-shadow: var(--e1); font: 600 13px/1 var(--font-ui); }
+.me-compose .me-go { margin-top: var(--g3); min-height: 52px; border-radius: var(--rc); font: 650 16px/1 var(--font-ui); }
 .me-desk .me-or { margin: var(--g6) 0 var(--g3); }
-.me-desk .me-or span { font: 650 12px/1 var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); background: transparent; }
+.me-desk .me-or span { font: 650 12px/1 var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); background: transparent; padding: 0; }
 .me-desk .me-or::before, .me-desk .me-or::after { display: none; }
+.me-or { justify-content: flex-start; }
 /* the two ways to start share one card, divided by a hairline */
 .me-group { overflow: hidden; border-radius: var(--rd); background: var(--surface-panel); box-shadow: var(--e1); }
 .me-group .me-rowbtn { width: 100%; min-height: 68px; padding: 0 var(--g4); gap: var(--g3); border: 0; border-radius: 0; background: transparent; box-shadow: none; position: relative; }
 .me-group .me-rowbtn + .me-rowbtn::before { content: ''; position: absolute; top: 0; left: calc(var(--g4) + 64px + var(--g3)); right: 0; height: .5px; background: var(--hair); }
-.me-group .me-rowbtn:active { background: var(--fill); }
-.me-group .me-rowbtn-ico { width: 40px; height: 40px; margin: 0 24px 0 0; border-radius: 10px; background: var(--fill); box-shadow: none; }
+.me-group .me-rowbtn:active { background: var(--fill); transform: none; }
+.me-group .me-rowbtn-ico { width: 40px; height: 40px; margin: 0 24px 0 0; border-radius: 11px; background: var(--fill); box-shadow: inset 0 0 0 .5px var(--hair); }
 .me-group .me-file-icons { width: 64px; gap: 4px; }
 .me-group .me-file-icons > * { width: 30px; height: 30px; }
-/* what happens next: a quiet three-step line, no icons in boxes, no arrows */
-.me-pipe { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--g4); margin: var(--g6) 0 0; padding: var(--g5) 0 0; list-style: none; border-top: .5px solid var(--hair); }
-.me-pipe li { display: flex; flex-direction: column; align-items: flex-start; gap: var(--g1); text-align: left; min-width: 0; }
+/* what happens next: a stepper, three nodes on one line in the signature colours */
+.me-pipe { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--g2); margin: var(--g6) 0 0; padding: 0; list-style: none; }
+.me-pipe::before { content: ''; position: absolute; top: 19px; left: 16.66%; right: 16.66%; height: 0; border-top: 1.5px dashed color-mix(in srgb, var(--text-tertiary) 55%, transparent); }
 .me-pipe .pipe-arrow { display: none; }
-.me-pipe .pipe-ic { display: none; }
+.me-pipe li { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--g1); text-align: center; min-width: 0; }
+.me-pipe li, .me-pipe li * { text-align: center; }
+.me-pipe .pipe-top { display: block; margin-bottom: var(--g2); }
+.me-pipe .pipe-top i { display: none; }
+.me-pipe .pipe-ic { width: 40px; height: 40px; border-radius: 50%; color: #fff; background: var(--c); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 0 0 4px var(--surface-app), 0 4px 10px -3px color-mix(in srgb, var(--c) 60%, transparent); }
+.me-pipe li.parse { --c: var(--sig-g); } .me-pipe li.polish { --c: #5b4de0; } .me-pipe li.publish { --c: var(--sig-o); }
 .me-pipe li b { font: 650 14px/1.3 var(--font-ui); }
-.me-pipe li small { font: 400 13px/1.4 var(--font-ui); color: var(--text-secondary); }
-.me-pipe .pipe-top i { font: 650 12px/1 var(--font-ui); color: var(--text-tertiary); letter-spacing: .06em; }
-
-.me-pipe li, .me-pipe li * { text-align: left; }
-.me-pipe li { align-items: flex-start; }
+.me-pipe li small { max-width: 14ch; font: 400 12.5px/1.4 var(--font-ui); color: var(--text-secondary); text-wrap: balance; }
 
 /* Graphics: the zoom/export strip is quiet — hairline above, controls without fills, one filled action */
 .gx-tools { gap: var(--g1); padding-inline: var(--g4); border-top: .5px solid var(--hair); }
 .gx-tools .m-iconbtn, .gx-tools .gx-zoom { background: transparent; box-shadow: none; }
 .gx-tools .m-iconbtn:active, .gx-tools .gx-zoom:active { background: var(--fill); }
 .gx-dock { border-top: .5px solid var(--hair); }
+
+/* Wire empty state: flat page, the three steps are one grouped card */
+.wr-empty { background: none; box-shadow: none; border: 0; padding: var(--g6) 0 0; border-radius: 0; }
+.wr-empty h3 { font: 700 22px/1.25 var(--font-ui); }
+.wr-steps { margin: var(--g5) 0 var(--g5); padding: 0; list-style: none; background: var(--surface-panel); box-shadow: var(--e1); border-radius: var(--rd); overflow: hidden; }
+.wr-steps li { background: transparent; border-radius: 0; box-shadow: none; padding: var(--g3) var(--g4); min-height: 64px; position: relative; }
+.wr-steps li + li::before { content: ''; position: absolute; top: 0; left: calc(var(--g4) + 36px + var(--g3)); right: 0; height: .5px; background: var(--hair); }
+
+/* Wire empty state steps wear the same three signature colours */
+.wr-steps li:nth-child(1) i { background: var(--sig-g); } .wr-steps li:nth-child(2) i { background: #5b4de0; } .wr-steps li:nth-child(3) i { background: var(--sig-o); }
+.wr-empty-ico { background: linear-gradient(155deg, #6a5cf0, #3b2fc0); color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 6px 14px -4px rgba(60, 48, 190, .5); }
+/* Continue editing carries the same rule on its top edge */
+.hm-continue, .me-continue .m-row { position: relative; }
+.me-pipe { border-top: 0; padding: var(--g1) 0 0; }
+.me-pipe .pipe-top { display: grid; place-items: center; width: 100%; }
+
+/* ================= Navigation follows the work =================
+ * Global bar:  Home · Wire (find) · Link (start, raised) · Stories (work) · Published (done)
+ * Story bar:   Story · Banner · Check · Publish, with what is left to fix on Check and a tick on Publish once it is ready. */
+.m-navbar.no-sel .m-nav-glide { opacity: 0; }
+.m-nav-item.is-primary .m-nav-pill { width: 52px; height: 52px; margin-top: -16px; border-radius: 50%; color: #fff; background: linear-gradient(155deg, #6a5cf0, #3b2fc0); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 0 0 4px var(--surface-panel), 0 8px 18px -6px rgba(60, 48, 190, .65); }
+.m-navbar .m-nav-item.is-primary { color: var(--text-secondary); }
+.m-navbar .m-nav-item.is-primary .m-nav-label { margin-top: -2px; font-weight: 650; }
+.m-navbar .m-nav-item.is-primary:active .m-nav-pill { transform: scale(.94); }
+.m-badge.is-bad { background: var(--danger); }
+.m-badge.is-warn { background: #e08a12; }
+.m-badge.is-ok { background: #1e9e57; }
+.m-nav-pill .m-badge { box-shadow: 0 0 0 2px var(--surface-panel); }
+.me-substeps { padding: var(--g1) var(--g4) var(--g2); }
+/* Banner pane: the banner leads, shown as the picture it is */
+.me-bannercard { padding: var(--g4); }
+.me-bannerrow { display: flex; gap: var(--g4); align-items: flex-start; }
+.me-bannerthumb { flex: none; width: 104px; aspect-ratio: 4 / 5; display: grid; place-items: center; overflow: hidden; border-radius: 10px; background: var(--fill); color: var(--text-tertiary); box-shadow: var(--e2); }
+.me-bannerthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.me-bannertxt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--g2); }
+.me-bannertxt .me-h3 { margin: 0; }
+.me-bannertxt .me-hint { margin: 0; }
+.me-bannertxt .me-start-row { flex-direction: column; align-items: stretch; gap: var(--g2); margin-top: var(--g1); }
+.m-navbar .m-nav-item.is-primary .m-nav-label { margin-top: -7px; }
+/* Home empty state: the New story tile is the way in, so no second button repeats it */
+.hm-empty .m-btn { display: none; }
+.hm-empty p { margin-bottom: 0; }
+.m-nav-item.is-primary .m-nav-pill { margin-top: -20px; box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 0 0 3px var(--surface-panel), 0 8px 18px -6px rgba(60, 48, 190, .65); }
+.m-navbar .m-nav-item.is-primary .m-nav-label { margin-top: 0; }
+/* Check: what is left to fix is the first thing you see, and one tap opens the list */
+.me-substeps { display: flex; flex-direction: column; gap: var(--g3); }
+.me-substeps .me-ready { width: 100%; justify-content: flex-start; min-height: 48px; padding: 0 var(--g4); border-radius: var(--rc); font: 650 14px/1 var(--font-ui); box-shadow: var(--e1); background: var(--surface-panel); }
+.me-substeps .me-ready::after { content: ''; margin-left: auto; width: 8px; height: 8px; border-right: 2px solid var(--text-tertiary); border-top: 2px solid var(--text-tertiary); transform: rotate(45deg); }
+
+/* ================= The steps, wherever you are =================
+ * Intake strip: Link · Parse · Banner · Check · Publish, with a marker on the current one.
+ * Story rows: four segments (Story · Banner · Check · Publish) and what comes next. */
+.me-strip { display: flex; margin: 0 0 var(--g5); padding: 0; list-style: none; }
+.me-strip li { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: var(--g1); color: var(--text-tertiary); font: 600 12px/1.2 var(--font-ui); }
+.me-strip li + li::before { content: ''; position: absolute; top: 11px; right: 50%; width: 100%; height: 1.5px; background: var(--hair); }
+.me-strip li.is-done + li::before, .me-strip li.is-now::before { background: #1e9e57; }
+.me-strip i { position: relative; z-index: 1; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-app); box-shadow: inset 0 0 0 1.5px var(--hair); font: 650 11px/1 var(--font-ui); font-style: normal; }
+.me-strip li.is-done { color: var(--text-secondary); }
+.me-strip li.is-done i { background: #1e9e57; color: #fff; box-shadow: none; }
+.me-strip li.is-now { color: var(--text-primary); }
+.me-strip li.is-now i { background: #5b4de0; color: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, #5b4de0 22%, transparent); }
+.me-strip li.is-busy i { animation: me-strip-pulse 1.1s ease-in-out infinite; }
+@keyframes me-strip-pulse { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, #5b4de0 8%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .me-strip li.is-busy i { animation: none; } }
+.me-track { display: inline-flex; align-items: center; gap: var(--g2); min-width: 0; }
+.me-track-bars { display: inline-flex; gap: 3px; }
+.me-track-bars b { width: 14px; height: 4px; border-radius: 2px; background: var(--hair); }
+.me-track-bars b.is-done { background: #1e9e57; }
+.me-track-bars b.is-now { background: #5b4de0; }
+.me-track-l { font: 600 12px/1 var(--font-ui); color: var(--text-secondary); white-space: nowrap; }
+
+/* ===== Depth pass: three clear levels (resting card -> raised card -> floating bars/sheets), tinted shadows, a soft ambient wash ===== */
+:root {
+  --e1: inset 0 1px 0 rgba(255, 255, 255, .95), 0 0 0 .5px rgba(30, 28, 90, .07), 0 1px 2px rgba(30, 28, 90, .06), 0 10px 22px -12px rgba(40, 34, 120, .20);
+  --e2: inset 0 1px 0 rgba(255, 255, 255, .95), 0 0 0 .5px rgba(30, 28, 90, .08), 0 2px 5px rgba(30, 28, 90, .07), 0 20px 36px -16px rgba(50, 40, 160, .34);
+  --e3: 0 -14px 34px -18px rgba(30, 28, 90, .34), 0 -.5px 0 rgba(30, 28, 90, .10);
+  --lift: inset 0 1px 0 rgba(255, 255, 255, .30), 0 1px 2px rgba(30, 24, 120, .30), 0 10px 20px -8px rgba(60, 48, 190, .55);
+  --m-card-shadow: var(--e1);
+  --m-card-raise: var(--e1);
+}
+:root[data-theme='dark'] {
+  --e1: inset 0 1px 0 rgba(255, 255, 255, .05), 0 0 0 .5px rgba(255, 255, 255, .08), 0 1px 2px rgba(0, 0, 0, .45), 0 10px 22px -10px rgba(0, 0, 0, .6);
+  --e2: inset 0 1px 0 rgba(255, 255, 255, .07), 0 0 0 .5px rgba(255, 255, 255, .10), 0 2px 5px rgba(0, 0, 0, .5), 0 20px 36px -14px rgba(0, 0, 0, .75);
+  --e3: 0 -14px 34px -16px rgba(0, 0, 0, .8), 0 -.5px 0 rgba(255, 255, 255, .08);
+}
+/* a faint indigo wash at the top of every screen, so the grey is not a flat sheet */
+.m-screen { background-image: radial-gradient(120% 320px at 50% -60px, rgba(106, 92, 240, .10), transparent 72%); background-repeat: no-repeat; }
+:root[data-theme='dark'] .m-screen { background-image: radial-gradient(120% 320px at 50% -60px, rgba(106, 92, 240, .16), transparent 72%); }
+/* the bottom bar floats above the page */
+.m-navbar { box-shadow: var(--e3); }
+/* the main action of a screen is a raised, tinted key */
+.m-btn-filled:not(:disabled) { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 86%, #fff) 0%, var(--accent) 100%); box-shadow: var(--lift); }
+.m-btn-filled:not(:disabled):active { box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25), 0 2px 6px -2px rgba(60, 48, 190, .5); transform: translateY(1px); filter: none; }
+.m-btn-tonal:not(:disabled) { box-shadow: var(--e1); }
+/* segmented controls: a recessed track and a raised thumb */
+:root .m-seg { box-shadow: inset 0 1px 2px rgba(30, 28, 90, .10), inset 0 0 0 .5px rgba(30, 28, 90, .05); }
+:root[data-theme='dark'] .m-seg { box-shadow: inset 0 1px 3px rgba(0, 0, 0, .5); }
+:root .m-seg::before { box-shadow: 0 0 0 .5px rgba(30, 28, 90, .08), 0 1px 2px rgba(30, 28, 90, .12), 0 4px 10px -3px rgba(30, 28, 90, .2); }
+/* tappable cards respond to the finger */
+.me-rowbtn:active, .hm-cell:active, .hm-continue:active { transform: scale(.985); transition: transform .12s ease; }
+/* sheets and full dialogs rise above the page */
+.m-sheet { box-shadow: 0 -20px 50px -20px rgba(20, 16, 80, .45); }
+/* fields: a light, slightly recessed well on the grey page; focus lifts it with an indigo ring */
+.m-input, .m-textarea, .m-select { background: color-mix(in srgb, var(--surface-panel) 62%, var(--field)); box-shadow: inset 0 1px 2px rgba(30, 28, 90, .09), inset 0 0 0 .5px rgba(30, 28, 90, .07); }
+.m-input:focus, .m-textarea:focus, .m-select:focus { border-color: #5b4de0; background: var(--surface-panel); box-shadow: 0 0 0 3.5px rgba(91, 77, 224, .22), 0 6px 16px -8px rgba(60, 48, 190, .45); }
+:root[data-theme='dark'] .m-input, :root[data-theme='dark'] .m-textarea, :root[data-theme='dark'] .m-select { background: var(--field); box-shadow: inset 0 1px 3px rgba(0, 0, 0, .5); }
+/* story rows: the step bars on one line, where it came from and when on the next (they used to run into each other) */
+.me-listrow .m-row-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; white-space: normal; }
+.me-listrow .m-row-meta > span:last-child { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ===== v3: one drop shadow on every container (the "Continue where you left off" look), no inner shadows; swift, even motion ===== */
+:root {
+  --smooth: cubic-bezier(.22, 1, .36, 1);
+  --drop: 0 0 0 .5px rgba(30, 28, 90, .06), 0 1px 2px rgba(30, 28, 90, .05), 0 10px 26px -10px rgba(40, 34, 120, .22);
+  --drop-2: 0 0 0 .5px rgba(30, 28, 90, .07), 0 2px 4px rgba(30, 28, 90, .06), 0 18px 36px -14px rgba(50, 40, 160, .34);
+  --e1: var(--drop); --e2: var(--drop-2);
+  --m-card-shadow: var(--drop); --m-card-raise: var(--drop);
+}
+:root[data-theme='dark'] {
+  --drop: 0 0 0 .5px rgba(255, 255, 255, .08), 0 1px 2px rgba(0, 0, 0, .45), 0 12px 26px -10px rgba(0, 0, 0, .65);
+  --drop-2: 0 0 0 .5px rgba(255, 255, 255, .10), 0 2px 5px rgba(0, 0, 0, .5), 0 20px 36px -14px rgba(0, 0, 0, .75);
+}
+/* every container is a raised white card */
+.me-card, .m-note, .me-progress, .bp-card, .me-bannercard, .me-mini, .me-idea, .gx-panel .pnl, .m-settings .m-section, .me-group, .wr-steps, .me-compose, .hm-continue, .m-list { box-shadow: var(--drop); }
+/* story rows are cards too: one shadow each, no hairlines between */
+.me-list { gap: var(--g3); }
+.me-listrow { background: var(--surface-panel); border: 0; border-radius: var(--rd); box-shadow: var(--drop); overflow: hidden; padding-right: var(--g1); }
+.me-listrow + .me-listrow { margin-top: var(--g3); }
+.me-continue .m-row { background: var(--surface-panel); border-radius: var(--rd); box-shadow: var(--drop); }
+/* fields: white with the same drop shadow, no inner wells */
+.m-input, .m-textarea, .m-select { background: var(--surface-panel); border: 0; box-shadow: var(--drop); }
+.m-input:focus, .m-textarea:focus, .m-select:focus { background: var(--surface-panel); box-shadow: 0 0 0 2px #5b4de0, 0 0 0 6px rgba(91, 77, 224, .18), 0 10px 22px -10px rgba(60, 48, 190, .45); }
+:root[data-theme='dark'] .m-input, :root[data-theme='dark'] .m-textarea, :root[data-theme='dark'] .m-select { background: var(--field); box-shadow: var(--drop); }
+.me-compose .me-link { box-shadow: 0 0 0 .5px var(--hair); }
+/* segmented tracks are flat; only the thumb rises */
+:root .m-seg, :root[data-theme='dark'] .m-seg { box-shadow: none; }
+:root .m-seg::before { box-shadow: var(--drop); }
+.me-bannerthumb { box-shadow: var(--drop); }
+
+/* ---- motion: short, decelerating, compositor-only. Tabs cross-fade with a small shift; stories open upward. ---- */
+.m-tab-fwd { animation: m-tab-r .24s var(--smooth) both; will-change: transform, opacity; }
+.m-tab-back { animation: m-tab-l .24s var(--smooth) both; will-change: transform, opacity; }
+@keyframes m-tab-r { from { opacity: 0; transform: translate3d(18px, 0, 0); } }
+@keyframes m-tab-l { from { opacity: 0; transform: translate3d(-18px, 0, 0); } }
+.m-view-up { animation-duration: .34s; animation-timing-function: var(--smooth); }
+.m-view-down { animation-duration: .30s; animation-timing-function: var(--smooth); }
+.me-scroll { animation: m-pane-in .22s var(--smooth) backwards; }
+@keyframes m-pane-in { from { opacity: 0; transform: translate3d(calc(var(--dir, 1) * 16px), 0, 0); } }
+.me-home { animation: m-pane-up .24s var(--smooth) backwards; }
+@keyframes m-pane-up { from { opacity: 0; transform: translate3d(0, 8px, 0); } }
+.m-sheet, .m-fulldialog { animation-duration: .3s; animation-timing-function: var(--smooth); }
+.m-scrim { animation-duration: .2s; }
+.m-nav-glide { transition-duration: .32s; transition-timing-function: var(--smooth); }
+:root .m-seg::before { transition-duration: .28s; transition-timing-function: var(--smooth); }
+.m-nav-item, .m-seg-item, .m-btn, .m-iconbtn, .me-rowbtn, .hm-cell { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.m-nav-item .m-nav-pill svg, .m-nav-item .m-nav-label { transition: color .18s ease, transform .28s var(--smooth); }
+.m-nav-item.is-on .m-nav-pill svg { transform: translateY(-1px) scale(1.06); }
+@media (prefers-reduced-motion: reduce) { .m-tab-fwd, .m-tab-back, .me-scroll, .me-home { animation: none; } }
+/* thumbnails inside a card carry no shadow of their own (the card's overflow clips it into a dark edge) */
+.me-listrow .m-row-lead *, .me-continue .m-row-lead *, .hm-continue .m-row-lead *, .hm-recent .m-row-lead * { box-shadow: none; }
+/* the story body is a raised white page like every other container */
+.me-rb, .me-rb > .rb { border: 0 !important; border-radius: var(--rd) !important; background: var(--surface-panel); box-shadow: var(--drop); }
+
+/* Nav clarity: Engine is the one coloured label; Wire / Stories / Published stay quiet until selected */
+.m-navbar .m-nav-item.is-primary .m-nav-label { color: #4a3de0; font-weight: 700; letter-spacing: .1px; }
+.m-navbar .m-nav-item:not(.is-primary):not(.is-on) .m-nav-label { font-weight: 500; }
+.m-navbar .m-nav-item:not(.is-primary).is-on .m-nav-label { font-weight: 700; }
+
+/* Stories is the list; Engine is the way in. The blank-story button sits quietly under the list. */
+.me-home > .m-btn-tonal { margin-top: var(--g4, 16px); align-self: center; }
+
+/* ---- Engine bump: the bar swells into one smooth dome around the raised Engine button (extruded, not a ring) ---- */
+.m-navbar:has(.is-primary) { position: relative; box-shadow: none; filter: drop-shadow(0 -1px 2px rgba(20, 20, 50, .06)) drop-shadow(0 -6px 14px rgba(20, 20, 50, .07)); }
+.m-navbar:has(.is-primary)::before {
+  content: ''; position: absolute; left: 50%; bottom: 100%; width: 124px; height: 21px; transform: translateX(-50%); pointer-events: none;
+  background: var(--surface-panel);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 20' preserveAspectRatio='none'%3E%3Cpath d='M0 20C16 20 22 19 30 13C38 7 46 0 60 0C74 0 82 7 90 13C98 19 104 20 120 20Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 20' preserveAspectRatio='none'%3E%3Cpath d='M0 20C16 20 22 19 30 13C38 7 46 0 60 0C74 0 82 7 90 13C98 19 104 20 120 20Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+.m-nav-item.is-primary .m-nav-pill { box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -3px 6px rgba(20,10,120,.28), 0 6px 14px -4px rgba(60, 48, 190, .6); }
+
+/* ---- The five steps, side by side, live and tappable ---- */
+.me-strip.is-live { margin: 0 0 var(--g4); }
+.me-strip.is-live li { align-items: stretch; }
+.me-strip.is-live li > button { display: flex; flex-direction: column; align-items: center; gap: var(--g1); width: 100%; padding: 4px 0 2px; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: transform .2s var(--smooth); }
+.me-strip.is-live li > button:active { transform: scale(.94); }
+.me-strip.is-live li.is-off { opacity: .55; }
+.me-strip.is-live i { transition: background .3s var(--smooth), box-shadow .3s var(--smooth), color .3s var(--smooth); box-shadow: var(--drop-2), inset 0 0 0 1.5px var(--hair); }
+.me-strip.is-live li.is-done i { box-shadow: var(--drop-2); }
+.me-strip.is-live li.is-now i { box-shadow: 0 0 0 4px color-mix(in srgb, #5b4de0 22%, transparent), var(--drop-2); }
+.me-strip.is-live li + li::before { transition: background .4s var(--smooth); }
+.me-strip.is-compact { margin: 0; padding: 4px var(--g4) 8px; }
+.me-strip.is-compact li > button span { font-size: 11px; }
+
+/* Home status chips: one construction (tint, hairline, drop shadow, height), only the hue differs */
+.hm-chips .hm-chip { --c: var(--text-secondary); min-height: 44px; border-radius: var(--rc); background: color-mix(in srgb, var(--c) 11%, var(--surface-panel)); color: var(--c); box-shadow: var(--drop-2), inset 0 0 0 1px color-mix(in srgb, var(--c) 26%, transparent); }
+.hm-chips .hm-chip.hm-chip-ok { --c: var(--success); }
+.hm-chips .hm-chip.hm-chip-bad { --c: var(--danger); }
+.hm-chips .hm-chip.hm-chip-ai.is-ok { --c: var(--pc); }
+.hm-chips .hm-chip.hm-chip-ai:not(.is-ok) { --c: #b4690e; }
+:root[data-theme='dark'] .hm-chips .hm-chip.hm-chip-ok { --c: #47d48a; }
+:root[data-theme='dark'] .hm-chips .hm-chip.hm-chip-bad { --c: #ff8a80; }
+
+/* Banner card: the two actions are equal, aligned and never wrap */
+.me-bannerrow .me-start-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--g2); margin-top: var(--g3); }
+.me-bannerrow .me-start-row .m-btn { width: 100%; min-width: 0; min-height: 48px; padding-inline: 10px; justify-content: center; white-space: nowrap; }
+
+/* ---- Graphics: balanced top, pick row and tools ---- */
+.gx-pick { gap: var(--g2); padding-block: 6px 10px; align-items: stretch; }
+.gx-pick .gx-drop, .gx-pick .gx-drop.gx-drop-cat { min-height: 48px; padding: 0 14px; border-radius: var(--rc); background: var(--surface-panel); box-shadow: var(--drop-2); }
+.gx-pick .gx-drop.is-open { background: var(--fill-active); }
+.gx-pick .gx-drop-size { min-width: 112px; justify-content: space-between; }
+.gx-pick .gx-drop-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.gx-tools { display: flex; align-items: center; gap: var(--g2); padding-block: 8px; box-shadow: 0 -8px 16px -10px rgba(20, 20, 50, .16); }
+.gx-zoomgrp { display: flex; align-items: center; flex: none; padding: 2px; border-radius: var(--rc); background: var(--surface-panel); box-shadow: var(--drop-2), inset 0 0 0 1px var(--hair); }
+.gx-zoomgrp .m-iconbtn { width: 40px; height: 40px; }
+.gx-zoomgrp .gx-zoom { min-width: 76px; height: 40px; min-height: 40px; padding: 0 6px; text-align: center; }
+.gx-tools .m-spacer { flex: 1 1 0; min-width: 0; }
+.gx-tools .m-btn { flex: none; min-height: 48px; border-radius: var(--rc); white-space: nowrap; }
+.gx-tools:has(.m-btn-filled) .m-btn-tonal { width: 48px; padding: 0; }
+.gx-tools:has(.m-btn-filled) .m-btn-tonal .m-btn-label { display: none; }
+.gx-tools .m-btn-tonal { background: var(--surface-panel); box-shadow: var(--drop-2), inset 0 0 0 1px var(--hair); }
+.me-bannerrow .me-start-row .m-btn .m-btn-label { white-space: nowrap; overflow: visible; text-overflow: clip; overflow-wrap: normal; flex: none; }
+.me-bannerrow .me-start-row .m-btn { gap: 8px; }
+.me-bannerrow .me-start-row .m-btn .m-btn-label, .gx-tools .m-btn .m-btn-label { white-space: nowrap !important; overflow-wrap: normal !important; }
+.me-bannerrow .me-start-row .m-btn > svg, .gx-tools .m-btn > svg { flex: none; width: 20px; height: 20px; }
+
+/* Home status chips, Mac style: plain white, soft drop shadow, no outline. Colour lives only in the dot / mark. */
+.hm-chips .hm-chip, .hm-chips .hm-chip.hm-chip-ok, .hm-chips .hm-chip.hm-chip-bad, .hm-chips .hm-chip.hm-chip-ai, .hm-chips .hm-chip.hm-chip-ai.is-ok {
+  background: var(--surface-panel); color: var(--text-primary); border: 0; box-shadow: var(--drop-2); font-weight: 600;
+}
+.hm-chips .hm-chip:active { box-shadow: 0 1px 2px rgba(20, 20, 50, .12); }
+.hm-chips .hm-chip.hm-chip-ok .m-dot { background: #2fbf71; box-shadow: 0 0 0 3px color-mix(in srgb, #2fbf71 22%, transparent); }
+.hm-chips .hm-chip.hm-chip-bad .m-dot { background: #e5484d; box-shadow: 0 0 0 3px color-mix(in srgb, #e5484d 22%, transparent); }
+.hm-chips .hm-chip.hm-chip-ai > svg { color: var(--pc, #4285f4); }
+
+/* Stories: the row thumbnail sits inside the card with equal margins; filter chips are one calm, aligned set */
+.me-listrow .m-row, .me-continue .m-row { padding-inline-start: var(--g3); }
+.me-listrow .me-thumb, .me-continue .me-thumb { width: 56px; height: 56px; border-radius: var(--rc); }
+.me-listrow .m-row-lead, .me-continue .m-row-lead { align-self: center; }
+.me-home .m-chips { gap: var(--g2); padding-block: 4px 8px; }
+.me-home .m-chips .m-chip { height: 36px; padding: 0 14px; gap: 6px; border: 0; border-radius: 999px; background: var(--surface-panel); color: var(--text-secondary); box-shadow: var(--drop-2); font: 600 13px/1 var(--font-ui); transition: background .2s var(--smooth), color .2s var(--smooth), transform .2s var(--smooth); }
+.me-home .m-chips .m-chip small { margin-left: 5px; font: 600 12px/1 var(--font-ui); opacity: .55; font-variant-numeric: tabular-nums; }
+.me-home .m-chips .m-chip.is-on { background: #1c1c24; color: #fff; }
+.me-home .m-chips .m-chip.is-on > svg { display: none; }
+.me-home .m-chips .m-chip:active { transform: scale(.96); }
+
+/* Paste text: one even rhythm (16px) between strip, file card, field and clipboard button */
+.me-intake > .me-stack { gap: 16px; }
+.me-intake > .me-stack .me-doc { margin: 0; }
+.me-intake > .me-stack .m-field { gap: 10px; }
+.me-intake > .me-stack .m-field-label { padding-inline: 4px; }
+.me-intake > .me-stack .me-raw { padding: 16px; border-radius: var(--rd); border: 0; background: #fff; box-shadow: var(--drop-2); min-height: 260px; }
+.me-intake > .me-stack > .m-btn { align-self: center; }
+.me-intake > .me-stack .me-raw { resize: vertical !important; overflow: hidden; box-sizing: border-box; }

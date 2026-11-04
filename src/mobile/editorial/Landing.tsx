@@ -2,9 +2,8 @@
 // PC desk keeps — the story queue (Draft / Needs check / Approved / Published), the articles live on esbpowerline.com
 // (open one to update it, never a duplicate) and the Wire inbox of followed feeds.
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { StepTrack } from './Pipeline'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
-import { aiFor } from '../../pc/editorial/aiProviders'
-import { FileTypeIcon, ProviderMark } from '../shell/marks'
 import { CatDot, CatName, catOf } from '../shell/cat'
 import { useStoryQueue, storyTitle, STATUS_LABEL, STORY_STATUSES } from '../../pc/editorial/storyQueue'
 import type { StoryItem, StoryStatus } from '../../pc/editorial/storyQueue'
@@ -17,7 +16,7 @@ import { Banner, Button, Chip, Empty, ErrorState, IconBtn, Icon, MenuButton, Row
 import type { MenuItem } from '../shell/ui'
 import { confirmAsk, snack, useOnline, useUi } from '../shell/core'
 import { useNav } from '../shell/nav'
-import { editLive, fetchLink, newStory, openStory, readClipboardText, useDesk } from './deskStore'
+import { editLive, newStory, openStory, useDesk } from './deskStore'
 import type { HomeTab } from './deskStore'
 import { ago, hasStoryContent, hostOf } from './useStory'
 
@@ -58,7 +57,7 @@ function StoryRow({ s, active }: { s: StoryItem; active: boolean }) {
   return (
     <div className={'me-listrow' + (active ? ' is-active' : '')}>
       <Row tall onClick={() => openStory(s.id)} lead={<Thumb src={img} />} title={storyTitle(s.snapshot)}
-        meta={<><StatusChip s={s.status} /><span>{hostOf(s.snapshot.source?.url)} · {ago(s.updatedAt)}</span></>} />
+        meta={<><StepTrack status={s.status} /><span>{hostOf(s.snapshot.source?.url)} · {ago(s.updatedAt)}</span></>} />
       <MenuButton label={`Story options: ${storyTitle(s.snapshot)}`} items={items} />
     </div>
   )
@@ -71,13 +70,13 @@ function StoriesList() {
   const [f, setF] = useState<'all' | StoryStatus>('all')
   const counts = useMemo(() => Object.fromEntries(STORY_STATUSES.map((s) => [s, stories.filter((x) => x.status === s).length])) as Record<StoryStatus, number>, [stories])
   const shown = stories.filter((s) => (f === 'all' || s.status === f) && (!q.trim() || storyTitle(s.snapshot).toLowerCase().includes(q.trim().toLowerCase()) || hostOf(s.snapshot.source?.url).includes(q.trim().toLowerCase())))
-  if (!stories.length) return <Empty icon="layers" title="No stories yet" body="Every story you start is kept here with its draft, so several can be in progress at once." />
+  if (!stories.length) return <Empty icon="layers" title="No stories yet" body="Start one from Engine (a link, a file or pasted text). Every story is kept here with its draft." />
   return (
     <>
       <label className="me-search"><Icon name="search" size={18} /><input type="search" className="m-input" placeholder="Search stories" aria-label="Search stories" value={q} onChange={(e) => setQ(e.target.value)} /></label>
       <div className="m-chips is-scroll" role="group" aria-label="Filter by status">
-        <Chip on={f === 'all'} onClick={() => setF('all')}>All {stories.length}</Chip>
-        {STORY_STATUSES.map((s) => <Chip key={s} on={f === s} onClick={() => setF(s)}>{STATUS_LABEL[s]} {counts[s]}</Chip>)}
+        <Chip on={f === 'all'} onClick={() => setF('all')}>All <small>{stories.length}</small></Chip>
+        {STORY_STATUSES.filter((s) => counts[s] > 0 || f === s).map((s) => <Chip key={s} on={f === s} onClick={() => setF(s)}>{STATUS_LABEL[s]} <small>{counts[s]}</small></Chip>)}
       </div>
       <div className="me-list">
         {shown.map((s) => <StoryRow key={s.id} s={s} active={s.id === activeId} />)}
@@ -229,55 +228,6 @@ export function WireSourcesSheet() {
 
 const TAB_TITLE: Record<HomeTab, string> = { stories: 'Stories', published: 'Published', wire: 'Wire' }
 
-/** The PC's "Editorial Story Desk" launcher: paste a link (or a PDF / Word file), and the story is read, translated and laid out. */
-function Launcher() {
-  const set = useDesk((s) => s.set)
-  const ai = useEditorialStore((s) => s.ai)
-  const main = aiFor('main', ai)
-  const online = useOnline()
-  const [link, setLink] = useState('')
-  const go = () => { const u = link.trim(); if (!u) return; newStory('intake'); set({ intakeTab: 'link' }); void fetchLink(u) }
-  return (
-    <section className="me-desk" aria-label="Start a story" data-provider={main?.provider}>
-      <header className="me-desk-head">
-        <span className="me-desk-ic" aria-hidden><Icon name="newspaper" size={22} /></span>
-        <div><h2>Editorial Story Desk</h2><p>Translate Bengali reporting into newsroom English, check every figure against the source, and publish to esbpowerline.com.</p></div>
-      </header>
-      <label className="me-link">
-        <Icon name="link" size={18} />
-        <input type="url" inputMode="url" autoComplete="off" spellCheck={false} placeholder="Paste a news story link" aria-label="News story link" value={link} onChange={(e) => setLink(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') go() }} />
-        {link
-          ? <button type="button" className="me-link-x" aria-label="Clear the link" onClick={() => setLink('')}><Icon name="x" size={16} /></button>
-          : <button type="button" className="me-link-paste" onClick={async () => { const t = (await readClipboardText()).trim(); if (t) setLink(t) }}><Icon name="copy" size={15} /><span>Paste</span></button>}
-      </label>
-      <button type="button" className="me-go" disabled={!link.trim() || !online} onClick={go}>
-        {main ? <ProviderMark id={main.provider} size={18} /> : <Icon name="sparkle" size={18} />}<span>Fetch &amp; Process</span>
-      </button>
-      {!online && <p className="me-hint">You are offline. Links need the network; you can still paste text or a file.</p>}
-      <div className="me-or" aria-hidden><span>or start from</span></div>
-      <div className="me-group">
-      <button type="button" className="me-rowbtn" onClick={() => { newStory('intake'); set({ intakeTab: 'text' }) }}>
-        <span className="me-file-icons" aria-hidden><FileTypeIcon kind="pdf" size={42} /><FileTypeIcon kind="docx" size={42} /></span>
-        <span className="me-rowbtn-txt"><b>PDF or Word file</b><small>or paste the text</small></span>
-        <Icon name="chevRight" size={20} />
-      </button>
-      <button type="button" className="me-rowbtn" onClick={() => newStory('story')}>
-        <span className="me-rowbtn-ico" aria-hidden><Icon name="plus" size={20} /></span>
-        <span className="me-rowbtn-txt"><b>Blank story</b><small>Write it from scratch</small></span>
-        <Icon name="chevRight" size={20} />
-      </button>
-      </div>
-      <ol className="me-pipe" aria-label="What happens next">
-        <li className="parse"><span className="pipe-top"><span className="pipe-ic"><Icon name="newspaper" size={16} /></span><i>01</i></span><b>Parse</b><small>Text &amp; photos are extracted</small></li>
-        <li className="pipe-arrow" aria-hidden><svg viewBox="0 0 36 24" width="34" height="23"><path d="M1 17C9 6 22 5 29 11" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeDasharray="2.4 3.6" /><path d="M0 0L-8-3.7Q-5.8 0-8 3.7Z" transform="translate(32 12.4) rotate(34)" fill="currentColor" strokeLinejoin="round" /></svg></li>
-        <li className="polish"><span className="pipe-top"><span className="pipe-ic"><Icon name="sparkle" size={16} /></span><i>02</i></span><b>Polish</b><small>AI refines it for the newsroom</small></li>
-        <li className="pipe-arrow" aria-hidden><svg viewBox="0 0 36 24" width="34" height="23"><path d="M1 12C7 18 11 5 18 8C23 10 26 12 29 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeDasharray="2.4 3.6" /><path d="M0 0L-8-3.7Q-5.8 0-8 3.7Z" transform="translate(32 9.4) rotate(-10)" fill="currentColor" strokeLinejoin="round" /></svg></li>
-        <li className="publish"><span className="pipe-top"><span className="pipe-ic"><Icon name="upload" size={16} /></span><i>03</i></span><b>Publish</b><small>Review &amp; publish right away</small></li>
-      </ol>
-    </section>
-  )
-}
-
 export function Landing({ active }: { active: boolean }) {
   const homeTab = useDesk((s) => s.homeTab)
   const set = useDesk((s) => s.set)
@@ -300,7 +250,6 @@ export function Landing({ active }: { active: boolean }) {
         <div className={'m-wrap me-home' + tabDir} key={homeTab}>
           {homeTab === 'stories' && (
             <>
-              <Launcher />
               {onDesk && (
                 <section className="me-continue" aria-label="Continue editing">
                   <h2 className="me-h2">Continue editing</h2>
@@ -308,8 +257,9 @@ export function Landing({ active }: { active: boolean }) {
                     meta={<>{story && <StatusChip s={story.status} />}<span>{hostOf(source?.url)}{story ? ` · ${ago(story.updatedAt)}` : ''}</span></>} trail={<Icon name="chevRight" size={20} />} />
                 </section>
               )}
-              <h2 className="me-h2">Continue a story</h2>
+              <h2 className="me-h2">All stories</h2>
               <StoriesList key={activeId ?? 'none'} />
+              <Button kind="tonal" icon="plus" onClick={() => newStory('story')}>Write a blank story</Button>
             </>
           )}
           {homeTab === 'published' && <PublishedList active={active && homeTab === 'published'} />}

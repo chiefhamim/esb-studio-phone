@@ -28,7 +28,6 @@ import { LivePreview } from './LivePreview'
 import type { ScreenProps } from '../shell/nav'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import { useDesk } from '../editorial/deskStore'
-import { linkedArticle } from '../editorial/publish'
 import { Banner, Button, ErrorState, Icon, IconBtn, Planned, Sheet, Skeleton, TopBar } from '../shell/ui'
 import type { IconName } from '../shell/ui'
 import { ExportSheet } from './ExportSheet'
@@ -42,7 +41,7 @@ import './graphics.css'
 
 type DockId = 'story' | 'photos' | 'elements' | 'layers' | 'inspector'
 const DOCK: { id: DockId; label: string; icon: IconName }[] = [
-  { id: 'story', label: 'Story', icon: 'newspaper' },
+  { id: 'story', label: 'Menu', icon: 'newspaper' },
   { id: 'photos', label: 'Photos', icon: 'image' },
   { id: 'elements', label: 'Elements', icon: 'eye' },
   { id: 'layers', label: 'Layers', icon: 'layers' },
@@ -85,11 +84,10 @@ export default function GraphicsScreen({ active }: ScreenProps) {
   // The bridge to publishing: a story with a headline is in progress, so Graphics offers Publish / Update straight from here.
   // The banner is the story's banner (same store as the Story screens), so nothing needs saving or exporting first.
   const storyHeadline = useEditorialStore((st) => st.draft.headline)
-  const liveStory = !!linkedArticle()
-  const publishFromHere = () => {
-    useDesk.getState().set({ view: 'story', writing: false })
+  // the banner is one step of the story: when it is done the next step is Check (SEO, captions, previews), then Publish
+  const toCheck = () => {
+    useDesk.getState().set({ view: 'story', tab: 'seo', writing: false })
     useNav.setState({ route: 'editorial', backTo: null })
-    window.setTimeout(() => useUi.getState().openSheet('ed-publish'), 260)
   }
   const size = useSizeClass()
   const [assets, retry] = useBaseAssets()
@@ -322,9 +320,8 @@ export default function GraphicsScreen({ active }: ScreenProps) {
     openSheet('gx-' + id)
   }
 
-  const fmt = getFormat(format)
   const pct = Math.round(scale * 100)
-  const sub = `${fmt.name} · ${FORMATS[format].w}×${FORMATS[format].h}${dirty ? ' · edited' : ''}`
+  const sub = `${FORMATS[format].w}×${FORMATS[format].h}${dirty ? ' · edited' : ''}`
 
   return (
     <div className="m-screen gx" data-size={size} style={{ '--gx-side': side ? '1' : '0' } as CSSProperties}>
@@ -365,14 +362,16 @@ export default function GraphicsScreen({ active }: ScreenProps) {
       )}
 
       <div className="gx-tools" role="toolbar" aria-label="Zoom and export">
+        <div className="gx-zoomgrp">
         <IconBtn icon="minus" label="Zoom out" onClick={() => zoomBy(-1)} disabled={!base} />
         <button type="button" className={'gx-zoom' + (zoom === 'fit' ? ' is-fit' : '')} onClick={() => zoomCanvas(zoom === 'fit' ? 1 : 'fit')} disabled={!base} aria-label={zoom === 'fit' ? `Fit, ${pct}%. Tap for 100%` : `${pct}%. Tap to fit`}>
           {zoom === 'fit' ? `Fit · ${pct}%` : `${pct}%`}
         </button>
         <IconBtn icon="plus" label="Zoom in" onClick={() => zoomBy(1)} disabled={!base} />
+        </div>
         <span className="m-spacer" />
-        <Button kind="tonal" icon="download" busy={busy} disabled={!base} onClick={() => setShowExport(true)}>Export</Button>
-        {storyHeadline.trim() && <Button icon="upload" disabled={!base} onClick={publishFromHere}>{liveStory ? 'Update' : 'Publish'}</Button>}
+        <Button kind="tonal" icon="download" busy={busy} disabled={!base} label="Export the banner" onClick={() => setShowExport(true)}>Export</Button>
+        {storyHeadline.trim() && <Button icon="check" disabled={!base} onClick={toCheck}>Check story</Button>}
       </div>
 
       <nav className="gx-dock" aria-label="Graphics panels">
@@ -404,7 +403,7 @@ function Sheets() {
   const st = useStore.getState
   return (
     <>
-      <Sheet id="gx-story" title="Story" wide>
+      <Sheet id="gx-story" title="Menu" wide>
         {/* the PC's Category row opens the phone's category sheet (numbered dots) instead of its own cramped grid */}
         <div onClickCapture={(e) => { if ((e.target as HTMLElement).closest('.pnl[data-panel="Category"] > header')) { e.stopPropagation(); e.preventDefault(); useUi.getState().openSheet('gx-category') } }}>
           <LivePreview />

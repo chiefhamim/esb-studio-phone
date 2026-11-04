@@ -128,16 +128,16 @@ export default function HomeScreen({ active }: ScreenProps) {
           </section>
 
           <nav className="hm-launch hm-glass" aria-label="Workspaces">
-            <button type="button" className="hm-cell" onClick={toEditorial}>
-              <span className="hm-cell-ico"><Icon name="newspaper" size={22} /></span>
-              <span className="hm-cell-name">Editorial</span>
-              <span className="hm-cell-note">Link in, English story out</span>
+            <button type="button" className="hm-cell" onClick={() => nav.intendEditorial('paste-link')}>
+              <span className="hm-cell-ico"><Icon name="power" size={22} /></span>
+              <span className="hm-cell-name">Engine</span>
+              <span className="hm-cell-note">Paste a link, get English</span>
               <Icon name="chevRight" size={20} />
             </button>
             <button type="button" className="hm-cell" onClick={() => nav.go('graphics')}>
               <span className="hm-cell-ico"><Icon name="layers" size={22} /></span>
-              <span className="hm-cell-name">Graphics</span>
-              <span className="hm-cell-note">Banners and cards</span>
+              <span className="hm-cell-name">Banner</span>
+              <span className="hm-cell-note">Design in Graphics</span>
               <Icon name="chevRight" size={20} />
             </button>
           </nav>

@@ -65,7 +65,7 @@ export function isNewer(a: string, b: string): boolean {
 
 /** Look for a newer release on our own update host. */
 export async function checkForUpdate(): Promise<AvailableUpdate | null> {
-  if (!Capacitor.isNativePlatform()) return null
+  if (!Capacitor.isNativePlatform() || import.meta.env.VITE_NO_OTA) return null // cable builds (VITE_NO_OTA=1) never offer the web bundle
   try {
     const res = await fetch(`${UPDATE_HOST}/latest.json?t=${Date.now()}`, { cache: 'no-store' })
     if (!res.ok) return null

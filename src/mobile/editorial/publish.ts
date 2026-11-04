@@ -16,6 +16,7 @@ import { effectiveQuality, usePublishImage } from '../../pc/editorial/publishIma
 import { commentOnPost, getFacebook, postBannerToFacebook } from '../../pc/editorial/facebook'
 import { sanitizeFacebook } from '../../pc/editorial/facebookCaption'
 import { renderBanner } from '../../pc/export'
+import { keepBanners, keepOn } from './pictureKeep'
 import { loadBaseAssets } from '../../pc/core/assets'
 import type { Assets } from '../../pc/core/render'
 import { useStore } from '../../pc/store'
@@ -99,10 +100,13 @@ export async function runPublish(opts: { status: 'PUBLISHED' | 'DRAFT'; heroMode
     let imageUrl = leadPhotoUrl() || undefined
     let imageNote = ''
     let uploadError = ''
+    let webBlob: Blob | null = null
+    let fbBlob: Blob | null = null
     if (opts.heroMode === 'banner' && base && canUploadToSite()) {
       jl.step(jobId, 'Rendering the web banner')
       const wo = usePublishImage.getState().opts.web
       const blob = await renderBanner(useStore.getState().doc, 'web', base, wo.scale, wo.type, effectiveQuality(wo)).catch(() => null)
+      webBlob = blob
       jl.step(jobId, 'Uploading the banner to the media library')
       let up = blob ? await uploadBannerToSite(fresh, blob, draft.slug) : { ok: false as const, error: 'The banner could not be rendered.' }
       if (!up.ok && blob && !/over 4 MB|sign in|Planned/i.test(up.error ?? '')) {
@@ -162,6 +166,7 @@ export async function runPublish(opts: { status: 'PUBLISHED' | 'DRAFT'; heroMode
       jl.step(jobId, 'Rendering the Facebook banner')
       const fo = usePublishImage.getState().opts.fb
       const photo = await renderBanner(useStore.getState().doc, 'fb45', base, fo.scale, fo.type, effectiveQuality(fo)).catch(() => null)
+      fbBlob = photo
       const link = result.liveUrl ?? ''
       const caption = sanitizeFacebook(draft.social.facebook, draft.headline).trim() || draft.headline
       jl.step(jobId, 'Posting to Facebook')
@@ -180,6 +185,10 @@ export async function runPublish(opts: { status: 'PUBLISHED' | 'DRAFT'; heroMode
       } else jobError = `The site was saved, but Facebook failed: ${post.error}`
     } else if (opts.status === 'PUBLISHED') {
       fbNote = fb ? ' Facebook: not posted (the Facebook switch was off).' : ' Facebook: not connected.'
+    }
+    if (opts.status === 'PUBLISHED' && keepOn()) {
+      jl.step(jobId, 'Saving the banners to this phone')
+      fbNote += ' ' + (await keepBanners(base, draft.slug, { web: webBlob, fb: fbBlob }))
     }
     finish({ ok: !jobError, msg: `${did} on esbpowerline.com.` + imageNote + fbNote, url: result.liveUrl, fbUrl },
       `${did} on the site` + (fbNote.includes('Posted') ? ' · posted to Facebook' : fbNote.includes('failed') ? ' · Facebook failed' : fbNote.includes('not') ? ' · not on Facebook' : ''))

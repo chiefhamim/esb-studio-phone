@@ -30,6 +30,7 @@ import { PcHost } from '../PcHost'
 import { CatDot, CatName, ChannelMark, DeviceMark, FormatMark } from '../shell/cat'
 import { ProviderMark } from '../shell/marks'
 import { Banner, Button, Dropdown, Icon, IconBtn, NavBar, Planned, Segmented, Sheet, TopBar } from '../shell/ui'
+import type { NavItem } from '../shell/ui'
 import type { IconName } from '../shell/ui'
 import type { MenuItem } from '../shell/ui'
 import { confirmAsk, snack, useSizeClass, useUi } from '../shell/core'
@@ -43,8 +44,12 @@ import { parseParagraphWithFacts } from './factSpans'
 import { baseAssets, cmsPayload, linkedArticle, usePublish } from './publish'
 import { StatusChip } from './Landing'
 import { useCategory, useFacts, useLeadPhoto, useReadiness, useStoryNumbers } from './useStory'
+import { FlowStrip } from './Pipeline'
 
-const TABS: { id: Tab; label: string; icon: IconName }[] = [{ id: 'story', label: 'Story', icon: 'edit' }, { id: 'details', label: 'Details', icon: 'sliders' }, { id: 'seo', label: 'SEO', icon: 'search' }, { id: 'social', label: 'Social', icon: 'send' }, { id: 'preview', label: 'Preview', icon: 'eye' }]
+// The five panes, grouped the way the work goes: write the story -> make its banner (category, photo, tags) -> check it (SEO, captions, previews) -> publish.
+const TABS: { id: Tab; label: string; icon: IconName }[] = [{ id: 'story', label: 'Story', icon: 'edit' }, { id: 'details', label: 'Banner', icon: 'image' }, { id: 'seo', label: 'SEO', icon: 'search' }, { id: 'social', label: 'Social', icon: 'send' }, { id: 'preview', label: 'Preview', icon: 'eye' }]
+const CHECKS: Tab[] = ['seo', 'social', 'preview']
+const STEP_TITLE: Record<string, string> = { story: 'Story', details: 'Banner & details', check: 'Check' }
 
 export function useBase(): Assets | null {
   const [b, setB] = useState<Assets | null>(null)
@@ -157,8 +162,23 @@ function DetailsTab() {
   const [tagIn, setTagIn] = useState('')
   const setTags = (l: string[]) => setField('focusKeywords', l.join(', '))
   const addTag = (raw: string) => { const t = raw.trim().replace(/^#/, ''); if (t && !tags.some((x) => x.toLowerCase() === t.toLowerCase())) setTags([...tags, t]); setTagIn('') }
+  const base = useBase()
+  const bannerImg = useBannerImage(base, 'fb45', 0.35)
   return (
     <div className="me-stack">
+      <section className="me-card me-bannercard">
+        <div className="me-bannerrow">
+          <div className="me-bannerthumb" aria-hidden>{bannerImg ? <img src={bannerImg} alt="" draggable={false} /> : <Icon name="image" size={22} />}</div>
+          <div className="me-bannertxt">
+            <h3 className="me-h3">Banner</h3>
+            <p className="me-hint">{bannerLink ? 'Follows the headline, credit and photo of this story.' : 'Not linked: it keeps its own text.'}</p>
+            <div className="me-start-row">
+              <Button icon="layers" onClick={() => useNav.getState().go('graphics')}>Edit banner</Button>
+              <Button kind="tonal" icon="refresh" disabled={!draft.headline.trim()} onClick={() => { useEditorialStore.getState().applyDraftToBanner(); snack('Banner updated from the story') }}>Update</Button>
+            </div>
+          </div>
+        </div>
+      </section>
       <section className="me-card" id="me-details-cat">
         <div className="m-field"><span className="m-field-label">Category</span>
           <button type="button" className="me-catpick" style={{ '--cc': cat.accent } as React.CSSProperties} aria-haspopup="dialog" onClick={() => useUi.getState().openSheet('ed-category')}>
@@ -204,10 +224,6 @@ function DetailsTab() {
       <section className="me-card">
         <h3 className="me-h3">Banner</h3>
         <label className="me-switchrow"><span><b>Keep the banner in step</b><small>Headline, credit and caption follow this story both ways.</small></span><input type="checkbox" role="switch" checked={bannerLink} onChange={(e) => useEditorialStore.getState().setBannerLink(e.target.checked)} /></label>
-        <div className="me-start-row">
-          <Button kind="tonal" icon="refresh" disabled={!draft.headline.trim()} onClick={() => { useEditorialStore.getState().applyDraftToBanner(); snack('Banner updated from the story') }}>Update banner</Button>
-          <Button kind="tonal" icon="layers" onClick={() => useNav.getState().go('graphics')}>Open in Graphics</Button>
-        </div>
       </section>
     </div>
   )
@@ -419,6 +435,9 @@ export function storyMenu(): MenuItem[] {
   ]
 }
 
+/** Which bar step a pane belongs to. */
+function stepOf(tab: Tab): string { return CHECKS.includes(tab) ? 'check' : tab }
+
 export function StoryEditor() {
   const d = useDesk()
   const headline = useEditorialStore((s) => s.draft.headline)
@@ -429,6 +448,16 @@ export function StoryEditor() {
   const jobLive = d.busy != null || pubBusy
   const linked = linkedArticle()
   const wide = size === 'expanded'
+  const { t: ready } = useReadiness()
+  const lastCheck = useRef<Tab>('seo')
+  useEffect(() => { if (CHECKS.includes(d.tab)) lastCheck.current = d.tab }, [d.tab])
+  const toCheck = ready.blockers > 0 ? ready.blockers : ready.warnings // the same number the strip on Check shows
+  const steps: NavItem[] = [
+    { id: 'story', label: 'Parse', icon: 'edit' },
+    { id: 'details', label: 'Banner', icon: 'image' },
+    { id: 'check', label: 'Check', icon: 'check', badge: toCheck > 0 ? toCheck : undefined, tone: ready.blockers > 0 ? 'bad' : 'warn' },
+    { id: 'publish', label: linked ? 'Update' : 'Publish', icon: 'upload', badge: ready.state === 'ready' ? '✓' : undefined, tone: 'ok' },
+  ]
   // which way the section slides in: forward tabs come from the right, earlier ones from the left
   const prevTab = useRef(d.tab)
   const order = TABS.map((t) => t.id)
@@ -438,15 +467,16 @@ export function StoryEditor() {
     <div className={'me-story' + (d.writing ? ' is-writing' : '') + (d.editing ? ' is-editing' : '')}>
       <div className="me-hide-writing">
         <TopBar leading={<IconBtn icon="chevLeft" label="Back to stories" onClick={() => d.set({ view: 'home', writing: false })} />}
-          title={TABS.find((t) => t.id === d.tab)?.label ?? 'Story'}
-          sub={<>{canCancel(d.busy) ? (story ? <StatusChip s={story.status} /> : <span className="me-status s-draft">{STATUS_LABEL.draft}</span>) : <ReadyPill />}<span>{words} words{linked ? ' · live' : ''}</span></>}
+          title={STEP_TITLE[stepOf(d.tab)]}
+          sub={<>{story ? <StatusChip s={story.status} /> : <span className="me-status s-draft">{STATUS_LABEL.draft}</span>}<span>{words} words{linked ? ' · live' : ''}</span></>}
           actions={<>
             {jobLive && <IconBtn icon="activity" label="Activity (a job is running)" badge="•" onClick={() => useUi.getState().openSheet('ed-activity')} />}
             {canCancel(d.busy) && <Button kind="text" onClick={cancelJob}>Cancel</Button>}
-            <Button icon="upload" className="me-pub-top" disabled={!headline.trim()} onClick={() => useUi.getState().openSheet('ed-publish')}>{linked ? 'Update' : 'Publish'}</Button>
           </>}
           overflow={storyMenu()} />
+        <FlowStrip compact />
       </div>
+      {CHECKS.includes(d.tab) && <div className="me-substeps me-hide-writing"><Segmented<Tab> label="What to check" value={d.tab} onChange={(v) => { lastCheck.current = v; d.set({ tab: v }) }} options={[{ value: 'seo', label: 'SEO', icon: 'search' }, { value: 'social', label: 'Social', icon: 'send' }, { value: 'preview', label: 'Preview', icon: 'eye' }]} /><ReadyPill /></div>}
       <div key={d.tab} className="m-scroll me-scroll" style={{ '--dir': paneDir } as React.CSSProperties}>
         <div className={'m-wrap' + (wide ? ' m-grid me-wide' : '')}>
           <div className={wide ? 'm-span-main' : undefined}>
@@ -459,7 +489,13 @@ export function StoryEditor() {
           {wide && !d.writing && <div className="m-span-side"><Side /></div>}
         </div>
       </div>
-      {!d.editing && !d.writing && <NavBar items={TABS} value={d.tab} onChange={(t) => d.set({ tab: t as Tab, writing: false })} />}
+      {!d.editing && !d.writing && <NavBar items={steps} value={stepOf(d.tab)} onChange={(id) => {
+        if (id === 'publish') {
+          if (!headline.trim()) { snack('Write a headline first, then publish.'); d.set({ tab: 'story', writing: false }); return }
+          useUi.getState().openSheet('ed-publish'); return
+        }
+        d.set({ tab: id === 'check' ? lastCheck.current : (id as Tab), writing: false })
+      }} />}
     </div>
   )
 }

@@ -32,14 +32,16 @@ import SettingsScreen from './settings/SettingsScreen'
 import './polish.css' // the polish layer wins ties over every screen's own CSS
 import './refine.css' // last: the design language (spacing, radius, depth) that every screen follows
 
-// Five destinations: the Editorial desk's three lists are first-class (one tap each), Graphics keeps its own workspace.
+// The bar reads left to right as the work does: find a story (Wire) -> start it (the raised Link button) -> work on it (Stories) -> done (Published).
+// Graphics is not a place on its own: a banner belongs to a story, so it is a step inside the story (and a tile on Home); the tablet rail keeps a direct entry.
 const NAV: NavItem[] = [
   { id: 'home', label: 'Home', icon: 'home' },
+  { id: 'ed-wire', label: 'Wire', icon: 'inbox' },
+  { id: 'add', label: 'Engine', icon: 'power', primary: true },
   { id: 'ed-stories', label: 'Stories', icon: 'newspaper' },
   { id: 'ed-published', label: 'Published', icon: 'globe' },
-  { id: 'ed-wire', label: 'Wire', icon: 'inbox' },
-  { id: 'graphics', label: 'Graphics', icon: 'layers' },
 ]
+const RAIL: NavItem[] = [...NAV.filter((n) => !n.primary), { id: 'graphics', label: 'Graphics', icon: 'layers' }]
 
 export default function MobileApp() {
   const size = useSizeClass()
@@ -71,19 +73,20 @@ export default function MobileApp() {
     if (!inEl || !outEl || !dim || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setLive(route); return }
     const dir = route === 'graphics' && from === 'editorial' ? 'up' : from === 'graphics' && route === 'editorial' ? 'down' : ORDER.indexOf(route) > ORDER.indexOf(from) ? 'fwd' : 'back'
     const topIsIn = dir === 'fwd' || dir === 'up'
-    const lay = (el: HTMLElement, z: number) => { el.style.cssText = 'opacity:1;position:absolute;inset:0;z-index:' + z + ';background:var(--surface-app);will-change:transform;' }
+    const lay = (el: HTMLElement, z: number) => { el.style.cssText = 'opacity:1;position:absolute;inset:0;z-index:' + z + ';background:var(--surface-app);will-change:transform,opacity;' }
     lay(inEl, topIsIn ? 3 : 1); lay(outEl, topIsIn ? 1 : 3); dim.style.zIndex = '2'
-    const o = { duration: 460, easing: 'cubic-bezier(.32,.72,0,1)', fill: 'both' as const }
+    const vertical = dir === 'up' || dir === 'down'
+    const o = { duration: vertical ? 340 : 260, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'both' as const }
     const T = (x: number, y: number, sc = 1) => 'translate3d(' + x + '%, ' + y + '%, 0) scale(' + sc + ')'
     const fx: Record<string, [Keyframe[], Keyframe[]]> = {
-      fwd: [[{ transform: T(100, 0) }, { transform: T(0, 0) }], [{ transform: T(0, 0) }, { transform: T(-24, 0) }]],
-      back: [[{ transform: T(-24, 0) }, { transform: T(0, 0) }], [{ transform: T(0, 0) }, { transform: T(100, 0) }]],
+      fwd: [[{ transform: T(7, 0), opacity: 0 }, { transform: T(0, 0), opacity: 1 }], [{ transform: T(0, 0), opacity: 1 }, { transform: T(-7, 0), opacity: 0 }]],
+      back: [[{ transform: T(-7, 0), opacity: 0 }, { transform: T(0, 0), opacity: 1 }], [{ transform: T(0, 0), opacity: 1 }, { transform: T(7, 0), opacity: 0 }]],
       up: [[{ transform: T(0, 100) }, { transform: T(0, 0) }], [{ transform: T(0, 0) }, { transform: T(0, -3, 0.95) }]],
       down: [[{ transform: T(0, -3, 0.95) }, { transform: T(0, 0) }], [{ transform: T(0, 0) }, { transform: T(0, 100) }]],
     }
     const anims = [
       inEl.animate(fx[dir][0], o), outEl.animate(fx[dir][1], o),
-      dim.animate(topIsIn ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }], o),
+      dim.animate(!vertical ? [{ opacity: 0 }, { opacity: 0 }] : topIsIn ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }], o),
     ]
     let finished = false
     const done = () => {
@@ -98,6 +101,7 @@ export default function MobileApp() {
     anims[0].finished.then(done, () => {})
   }, [route]) // eslint-disable-line react-hooks/exhaustive-deps
   const onNav = (id: string) => {
+    if (id === 'add') { useNav.getState().intendEditorial('paste-link'); return }
     if (id.startsWith('ed-')) { useDesk.getState().set({ homeTab: id.slice(3) as HomeTab, view: 'home', writing: false }); go('editorial') } else go(id as Route)
   }
   const detail = (route === 'editorial' && deskView !== 'home') || route === 'graphics'
@@ -193,7 +197,7 @@ export default function MobileApp() {
 
   return (
     <div className={`m-app${rail ? ' has-rail' : ''}${detail && !rail ? ' m-nav-off' : ''}`} data-size={size}>
-      {rail && <NavBar rail items={NAV} value={navValue} onChange={onNav} />}
+      {rail && <NavBar rail items={RAIL} value={navValue} onChange={onNav} />}
       <div className="m-screen m-screens">
         <div className={'m-screen' + (route === 'home' ? '' : ' is-off')} ref={(e) => { screenEls.current.home = e }} inert={route !== 'home'}><HomeScreen active={liveRoute === 'home'} /></div>
         <div className={'m-screen' + (route === 'editorial' ? '' : ' is-off')} ref={(e) => { screenEls.current.editorial = e }} inert={route !== 'editorial'}><EditorialScreen active={liveRoute === 'editorial'} /></div>

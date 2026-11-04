@@ -11,7 +11,7 @@ import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import { installBannerLink } from '../../pc/editorial/bannerLink'
 import { useWirePoll } from '../../pc/editorial/wire'
 import { readSharedFile } from '../../native/shareIn'
-import { useDesk, newStory, readFile } from './deskStore'
+import { useDesk, newStory, readFile, readClipboardText } from './deskStore'
 import { usePublish } from './publish'
 import { Landing } from './Landing'
 import { Intake } from './Intake'
@@ -45,6 +45,13 @@ async function takeShared() {
   if (pics.length) snack(`${pics.length} picture${pics.length === 1 ? '' : 's'} came with this share. Add them to the banner from Graphics → Photos.`, { action: { label: 'Graphics', run: () => useNav.getState().intendGraphics('photos') }, ms: 8000 })
 }
 
+/** The Link button was pressed to bring a story in: if a web address is already copied, it is in the box (one tap to Fetch). */
+async function prefillCopiedLink() {
+  if (useDesk.getState().url.trim() || useDesk.getState().raw.trim()) return
+  const t = (await readClipboardText().catch(() => '')).trim()
+  if (/^https?:\/\/\S+$/i.test(t) && !useDesk.getState().url.trim()) useDesk.setState({ url: t })
+}
+
 export default function EditorialScreen({ active }: ScreenProps) {
   const view = useDesk((s) => s.view)
   const writing = useDesk((s) => s.writing)
@@ -63,7 +70,7 @@ export default function EditorialScreen({ active }: ScreenProps) {
   useEffect(() => {
     if (!intent) return
     if (intent.kind === 'new') newStory('story')
-    else if (intent.kind === 'paste-link') { newStory('intake'); useDesk.setState({ intakeTab: 'link', focusUrlAt: Date.now() }); void takeShared() }
+    else if (intent.kind === 'paste-link') { newStory('intake'); useDesk.setState({ intakeTab: 'link', focusUrlAt: Date.now() }); void takeShared().then(prefillCopiedLink) }
     else useDesk.setState({ view: hasStoryContent(useEditorialStore.getState()) ? 'story' : 'home' })
   }, [intent])
 
