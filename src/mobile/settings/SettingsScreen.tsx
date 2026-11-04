@@ -122,6 +122,7 @@ function KeyField({ id, ai, onSave, inline }: { id: AiProviderId; ai: AiSettings
   const [val, setVal] = useState(ai.keys[id])
   const [show, setShow] = useState(false)
   const [models, setModels] = useState<AiModelInfo[] | null>(null)
+  const [listErr, setListErr] = useState('')
   const [testing, setTesting] = useState(false)
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null)
   const dirty = val.trim() !== ai.keys[id]
@@ -130,7 +131,8 @@ function KeyField({ id, ai, onSave, inline }: { id: AiProviderId; ai: AiSettings
     const k = ai.keys[id]
     if (!k || models || ai.paused) return
     let dead = false
-    void listModels(id, k).then((m) => { if (!dead && m.length) setModels(m) }).catch(() => undefined)
+    setListErr('')
+    void listModels(id, k).then((m) => { if (dead) return; if (m.length) setModels(m); else setListErr('The account answered with no usable models.') }).catch((e) => { if (!dead) setListErr(e instanceof Error ? e.message : String(e)) })
     return () => { dead = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ai.keys[id], ai.paused])
@@ -140,7 +142,7 @@ function KeyField({ id, ai, onSave, inline }: { id: AiProviderId; ai: AiSettings
     try {
       const r = await testAiKey(id, val.trim(), ai.models[id])
       setResult(r.ok ? { ok: true, text: `Key works — ${r.models?.length ?? 0} models${r.model ? `, answered on ${r.model}` : ''}.` } : { ok: false, text: r.error ?? 'The key did not work.' })
-      if (r.ok) setModels(r.models ?? (await listModels(id, val.trim()).catch(() => null)))
+      if (r.ok) { setListErr(''); setModels(r.models ?? (await listModels(id, val.trim()).catch((e) => { setListErr(e instanceof Error ? e.message : String(e)); return null }))) }
     } finally { setTesting(false) }
   }
   const body = (
@@ -149,9 +151,9 @@ function KeyField({ id, ai, onSave, inline }: { id: AiProviderId; ai: AiSettings
         <label className="m-field">
           <span className="m-field-label">API key</span>
           <span className="m-input-row">
-            <input className="m-input" type={show ? 'text' : 'password'} autoComplete="off" spellCheck={false} placeholder={meta.keyPlaceholder} value={val} onChange={(e) => { setVal(e.target.value); setModels(null); setResult(null) }} />
+            <input className="m-input" type={show ? 'text' : 'password'} autoComplete="off" spellCheck={false} placeholder={meta.keyPlaceholder} value={val} onChange={(e) => { setVal(e.target.value); setModels(null); setResult(null); setListErr('') }} />
             <button type="button" className="m-iconbtn" aria-label={show ? 'Hide key' : 'Show key'} onClick={() => setShow(!show)}><Icon name={show ? 'eyeOff' : 'eye'} size={22} /></button>
-            <button type="button" className="m-iconbtn st-rm" aria-label={`Remove the ${meta.name} key`} title="Remove key" disabled={!ai.keys[id]} onClick={() => { setVal(''); setModels(null); setResult(null); onSave({ ...ai, keys: { ...ai.keys, [id]: '' } }); snack(`${meta.name} key removed`) }}><Icon name="trash" size={20} /></button>
+            <button type="button" className="m-iconbtn st-rm" aria-label={`Remove the ${meta.name} key`} title="Remove key" disabled={!ai.keys[id]} onClick={() => { setVal(''); setModels(null); setResult(null); setListErr(''); onSave({ ...ai, keys: { ...ai.keys, [id]: '' } }); snack(`${meta.name} key removed`) }}><Icon name="trash" size={20} /></button>
           </span>
         </label>
         <div className="m-field">
@@ -160,7 +162,7 @@ function KeyField({ id, ai, onSave, inline }: { id: AiProviderId; ai: AiSettings
             ...(ai.models[id] !== 'auto' && !models?.some((x) => x.id === ai.models[id]) ? [{ value: ai.models[id], label: ai.models[id] }] : []),
             ...(models ?? []).map((x) => ({ value: x.id, label: x.label, hint: x.hint })),
           ]} />
-          {!models?.length && <span className="m-field-help">{val.trim() ? 'Check the key to load the models it can use.' : `Paste a ${meta.name} key to choose a model.`}</span>}
+          {!models?.length && <span className="m-field-help">{listErr ? `Could not load the models: ${listErr} Press Check to try again.` : val.trim() ? 'Check the key to load the models it can use.' : `Paste a ${meta.name} key to choose a model.`}</span>}
         </div>
         {result && <Banner tone={result.ok ? 'success' : 'error'}>{result.text}</Banner>}
         <div className="st-actions">
