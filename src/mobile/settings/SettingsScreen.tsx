@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import { AI_PROVIDERS, providerMeta, listModels, testAiKey, type AiModelInfo, type AiProviderId, type AiSettings } from '../../pc/editorial/aiProviders'
-import { clearFacebook, getFacebook, saveFacebook, useFacebookPrefs, verifyFacebook } from '../../pc/editorial/facebook'
+import { clearFacebook, getFacebook, makeTokenPermanent, saveFacebook, useFacebookPrefs, verifyFacebook } from '../../pc/editorial/facebook'
 import manifest from '../../pc/SYNC_MANIFEST.json'
 import { getLinkFetchMode, setLinkFetchMode, type LinkFetchMode } from '../../platform/fetchGuarded'
 import { probeFeature } from '../../sync/endpoints'
@@ -13,7 +13,6 @@ import { isAppLockEnabled, isBiometricAvailable, setAppLockEnabled } from '../..
 import { useNav } from '../shell/nav'
 import { snack, useOnline } from '../shell/core'
 import { Banner, Button, Collapse, Dropdown, FullDialog, Icon, Row, Section, Segmented } from '../shell/ui'
-import { checkForUpdate, getCurrentBundle } from '../../platform/ota'
 import { ProviderMark } from '../shell/marks'
 import { FormatMark, RoleChip } from '../shell/cat'
 import { JOURNALISTIC_TRANSLATOR_PROMPT } from '../../pc/editorial/translator'
@@ -246,6 +245,42 @@ function AiSection() {
   )
 }
 
+/** The PC's "Make it permanent": a short-lived user token from the Graph API Explorer + the app's ID and secret become a Page token that
+ *  never expires (Meta: a Page token made from a long-lived user token has no expiry). The secret lives in this form only: it is used for
+ *  the exchange and cleared straight after, never saved, never logged. */
+function PermanentToken({ pageId, onPageId, onDone, onCancel }: { pageId: string; onPageId?: (v: string) => void; onDone: () => void; onCancel?: () => void }) {
+  const [userToken, setUserToken] = useState('')
+  const [appId, setAppId] = useState('')
+  const [appSecret, setAppSecret] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const ready = /^\d{5,}$/.test(pageId.trim()) && !!userToken.trim() && /^\d{5,}$/.test(appId.trim()) && !!appSecret.trim()
+  const go = async () => {
+    setBusy(true); setErr('')
+    try {
+      const r = await makeTokenPermanent({ pageId: pageId.trim(), userToken: userToken.trim(), appId: appId.trim(), appSecret: appSecret.trim() })
+      if (!r.ok) { setErr(r.error); return }
+      const v = await verifyFacebook(pageId.trim(), r.token, true)
+      if (!v.ok) { setErr(v.error); return }
+      saveFacebook({ pageId: pageId.trim(), token: r.token, pageName: v.name || r.pageName, permanent: r.permanent })
+      snack(r.permanent ? `Connected to ${v.name || r.pageName}: the token does not expire` : `Connected to ${v.name || r.pageName}. Facebook did not confirm that it never expires`, { tone: r.permanent ? 'success' : 'info' })
+      onDone()
+    } catch { setErr('Could not reach Facebook. Check the connection and try again.') } finally { setBusy(false); setAppSecret(''); setUserToken('') }
+  }
+  return (
+    <div className="m-stack fb-perm">
+      <p className="m-muted">A token copied from the Graph API Explorer lasts about an hour, which is why it keeps stopping. This builds one that does not expire. Paste the Explorer's <b>user</b> token, your app's ID and secret (Meta for Developers, your app, Settings, Basic). The secret is used once and not kept.</p>
+      {onPageId && <label className="m-field"><span className="m-field-label">Page id</span><input className="m-input" inputMode="numeric" value={pageId} onChange={(e) => onPageId(e.target.value.replace(/\D/g, ''))} /></label>}
+      <label className="m-field"><span className="m-field-label">User access token (from the Graph API Explorer)</span><input className="m-input" type="password" autoComplete="off" spellCheck={false} value={userToken} onChange={(e) => setUserToken(e.target.value)} /></label>
+      <label className="m-field"><span className="m-field-label">App ID</span><input className="m-input" inputMode="numeric" value={appId} onChange={(e) => setAppId(e.target.value.replace(/\D/g, ''))} /></label>
+      <label className="m-field"><span className="m-field-label">App secret</span><input className="m-input" type="password" autoComplete="off" spellCheck={false} value={appSecret} onChange={(e) => setAppSecret(e.target.value)} /></label>
+      {err && <Banner tone="error">{err}</Banner>}
+      <Button wide busy={busy} disabled={!ready} onClick={() => void go()}>Make permanent &amp; connect</Button>
+      {onCancel && <Button kind="text" wide onClick={onCancel}>Paste a Page token instead</Button>}
+    </div>
+  )
+}
+
 function FacebookSection() {
   const [fb, setFb] = useState(getFacebook())
   const [pageId, setPageId] = useState(fb?.pageId ?? '')
@@ -253,6 +288,7 @@ function FacebookSection() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const [pic, setPic] = useState(true)
+  const [perm, setPerm] = useState(false)
   const [link, setLink] = useState<{ s: 'checking' | 'ok' | 'bad'; name?: string; err?: string }>({ s: 'checking' })
   const linkComment = useFacebookPrefs((st) => st.linkComment)
   const setLinkComment = useFacebookPrefs((st) => st.setLinkComment)
@@ -290,8 +326,21 @@ function FacebookSection() {
           <div><Icon name={fb.permanent ? 'check' : 'info'} size={16} /><span><b>{fb.permanent ? 'Token does not expire' : 'Token may expire'}</b><small>{fb.permanent ? 'Made from a long-lived token.' : 'A token pasted from the Graph API Explorer usually lasts about an hour.'}</small></span></div>
           <div><Icon name="lock" size={16} /><span><b>Kept in this phone's secure storage</b><small>Sent only to Facebook, never in a link.</small></span></div>
         </div>
+        {!fb.permanent && (
+          <Collapse title="Make the token permanent" sub="Stop it expiring every hour">
+            <PermanentToken pageId={fb.pageId} onDone={() => { const n = getFacebook(); setFb(n); setLink({ s: 'checking' }); if (n) void recheck(n, false) }} />
+          </Collapse>
+        )}
         <Row title="Link in the first comment" meta="After a post, add the story link as the first comment." trail={<button type="button" role="switch" aria-checked={linkComment} aria-label="Link in first comment" className={`m-switch${linkComment ? ' is-on' : ''}`} onClick={() => setLinkComment(!linkComment)}><span /></button>} />
         <Button kind="outlined" wide className="sa-out" onClick={() => { clearFacebook(); setFb(null); setLink({ s: 'checking' }); setPic(true); snack('Facebook Page removed from this phone') }}>Disconnect Page</Button>
+      </div>
+    )
+  }
+  if (perm) {
+    return (
+      <div className="m-stack">
+        <div className="fbc-empty"><span className="fbc-f big"><FormatMark id="fb45" size={28} /></span><span><b>Not connected</b><small>Permanent token</small></span></div>
+        <PermanentToken pageId={pageId} onPageId={setPageId} onDone={() => { setFb(getFacebook()); setPerm(false); setLink({ s: 'ok' }) }} onCancel={() => setPerm(false)} />
       </div>
     )
   }
@@ -314,6 +363,7 @@ function FacebookSection() {
       <label className="m-field"><span className="m-field-label">Page access token</span><input className="m-input" type="password" autoComplete="off" value={token} onChange={(e) => setToken(e.target.value)} /></label>
       {err && <Banner tone="error">{err}</Banner>}
       <Button type="submit" wide busy={busy} disabled={!pageId || !token}>Connect Page</Button>
+      <Button kind="text" wide onClick={() => setPerm(true)}>Token keeps expiring? Make it permanent</Button>
     </form>
   )
 }
@@ -323,25 +373,9 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
   const [mode, setMode] = useState<LinkFetchMode>(getLinkFetchMode())
   const [lock, setLock] = useState(isAppLockEnabled())
   const [bio, setBio] = useState<boolean | null>(null)
-  const [bundleInfo, setBundleInfo] = useState<string>('built-in')
-  const [checkingOta, setCheckingOta] = useState(false)
 
   useEffect(() => { void isBiometricAvailable().then((r) => setBio(r.available)) }, [])
-  useEffect(() => { void getCurrentBundle().then((b) => setBundleInfo(b.version && b.version !== 'web' ? b.version : b.id || 'built-in')) }, [])
   useEffect(() => { if (section) document.getElementById(`set-${section}`)?.scrollIntoView({ block: 'start' }) }, [section])
-
-  const handleCheckOta = async () => {
-    setCheckingOta(true)
-    try {
-      const up = await checkForUpdate()
-      if (up) snack(`Update v${up.version} is available!`, { tone: 'success' })
-      else snack('App is up to date', { tone: 'info' })
-    } catch {
-      snack('Could not check for updates', { tone: 'error' })
-    } finally {
-      setCheckingOta(false)
-    }
-  }
 
   return (
     <FullDialog open title="Settings" onClose={onClose}>
@@ -362,7 +396,7 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
         </Section>
         <Section title="About" id="set-about">
           <AboutCard />
-          <Row title="ESB Studio" meta={`Version ${__APP_VERSION__} · bundle: ${bundleInfo}`} trail={<Button kind="text" icon="refresh" busy={checkingOta} onClick={() => void handleCheckOta()}>Check updates</Button>} />
+          <Row title="ESB Studio" meta={`Version ${__APP_VERSION__} · updates arrive as a new app file (APK) installed over this one; your drafts and keys stay.`} />
           <Row title="Engine and editor" meta={`ESB AI Studio build ${manifest.commit.slice(0, 7)} · ${Object.keys(manifest.files).length} files`} />
         </Section>
       </div>

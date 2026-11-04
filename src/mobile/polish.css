@@ -105,8 +105,8 @@ button.m-row:active { background: var(--fill); }
 .m-planned { border-radius: 8px; }
 
 /* ---------------------------------------------------------------- screens ease in when you switch to them */
-.m-screens > .m-screen:not([hidden]) { animation: m-screen-in .3s var(--m-spring) backwards; }
-@keyframes m-screen-in { from { opacity: 0; transform: translateY(10px); } }
+.m-screens > .m-screen:not([hidden]) { animation: m-screen-in .16s ease-out backwards; }
+@keyframes m-screen-in { from { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   .m-screens > .m-screen:not([hidden]), .m-nav-item.is-on .m-nav-pill { animation: none; }
@@ -1448,3 +1448,17 @@ html:not(.kb-open) .me-toolbar { bottom: calc(var(--m-navbar) + var(--m-safe-bot
 .me-tb-grip i { width: 44px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--text-primary) 28%, transparent); transition: background .15s, width .15s; }
 .me-tb-grip:active i { background: var(--text-secondary); width: 52px; }
 .me-toolbar.is-moved { box-shadow: 0 0 0 .5px var(--m-hair), 0 14px 40px rgba(0, 0, 0, 0.3); }
+
+/* Publish: the running card is clearly "live", and scrolling to it leaves room above the footer */
+.me-progress { scroll-margin-bottom: 24px; }
+.me-progress.is-running { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent), var(--m-card-shadow); }
+.m-note[role='status'] { scroll-margin-bottom: 24px; }
+
+/* size bar v2: [-] [ 52 px / drag ] [+] over a full-width slider */
+.gx-sizebar { grid-template-columns: 60px minmax(0, 1fr) 60px; row-gap: 4px; }
+.gx-size-val { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 52px; touch-action: none; cursor: ew-resize; -webkit-user-select: none; user-select: none; }
+.gx-size-num { display: inline-flex; align-items: baseline; gap: 4px; }
+.gx-size-val input { width: 3ch; text-align: right; font: 700 22px/1 var(--font-ui); font-variant-numeric: tabular-nums; }
+.gx-size-num > span { position: static; font: 600 13px/1 var(--font-ui); color: var(--text-secondary); }
+.gx-size-val em { font: 600 10px/1 var(--font-ui); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); pointer-events: none; }
+.gx-size-slider { grid-column: 1 / -1; width: 100%; height: 40px; margin: 2px 0 0; accent-color: var(--accent); }

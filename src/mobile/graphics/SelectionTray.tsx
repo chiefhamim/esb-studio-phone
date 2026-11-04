@@ -18,38 +18,70 @@ const NEXT_ALIGN: Record<Align, Align> = { left: 'center', center: 'right', righ
 const ALIGN_ICON: Record<Align, IconName> = { left: 'alignTextLeft', center: 'alignTextCenter', right: 'alignTextRight' }
 
 const SIZE_MIN = 6, SIZE_MAX = 600
+const SLIDER_MAX = 240
 const fmt = (n: number) => (Math.abs(n - Math.round(n)) < 0.05 ? String(Math.round(n)) : n.toFixed(1))
 
-/** Exact pixel size, like the PC's: one tap = 1 px, hold to run, or tap the number and type it. */
+/** Font size, the way the PC does it. Drag across the number to scrub (about 3 dp per pixel, so a thumb sweep covers 100 px of type), slide the
+ *  slider for the big moves, tap +/- for one pixel and hold to run (it speeds up), or tap the number and type 55. Every live change skips the
+ *  undo history; the gesture saves one undo step when it starts, so Undo goes back to the size you began with. */
 function SizeBar({ id, size }: { id: string; size: number }) {
   const [draft, setDraft] = useState<string | null>(null)
   const timer = useRef(0)
   const live = useRef(size)
   live.current = size
-  const set = (v: number) => useStore.getState().setOverride(id, { size: Math.min(SIZE_MAX, Math.max(SIZE_MIN, Math.round(v * 10) / 10)) })
-  const stop = () => { clearTimeout(timer.current); clearInterval(timer.current) }
+  const clampSize = (v: number) => Math.min(SIZE_MAX, Math.max(SIZE_MIN, v))
+  const apply = (v: number, silent = true) => useStore.getState().setOverride(id, { size: clampSize(Math.round(v * 10) / 10) }, { silent })
+  const begin = () => useStore.getState().record('size:' + id)
+  const stop = () => { clearInterval(timer.current); clearTimeout(timer.current) }
   useEffect(() => stop, [])
+
+  // +/- : tap = 1 px, hold = runs, faster the longer it is held
   const press = (dir: 1 | -1) => (e: React.PointerEvent) => {
     e.preventDefault()
-    stop()
-    set(Math.round(live.current) + dir) // the first tap lands on a whole pixel
+    stop(); begin()
+    apply(Math.round(live.current) + dir)
     let n = 0
     timer.current = window.setTimeout(() => {
-      timer.current = window.setInterval(() => { n++; set(live.current + dir * (n > 18 ? 5 : n > 8 ? 2 : 1)) }, 70)
-    }, 380)
+      timer.current = window.setInterval(() => { n++; apply(live.current + dir * (n > 40 ? 8 : n > 20 ? 4 : n > 8 ? 2 : 1)) }, 32)
+    }, 300)
+  }
+
+  // scrub the number
+  const scrub = useRef<{ x0: number; v0: number; moved: boolean } | null>(null)
+  const onDown = (e: React.PointerEvent) => {
+    if (document.activeElement === e.target) return // already typing: let the caret work
+    scrub.current = { x0: e.clientX, v0: live.current, moved: false }
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  }
+  const onMove = (e: React.PointerEvent) => {
+    const d = scrub.current
+    if (!d) return
+    const dx = e.clientX - d.x0
+    if (!d.moved) { if (Math.abs(dx) < 6) return; d.moved = true; begin() }
+    apply(Math.round(d.v0 + dx / 3))
+  }
+  const onUp = (e: React.PointerEvent) => {
+    const d = scrub.current
+    scrub.current = null
+    if (d && !d.moved) (e.currentTarget.querySelector('input') as HTMLInputElement | null)?.focus() // a tap types
   }
   const commit = () => {
-    if (draft !== null) { const v = parseFloat(draft.replace(',', '.')); if (Number.isFinite(v)) set(v) }
+    if (draft !== null) { const v = parseFloat(draft.replace(',', '.')); if (Number.isFinite(v)) { begin(); apply(v) } }
     setDraft(null)
   }
   return (
     <div className="gx-sizebar" role="group" aria-label="Font size in pixels">
       <button type="button" className="gx-step" aria-label="Smaller by 1 pixel" onPointerDown={press(-1)} onPointerUp={stop} onPointerCancel={stop} onPointerLeave={stop} onContextMenu={(e) => e.preventDefault()}><Icon name="minus" size={20} /></button>
-      <label className="gx-size-val">
-        <input inputMode="decimal" aria-label="Font size" value={draft ?? fmt(size)} onFocus={(e) => { setDraft(fmt(size)); e.currentTarget.select() }} onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }} />
-        <span>px</span>
-      </label>
+      <div className="gx-size-val" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => { scrub.current = null }} title="Drag sideways to change the size, or tap to type it">
+        <span className="gx-size-num">
+          <input inputMode="decimal" aria-label="Font size" value={draft ?? fmt(size)} onFocus={(e) => { setDraft(fmt(size)); e.currentTarget.select() }} onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }} />
+          <span>px</span>
+        </span>
+        <em aria-hidden>◂ drag ▸</em>
+      </div>
       <button type="button" className="gx-step" aria-label="Larger by 1 pixel" onPointerDown={press(1)} onPointerUp={stop} onPointerCancel={stop} onPointerLeave={stop} onContextMenu={(e) => e.preventDefault()}><Icon name="plus" size={20} /></button>
+      <input className="gx-size-slider" type="range" aria-label="Font size slider" min={SIZE_MIN} max={SLIDER_MAX} step={1} value={Math.min(SLIDER_MAX, Math.max(SIZE_MIN, Math.round(size)))}
+        onPointerDown={begin} onChange={(e) => apply(Number(e.target.value))} />
     </div>
   )
 }

@@ -67,7 +67,7 @@ export default function MobileApp() {
     }
   }), [])
   useEffect(() => startMobileCopy(), []) // the PC panels' help text, in phone wording
-  useBackLayer(route !== 'home', () => go('home'), 'screen')
+  useBackLayer(route !== 'home', () => useNav.getState().back(), 'screen')
   useBackLayer(settingsOpen, closeSettings, 'dialog')
 
   // the PC Graphics store keeps its own theme for the canvas chrome; the phone's preference drives it

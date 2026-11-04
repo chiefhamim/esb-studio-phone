@@ -78,6 +78,7 @@ async function importShared() {
 }
 
 export default function GraphicsScreen({ active }: ScreenProps) {
+  const backTo = useNav((st) => st.backTo)
   const size = useSizeClass()
   const [assets, retry] = useBaseAssets()
   usePcPortals()
@@ -316,7 +317,7 @@ export default function GraphicsScreen({ active }: ScreenProps) {
   return (
     <div className="m-screen gx" data-size={size} style={{ '--gx-side': side ? '1' : '0' } as CSSProperties}>
       <TopBar
-        leading={size === 'compact' ? <IconBtn icon="chevLeft" label="Back to Home" onClick={() => useNav.getState().go('home')} /> : undefined}
+        leading={size === 'compact' ? <IconBtn icon="chevLeft" label={backTo ? 'Back to the story' : 'Back to Home'} onClick={() => useNav.getState().back()} /> : undefined}
         title={projectName ?? 'Untitled banner'}
         sub={sub}
         actions={<>

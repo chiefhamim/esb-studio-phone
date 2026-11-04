@@ -7,6 +7,10 @@ export interface ScreenProps { active: boolean }
 interface NavState {
   route: Route
   go: (r: Route) => void
+  /** Where Graphics was entered from (the story editor), so Back returns there instead of to Home. */
+  backTo: Route | null
+  /** One step back from the current screen: to where it was entered from, else Home. */
+  back: () => void
   settingsOpen: boolean
   openSettings: (section?: string) => void
   closeSettings: () => void
@@ -20,7 +24,9 @@ interface NavState {
 
 export const useNav = create<NavState>((set) => ({
   route: 'home',
-  go: (route) => set({ route }),
+  backTo: null,
+  go: (route) => set((s) => ({ route, backTo: route === 'graphics' && s.route === 'editorial' ? 'editorial' : route === 'graphics' ? s.backTo : null })),
+  back: () => set((s) => (s.route === 'graphics' && s.backTo ? { route: s.backTo, backTo: null } : { route: 'home', backTo: null })),
   settingsOpen: false,
   settingsSection: null,
   openSettings: (section) => set({ settingsOpen: true, settingsSection: section ?? null }),
@@ -28,5 +34,5 @@ export const useNav = create<NavState>((set) => ({
   editorialIntent: null,
   graphicsIntent: null,
   intendEditorial: (kind) => set({ route: 'editorial', editorialIntent: { kind, at: Date.now() } }),
-  intendGraphics: (kind, format) => set({ route: 'graphics', graphicsIntent: { kind, at: Date.now(), format } }),
+  intendGraphics: (kind, format) => set((s) => ({ route: 'graphics', backTo: s.route === 'editorial' ? 'editorial' : s.backTo, graphicsIntent: { kind, at: Date.now(), format } })),
 }))

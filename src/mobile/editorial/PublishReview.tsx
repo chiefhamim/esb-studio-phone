@@ -3,7 +3,7 @@
 // what the site can and cannot do from the phone yet (upload and page refresh are Planned until the site update), the
 // website and Facebook banners, the Facebook switches, then live progress and the site's real answer.
 // Publish / Update and any Facebook post need a second, separate tap (tapGate.ts). Save draft is not live: one tap.
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import { BannerPreviews } from '../../pc/editorial/BannerPreviews'
 import { useHeroMode } from '../../pc/editorial/heroMode'
@@ -121,6 +121,17 @@ export function PublishReview() {
     if (!usePublish.getState().busy) usePublish.setState({ result: null, jobId: null })
     void useEditorialStore.getState().checkConnection()
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Publishing runs at the foot of the page while its steps sit above: follow the run. Each new step scrolls into view, and the result does too.
+  const progressRef = useRef<HTMLElement>(null)
+  const resultRef = useRef<HTMLDivElement>(null)
+  const stepCount = job?.steps.length ?? 0
+  useEffect(() => {
+    if (!open || !P.busy) return
+    progressRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
+  }, [open, P.busy, stepCount])
+  useEffect(() => {
+    if (open && P.result) setTimeout(() => resultRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 120)
+  }, [open, P.result])
   useUnsavedGuard(() => (P.busy ? 'A publish is still running. Leaving now may leave the article half-sent.' : null))
 
   const verb = linked ? 'Update' : 'Publish'
@@ -189,13 +200,13 @@ export function PublishReview() {
         </section>
 
         {job && (
-          <section className="me-card" aria-live="polite">
-            <h3 className="me-h3">Progress</h3>
+          <section className={'me-card me-progress' + (P.busy ? ' is-running' : '')} ref={progressRef} aria-live="polite">
+            <h3 className="me-h3">{P.busy ? (linked ? 'Updating now' : 'Publishing now') : 'Progress'}</h3>
             <Steps job={job} />
           </section>
         )}
         {P.result && (
-          <div className={'m-note ' + (P.result.ok ? 'm-note-success' : 'm-note-error')} role="status">
+          <div ref={resultRef} className={'m-note ' + (P.result.ok ? 'm-note-success' : 'm-note-error')} role="status">
             <Icon name={P.result.ok ? 'check' : 'alert'} size={18} />
             <div className="m-note-text">
               <p>{P.result.msg}</p>
