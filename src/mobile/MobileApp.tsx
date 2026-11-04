@@ -54,23 +54,27 @@ export default function MobileApp() {
   // page transitions: the screen you leave slides away while the new one slides in like a card (sideways between destinations, up/down into and out of a detail)
   const ORDER: Route[] = ['home', 'editorial', 'graphics']
   const prevRoute = useRef(route)
+  // the heavy part of a screen (canvas fit, connection checks) switches on only after the slide, so the slide itself is never starved of frames
+  const [liveRoute, setLive] = useState<Route>(route)
   const [anim, setAnim] = useState<{ from: Route; to: Route; dir: 'fwd' | 'back' | 'up' | 'down' } | null>(null)
   useLayoutEffect(() => {
     const from = prevRoute.current
     if (from === route) return
     prevRoute.current = route
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setLive(route); return }
     const dir = route === 'graphics' && from === 'editorial' ? 'up' : from === 'graphics' && route === 'editorial' ? 'down' : ORDER.indexOf(route) > ORDER.indexOf(from) ? 'fwd' : 'back'
     setAnim({ from, to: route, dir })
-    const t = setTimeout(() => setAnim(null), 380)
+    const t = setTimeout(() => { setAnim(null); setLive(route) }, 480)
     return () => clearTimeout(t)
   }, [route]) // eslint-disable-line react-hooks/exhaustive-deps
-  const slot = (r: Route) => (anim?.to === r ? ' m-go-in m-dir-' + anim.dir : anim?.from === r ? ' m-go-out m-dir-' + anim.dir : '')
   const shown = (r: Route) => route === r || anim?.from === r
+  const slot = (r: Route) => (!shown(r) ? ' is-off' : anim?.to === r ? ' m-go-in m-dir-' + anim.dir : anim?.from === r ? ' m-go-out m-dir-' + anim.dir : '')
   const onNav = (id: string) => {
     if (id.startsWith('ed-')) { useDesk.getState().set({ homeTab: id.slice(3) as HomeTab, view: 'home', writing: false }); go('editorial') } else go(id as Route)
   }
   const detail = (route === 'editorial' && deskView !== 'home') || route === 'graphics'
+  // the desk colour is applied once the slide has finished: restyling the whole document mid-slide would stall its first frames
+  const accentOn = (liveRoute === 'editorial' && deskView !== 'home') || liveRoute === 'graphics'
   // Like the PC: while a story is open, the app's accent (buttons, switches, selected chips) is the desk's colour.
   const catId = useStore((s) => s.doc.content.categoryId)
   useEffect(() => {
@@ -78,7 +82,7 @@ export default function MobileApp() {
     const names = ['--accent', '--on-accent', '--accent-soft']
     const clear = () => names.forEach((n) => root.style.removeProperty(n))
     const c = CATEGORIES.find((x) => x.id === catId)
-    if (!detail || !c) { clear(); return }
+    if (!accentOn || !c) { clear(); return }
     const paint = () => {
       const dark = root.getAttribute('data-theme') === 'dark'
       // light: the desk colour itself; dark: softened toward the surface so it keeps contrast (same recipe as the PC)
@@ -91,7 +95,7 @@ export default function MobileApp() {
     const mo = new MutationObserver(paint)
     mo.observe(root, { attributes: true, attributeFilter: ['data-theme'] })
     return () => { mo.disconnect(); clear() }
-  }, [detail, catId])
+  }, [accentOn, catId])
 
   useEffect(() => watchKeyboard(), [])
   useEffect(() => startSliderReset(), [])
@@ -163,9 +167,9 @@ export default function MobileApp() {
     <div className={`m-app${rail ? ' has-rail' : ''}${detail && !rail ? ' m-nav-off' : ''}`} data-size={size}>
       {rail && <NavBar rail items={NAV} value={navValue} onChange={onNav} />}
       <div className="m-screen m-screens">
-        <div className={'m-screen' + slot('home')} hidden={!shown('home')}><HomeScreen active={route === 'home'} /></div>
-        <div className={'m-screen' + slot('editorial')} hidden={!shown('editorial')}><EditorialScreen active={route === 'editorial'} /></div>
-        <div className={'m-screen' + slot('graphics')} hidden={!shown('graphics')}><GraphicsScreen active={route === 'graphics'} /></div>
+        <div className={'m-screen' + slot('home')} inert={!shown('home')}><HomeScreen active={liveRoute === 'home'} /></div>
+        <div className={'m-screen' + slot('editorial')} inert={!shown('editorial')}><EditorialScreen active={liveRoute === 'editorial'} /></div>
+        <div className={'m-screen' + slot('graphics')} inert={!shown('graphics')}><GraphicsScreen active={liveRoute === 'graphics'} /></div>
       </div>
       {!rail && <NavBar items={NAV} value={navValue} onChange={onNav} />}
       {settingsOpen && <SettingsScreen onClose={closeSettings} />}

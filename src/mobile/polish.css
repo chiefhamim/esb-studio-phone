@@ -1617,33 +1617,42 @@ input, textarea, [contenteditable='true'], [contenteditable=''], .allow-select, 
 .hm-launch .hm-cell + .hm-cell::before { display: none; }
 .hm-launch .hm-cell > svg { grid-row: auto; grid-column: auto; }
 
-/* ---- page transitions: cards sliding like an app switcher ---- */
+/* ---- page transitions: cards sliding like an app switcher. Compositor-only (transform + a dimming layer), screens stay laid out
+   (visibility, not display:none) so nothing has to be measured on the first frame. ---- */
 .m-screens { position: relative; overflow: hidden; }
-.m-screens > .m-screen.m-go-in, .m-screens > .m-screen.m-go-out { position: absolute; inset: 0; background: var(--surface-app); animation-duration: .36s; animation-timing-function: cubic-bezier(.22, .8, .2, 1); animation-fill-mode: both; will-change: transform; }
+/* kept painted (but invisible and inert) so its layers are already rasterised when the slide starts */
+.m-screens > .m-screen.is-off { position: absolute; inset: 0; opacity: .001; z-index: 0; pointer-events: none; }
+.m-screens > .m-screen.m-go-in, .m-screens > .m-screen.m-go-out { position: absolute; inset: 0; background: var(--surface-app); backface-visibility: hidden; will-change: transform; animation-duration: .46s; animation-timing-function: cubic-bezier(.32, .72, 0, 1); animation-fill-mode: both; }
 .m-screens > .m-screen.m-go-in { z-index: 2; }
 .m-screens > .m-screen.m-go-out { z-index: 1; }
 .m-screens > .m-screen.m-dir-back.m-go-in, .m-screens > .m-screen.m-dir-down.m-go-in { z-index: 1; }
 .m-screens > .m-screen.m-dir-back.m-go-out, .m-screens > .m-screen.m-dir-down.m-go-out { z-index: 2; }
-.m-screens > .m-screen.m-dir-fwd.m-go-in { animation-name: m-in-right; box-shadow: -14px 0 30px -12px rgba(0, 0, 0, .28); }
+/* the screen underneath dims through a pseudo layer instead of animating its own opacity */
+.m-screens > .m-screen.m-go-in::after, .m-screens > .m-screen.m-go-out::after { content: ''; position: absolute; inset: 0; z-index: 99; pointer-events: none; background: rgba(8, 8, 20, .16); opacity: 0; }
+.m-dir-fwd.m-go-out::after, .m-dir-up.m-go-out::after { animation: m-dim-in .46s cubic-bezier(.32, .72, 0, 1) both; }
+.m-dir-back.m-go-in::after, .m-dir-down.m-go-in::after { animation: m-dim-out .46s cubic-bezier(.32, .72, 0, 1) both; }
+.m-screens > .m-screen.m-dir-fwd.m-go-in { animation-name: m-in-right; }
 .m-screens > .m-screen.m-dir-fwd.m-go-out { animation-name: m-out-left; }
 .m-screens > .m-screen.m-dir-back.m-go-in { animation-name: m-in-left; }
-.m-screens > .m-screen.m-dir-back.m-go-out { animation-name: m-out-right; box-shadow: -14px 0 30px -12px rgba(0, 0, 0, .28); }
-.m-screens > .m-screen.m-dir-up.m-go-in { animation-name: m-in-bottom; box-shadow: 0 -14px 30px -12px rgba(0, 0, 0, .3); border-radius: 22px 22px 0 0; }
+.m-screens > .m-screen.m-dir-back.m-go-out { animation-name: m-out-right; }
+.m-screens > .m-screen.m-dir-up.m-go-in { animation-name: m-in-bottom; }
 .m-screens > .m-screen.m-dir-up.m-go-out { animation-name: m-out-back; }
 .m-screens > .m-screen.m-dir-down.m-go-in { animation-name: m-in-front; }
-.m-screens > .m-screen.m-dir-down.m-go-out { animation-name: m-out-bottom; box-shadow: 0 -14px 30px -12px rgba(0, 0, 0, .3); border-radius: 22px 22px 0 0; }
-@keyframes m-in-right { from { transform: translateX(100%); } }
-@keyframes m-out-left { to { transform: translateX(-28%); opacity: .55; } }
-@keyframes m-in-left { from { transform: translateX(-28%); opacity: .55; } }
-@keyframes m-out-right { to { transform: translateX(100%); } }
-@keyframes m-in-bottom { from { transform: translateY(100%); } }
-@keyframes m-out-back { to { transform: scale(.94); opacity: .6; } }
-@keyframes m-in-front { from { transform: scale(.94); opacity: .6; } }
-@keyframes m-out-bottom { to { transform: translateY(100%); } }
+.m-screens > .m-screen.m-dir-down.m-go-out { animation-name: m-out-bottom; }
+@keyframes m-in-right { from { transform: translate3d(100%, 0, 0); } }
+@keyframes m-out-left { to { transform: translate3d(-24%, 0, 0); } }
+@keyframes m-in-left { from { transform: translate3d(-24%, 0, 0); } }
+@keyframes m-out-right { to { transform: translate3d(100%, 0, 0); } }
+@keyframes m-in-bottom { from { transform: translate3d(0, 100%, 0); } }
+@keyframes m-out-back { to { transform: translate3d(0, -3%, 0) scale(.95); } }
+@keyframes m-in-front { from { transform: translate3d(0, -3%, 0) scale(.95); } }
+@keyframes m-out-bottom { to { transform: translate3d(0, 100%, 0); } }
+@keyframes m-dim-in { to { opacity: 1; } }
+@keyframes m-dim-out { from { opacity: 1; } to { opacity: 0; } }
 /* inside Editorial: a story opens upward, closes downward; Stories / Published / Wire slide sideways */
 .m-view { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; }
-.m-view-up { animation: m-in-bottom .34s cubic-bezier(.22, .8, .2, 1) both; background: var(--surface-app); }
-.m-view-down { animation: m-in-front .3s cubic-bezier(.22, .8, .2, 1) both; }
-.m-tab-fwd { animation: m-in-right .3s cubic-bezier(.22, .8, .2, 1) both; }
-.m-tab-back { animation: m-in-left .3s cubic-bezier(.22, .8, .2, 1) both; }
+.m-view-up { animation: m-in-bottom .42s cubic-bezier(.32, .72, 0, 1) both; background: var(--surface-app); will-change: transform; }
+.m-view-down { animation: m-in-front .38s cubic-bezier(.32, .72, 0, 1) both; will-change: transform; }
+.m-tab-fwd { animation: m-in-right .38s cubic-bezier(.32, .72, 0, 1) both; will-change: transform; }
+.m-tab-back { animation: m-in-left .38s cubic-bezier(.32, .72, 0, 1) both; will-change: transform; }
 @media (prefers-reduced-motion: reduce) { .m-view-up, .m-view-down, .m-tab-fwd, .m-tab-back { animation: none; } }
