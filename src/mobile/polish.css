@@ -1406,3 +1406,12 @@ body:has(.gx-dropscrim) .gx-live-top { display: none; }
 .gx-chip { flex: none; display: inline-flex; align-items: center; gap: 7px; height: 44px; padding: 0 14px 0 12px; border: 0; border-radius: 13px; background: var(--fill); color: var(--text-primary); font: 600 13px/1 var(--font-ui); white-space: nowrap; cursor: pointer; scroll-snap-align: start; transition: transform .14s var(--m-spring), background .15s; }
 .gx-chip:active { transform: scale(.95); background: var(--fill-active); }
 .gx-chip.is-on { background: var(--accent); color: var(--on-accent); }
+
+/* the Google result preview is a white card in both themes: its text must be dark on it (the dark theme made the site name white on white) */
+.me-seo .seo-serp { color: #202124; }
+.me-seo .seo-serp .seo-serp-site b, .me-seo .seo-serp .seo-serp-desc, .me-seo .seo-serp p { color: #202124; }
+.me-seo .seo-serp .seo-serp-site span, .me-seo .seo-serp .seo-serp-note, .me-seo .seo-serp .hint { color: #4d5156; }
+:root[data-theme='dark'] .me-seo .seo-serp .seo-serp-title { color: #1a0dab; }
+
+/* the body editor's tools sit above the keyboard on the phone, not "above" the box */
+.ProseMirror p.is-editor-empty:first-child::before, .ProseMirror p.is-empty:first-child::before { content: 'Tap to write the full English story. Headings, bullets and bold appear in the bar above the keyboard.'; }
