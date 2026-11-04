@@ -12,6 +12,7 @@ import { siteFeatureState, type SiteFeatureState } from '../../platform/esbShim'
 import { isAppLockEnabled, isBiometricAvailable, setAppLockEnabled } from '../../native/biometric'
 import { useNav } from '../shell/nav'
 import { snack, useOnline } from '../shell/core'
+import { checkForUpdate, getCurrentBundle } from '../../platform/ota'
 import { Banner, Button, Collapse, Dropdown, FullDialog, Icon, Row, Section, Segmented } from '../shell/ui'
 import { ProviderMark } from '../shell/marks'
 import { FormatMark, RoleChip } from '../shell/cat'
@@ -40,7 +41,33 @@ function AboutCard() {
         <span className="ab-meta"><small>Designed &amp; engineered by</small><b>Hamim Ruwayfi</b><em>Editorial &amp; Newsroom Workflow</em></span>
         <button type="button" className="ab-link" onClick={() => void platform().openExternal('https://facebook.com/chiefhamim')}><Icon name="link" size={16} />Facebook</button>
       </div>
-      <p className="ab-foot">Fonts, artwork and templates are bundled with the app. © ESB Power Line, Express Broadcast and Communication Ltd.</p>
+      <p className="ab-foot">Fonts, artwork and templates are bundled with the app. © ESB Power Line.</p>
+    </div>
+  )
+}
+
+/** About: shows the running version and looks for a newer release on our own update host on request. */
+function UpdateCheck() {
+  const [state, setState] = useState<'idle' | 'checking' | 'latest' | 'found' | 'failed'>('idle')
+  const [found, setFound] = useState('')
+  const [running, setRunning] = useState('')
+  useEffect(() => { void getCurrentBundle().then((b) => setRunning(/^\d/.test(b.version) ? b.version : '')) }, [])
+  const run = async () => {
+    setState('checking')
+    try {
+      const up = await checkForUpdate()
+      if (up) { setFound(up.version); setState('found'); window.dispatchEvent(new CustomEvent('esb-update-found', { detail: up })) } else setState('latest')
+    } catch { setState('failed') }
+  }
+  const meta = state === 'checking' ? 'Looking for a newer version…'
+    : state === 'found' ? `Version ${found} is ready. Tap Update now in the box that opened.`
+    : state === 'latest' ? 'You have the latest version.'
+    : state === 'failed' ? 'Could not reach the update server. Check the connection and try again.'
+    : 'Updates download over the internet; your drafts and keys stay.'
+  return (
+    <div className="ab-update">
+      <span className="ab-update-t"><b>ESB Studio</b><small>Version {running || __APP_VERSION__}</small><small className={'ab-update-s is-' + state}>{meta}</small></span>
+      <Button kind="tonal" icon="refresh" busy={state === 'checking'} onClick={() => void run()}>Check for updates</Button>
     </div>
   )
 }
@@ -398,7 +425,7 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
         </Section>
         <Section title="About" id="set-about">
           <AboutCard />
-          <Row title="ESB Studio" meta={`Version ${__APP_VERSION__} · updates arrive as a new app file (APK) installed over this one; your drafts and keys stay.`} />
+          <UpdateCheck />
           <Row title="Engine and editor" meta={`ESB AI Studio build ${manifest.commit.slice(0, 7)} · ${Object.keys(manifest.files).length} files`} />
         </Section>
       </div>

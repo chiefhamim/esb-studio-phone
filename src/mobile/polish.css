@@ -1542,3 +1542,11 @@ html:not(.kb-open) .me-toolbar { bottom: calc(var(--m-navbar) + var(--m-safe-bot
 .select { height: auto; min-height: 44px; }
 .pnl > header h3 { align-items: flex-start; }
 .hm-chips .hm-chip { height: auto; min-height: 40px; padding-block: 8px; }
+
+/* About: version + Check for updates */
+.ab-update { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--fill); }
+.ab-update-t { display: flex; flex-direction: column; gap: 3px; }
+.ab-update-t b { font: 700 15px/1.3 var(--font-ui); }
+.ab-update-t small { font: 500 13px/1.4 var(--font-ui); color: var(--text-secondary); }
+.ab-update-s.is-found, .ab-update-s.is-latest { color: var(--success); }
+.ab-update-s.is-failed { color: var(--danger); }

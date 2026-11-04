@@ -10,6 +10,13 @@ export function UpdateDialog() {
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
 
+  // Settings > About > "Check for updates" hands over what it found
+  useEffect(() => {
+    const on = (e: Event) => { setUpdate((e as CustomEvent<AvailableUpdate>).detail); setDismissed(false) }
+    window.addEventListener('esb-update-found', on)
+    return () => window.removeEventListener('esb-update-found', on)
+  }, [])
+
   useEffect(() => {
     return watchForUpdatesOnResume((up) => {
       setUpdate(up)
