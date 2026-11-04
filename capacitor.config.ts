@@ -20,10 +20,10 @@ const config: CapacitorConfig = {
       insetsHandling: 'css'
     },
     CapacitorUpdater: {
-      autoUpdate: 'atBackground',
+      // false: a bundle is applied only when the editor taps "Update now" (the dialog), never silently in the background.
+      autoUpdate: false,
       appReadyTimeout: 10000,
       responseTimeout: 20,
-      version: '0.0.0',
       appId: 'com.esbpowerline.studio.phone'
     }
   }

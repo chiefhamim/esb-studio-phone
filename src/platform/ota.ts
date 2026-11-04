@@ -38,6 +38,17 @@ export async function getCurrentBundle(): Promise<CurrentBundle> {
   }
 }
 
+/** True when dotted version `a` is newer than `b` (non-numeric parts count as 0). */
+export function isNewer(a: string, b: string): boolean {
+  const n = (v: string) => v.split(/[.+-]/).map((x) => parseInt(x, 10) || 0)
+  const [x, y] = [n(a), n(b)]
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const d = (x[i] ?? 0) - (y[i] ?? 0)
+    if (d) return d > 0
+  }
+  return false
+}
+
 /** Check Capgo for available updates on the current channel. */
 export async function checkForUpdate(): Promise<AvailableUpdate | null> {
   if (!Capacitor.isNativePlatform()) return null
@@ -47,6 +58,11 @@ export async function checkForUpdate(): Promise<AvailableUpdate | null> {
     if (!latest || !latest.url || !latest.version) return null
     // If already running this version, no update needed
     if (cur.version === latest.version || cur.id === latest.version) return null
+    // Never offer a bundle that is not newer than what is running or than the installed app itself: an old bundle left on the
+    // channel must not replace a newer install (it once offered v0.1.1 over a v0.3.0 app).
+    const native = (await App.getInfo().catch(() => null))?.version ?? '0.0.0'
+    const running = /^\d/.test(cur.version) ? cur.version : native
+    if (!isNewer(latest.version, native) || !isNewer(latest.version, running)) return null
 
     return {
       version: latest.version,
