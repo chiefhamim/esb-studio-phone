@@ -96,10 +96,12 @@ function SiteAccount() {
         <span className="sa-avatar" aria-hidden>{(session.name || session.email).slice(0, 1).toUpperCase()}</span>
         <span className="sa-me-t"><span className="sa-name"><b>{session.name || session.email}</b><RoleChip role={session.role} /></span><small>{session.email}</small></span>
       </div>
-      <div className="sa-conn">
-        <span className={'sa-dot ' + (status.connected ? 'is-ok' : 'is-warn')} aria-hidden />
-        <span className="sa-conn-t"><b>esbpowerline.com</b><small>{status.connected ? `Connected · ${status.latencyMs} ms` : status.sessionEnded ? 'Session ended: sign in again' : status.statusText ?? 'Not connected'}</small></span>
-        <button type="button" className="sa-check" onClick={() => { void check() }}><Icon name="refresh" size={16} />Check</button>
+      <div className="sa-site">
+        <span className="sa-site-t"><b>esbpowerline.com</b><small>Editor sign-in and publishing</small></span>
+        <div className="fbc-conn">
+          <span className={'fbc-pill is-' + (status.connected ? 'ok' : 'bad')}><i aria-hidden />{status.connected ? `Connected · ${status.latencyMs} ms` : status.sessionEnded ? 'Session ended: sign in again' : status.statusText ?? 'Not connected'}</span>
+          <button type="button" className="fbc-recheck" onClick={() => { void check() }}><Icon name="refresh" size={16} />Check again</button>
+        </div>
       </div>
       <div className="sa-feats">
         {featRow('Save drafts, publish, update articles', 'works')}
@@ -381,6 +383,7 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
     <FullDialog open title="Settings" onClose={onClose}>
       <div className="m-wrap m-settings">
         <Section title="Site account" id="set-site"><SiteAccount /></Section>
+        <Section title="Facebook" id="set-facebook"><FacebookSection /></Section>
         <Section title="AI providers" id="set-ai"><AiSection /></Section>
         <Section title="Link fetching" id="set-fetch">
           <div className="m-stack">
@@ -390,7 +393,6 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
               : 'This phone reads the public page itself, after the same safety checks (public https addresses only). Feeds (Wire) work in this mode.'}</p>
           </div>
         </Section>
-        <Section title="Facebook" id="set-facebook"><FacebookSection /></Section>
         <Section title="Security" id="set-lock">
           <Row title="App lock" meta={bio === false ? 'This phone has no fingerprint, face or screen lock set up.' : 'Ask for fingerprint, face or screen lock when ESB Studio opens.'} trail={<button type="button" role="switch" aria-checked={lock} aria-label="App lock" disabled={bio === false} className={`m-switch${lock ? ' is-on' : ''}`} onClick={() => { const want = !lock; void setAppLockEnabled(want).then((state) => { setLock(state); if (state !== want) snack('App lock was not turned on (the phone did not confirm it is you).', { tone: 'error' }) }) }}><span /></button>} />
         </Section>
