@@ -29,7 +29,8 @@ import HomeScreen from './home/HomeScreen'
 import EditorialScreen from './editorial/EditorialScreen'
 import GraphicsScreen from './graphics/GraphicsScreen'
 import SettingsScreen from './settings/SettingsScreen'
-import './polish.css' // last: the polish layer wins ties over every screen's own CSS
+import './polish.css' // the polish layer wins ties over every screen's own CSS
+import './refine.css' // last: the design language (spacing, radius, depth) that every screen follows
 
 // Five destinations: the Editorial desk's three lists are first-class (one tap each), Graphics keeps its own workspace.
 const NAV: NavItem[] = [

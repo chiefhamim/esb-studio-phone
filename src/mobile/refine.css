@@ -1,0 +1,89 @@
+/* ESB Studio design language, one set of rules for every screen. Loaded after polish.css so it has the last word.
+ *
+ *  Space     4-pt grid: 4 8 12 16 20 24 32.  Page margin 16.  Gap between sections 24.  Gap inside a group 8-12.
+ *  Radius    12 controls (inputs, buttons, chips) · 16 cards and lists · 22 hero tiles and sheets.
+ *  Depth     one hairline edge plus one soft shadow for a resting card; a larger one only for what floats (tiles, sheets, menus).
+ *  Type      Title 22/700 · Headline 17/650 · Body 15/400 · Label 13/600 · Overline 12/650 caps.
+ *  Colour    page = surface-app, card = surface-panel, text-on-card is primary; secondary for support copy. Accent only for the one thing to do.
+ *  Rule      a card never sits inside a card. Grouped rows share one card, divided by a hairline.
+ */
+:root {
+  --g1: 4px; --g2: 8px; --g3: 12px; --g4: 16px; --g5: 20px; --g6: 24px; --g8: 32px;
+  --rc: 12px; --rd: 16px; --rh: 22px;
+  --e1: 0 0 0 .5px rgba(16, 18, 40, .06), 0 1px 2px rgba(16, 18, 40, .04), 0 4px 14px -4px rgba(16, 18, 40, .06);
+  --e2: 0 0 0 .5px rgba(16, 18, 40, .07), 0 2px 4px rgba(16, 18, 40, .05), 0 14px 28px -10px rgba(16, 18, 40, .16);
+  --m-card-shadow: var(--e1);
+  --m-card-raise: var(--e1);
+  --m-card-bg: var(--surface-panel);
+  --hair: rgba(16, 18, 40, .08);
+}
+:root[data-theme='dark'] {
+  --e1: 0 0 0 .5px rgba(255, 255, 255, .08), 0 1px 2px rgba(0, 0, 0, .4), 0 6px 16px -6px rgba(0, 0, 0, .45);
+  --e2: 0 0 0 .5px rgba(255, 255, 255, .1), 0 2px 4px rgba(0, 0, 0, .5), 0 16px 30px -10px rgba(0, 0, 0, .6);
+  --m-card-bg: var(--surface-panel);
+  --hair: rgba(255, 255, 255, .09);
+}
+
+/* one resting card style everywhere (cancels the earlier gradients and stacked lifts) */
+.m-list, .m-settings .m-section, .me-mini, .hm .m-list.hm-glass, .hm-glass, .hm-continue, .gx-panel .pnl { background: var(--surface-panel); box-shadow: var(--e1); border: 0; border-radius: var(--rd); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.hm-continue:active, .me-mini:active { transform: scale(.992); }
+
+/* ---------------- Home ---------------- */
+.hm-hero { padding-bottom: 0; }
+/* status: a quiet line of text, not two boxes */
+.hm-chips { display: flex; justify-content: flex-start; gap: var(--g5); margin-top: var(--g3); }
+.hm-chips .hm-chip { flex: none; min-height: 32px; padding: 0; border: 0; border-radius: 0; background: none !important; box-shadow: none !important; font: 600 13px/1 var(--font-ui); color: var(--text-secondary); gap: 7px; }
+.hm-chips .hm-chip-ok { color: var(--text-secondary); }
+.hm-chips .hm-chip-ai.is-ok { color: var(--text-secondary); }
+.hm-chips .hm-chip:active { opacity: .6; transform: none; }
+.hm-launch { gap: var(--g3); margin-top: var(--g6); }
+.hm-launch .hm-cell { min-height: 136px; padding: var(--g4); border-radius: var(--rh); }
+.hm-launch .hm-cell:nth-child(1) { box-shadow: var(--e2); }
+.hm-launch .hm-cell:nth-child(2) { box-shadow: 0 0 0 .5px rgba(58, 47, 181, .3), 0 2px 4px rgba(58, 47, 181, .12), 0 14px 28px -10px rgba(77, 63, 220, .42); }
+.hm-launch .hm-cell:active { box-shadow: var(--e1); }
+.hm-sec { margin-top: var(--g8); }
+.hm-continue { margin-top: var(--g4); box-shadow: var(--e1); }
+/* empty state is plain text on the page, not a card with another card's button inside */
+.hm-empty.hm-glass { background: none; box-shadow: none; padding: 0; border-radius: 0; }
+.hm-empty .hm-rule { display: none; }
+.hm-empty h3 { margin: 0 0 var(--g1); font: 650 17px/1.3 var(--font-ui); }
+.hm-empty p { margin: 0 0 var(--g4); color: var(--text-secondary); font: 400 15px/1.5 var(--font-ui); }
+.hm-empty .m-btn { width: auto; min-height: 48px; padding: 0 var(--g5); border-radius: var(--rc); }
+
+/* ---------------- Stories: the story desk ---------------- */
+.me-desk { padding: 0; margin-top: var(--g2); gap: 0; background: none; box-shadow: none; border-radius: 0; }
+.me-desk-head { gap: 0; margin-bottom: var(--g5); }
+.me-desk-ic { display: none; }
+.me-desk-head h2 { margin: 0 0 var(--g1); font: 700 22px/1.25 var(--font-ui); letter-spacing: -.015em; }
+.me-desk-head p { font: 400 15px/1.5 var(--font-ui); }
+.me-desk .me-link { min-height: 52px; padding: 0 var(--g2) 0 var(--g4); border-radius: var(--rc); background: var(--surface-panel); box-shadow: var(--e1); border: 0; }
+.me-desk .me-link-paste { height: 36px; padding: 0 var(--g3); border-radius: 9px; background: var(--fill); font: 600 13px/1 var(--font-ui); }
+.me-desk .me-go { margin-top: var(--g3); min-height: 52px; border-radius: var(--rc); font: 650 16px/1 var(--font-ui); box-shadow: none; }
+.me-desk .me-or { margin: var(--g6) 0 var(--g3); }
+.me-desk .me-or span { font: 650 12px/1 var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); background: transparent; }
+.me-desk .me-or::before, .me-desk .me-or::after { display: none; }
+/* the two ways to start share one card, divided by a hairline */
+.me-group { overflow: hidden; border-radius: var(--rd); background: var(--surface-panel); box-shadow: var(--e1); }
+.me-group .me-rowbtn { width: 100%; min-height: 68px; padding: 0 var(--g4); gap: var(--g3); border: 0; border-radius: 0; background: transparent; box-shadow: none; position: relative; }
+.me-group .me-rowbtn + .me-rowbtn::before { content: ''; position: absolute; top: 0; left: calc(var(--g4) + 64px + var(--g3)); right: 0; height: .5px; background: var(--hair); }
+.me-group .me-rowbtn:active { background: var(--fill); }
+.me-group .me-rowbtn-ico { width: 40px; height: 40px; margin: 0 24px 0 0; border-radius: 10px; background: var(--fill); box-shadow: none; }
+.me-group .me-file-icons { width: 64px; gap: 4px; }
+.me-group .me-file-icons > * { width: 30px; height: 30px; }
+/* what happens next: a quiet three-step line, no icons in boxes, no arrows */
+.me-pipe { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--g4); margin: var(--g6) 0 0; padding: var(--g5) 0 0; list-style: none; border-top: .5px solid var(--hair); }
+.me-pipe li { display: flex; flex-direction: column; align-items: flex-start; gap: var(--g1); text-align: left; min-width: 0; }
+.me-pipe .pipe-arrow { display: none; }
+.me-pipe .pipe-ic { display: none; }
+.me-pipe li b { font: 650 14px/1.3 var(--font-ui); }
+.me-pipe li small { font: 400 13px/1.4 var(--font-ui); color: var(--text-secondary); }
+.me-pipe .pipe-top i { font: 650 12px/1 var(--font-ui); color: var(--text-tertiary); letter-spacing: .06em; }
+
+.me-pipe li, .me-pipe li * { text-align: left; }
+.me-pipe li { align-items: flex-start; }
+
+/* Graphics: the zoom/export strip is quiet — hairline above, controls without fills, one filled action */
+.gx-tools { gap: var(--g1); padding-inline: var(--g4); border-top: .5px solid var(--hair); }
+.gx-tools .m-iconbtn, .gx-tools .gx-zoom { background: transparent; box-shadow: none; }
+.gx-tools .m-iconbtn:active, .gx-tools .gx-zoom:active { background: var(--fill); }
+.gx-dock { border-top: .5px solid var(--hair); }

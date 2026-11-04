@@ -255,6 +255,7 @@ function Launcher() {
       </button>
       {!online && <p className="me-hint">You are offline. Links need the network; you can still paste text or a file.</p>}
       <div className="me-or" aria-hidden><span>or start from</span></div>
+      <div className="me-group">
       <button type="button" className="me-rowbtn" onClick={() => { newStory('intake'); set({ intakeTab: 'text' }) }}>
         <span className="me-file-icons" aria-hidden><FileTypeIcon kind="pdf" size={42} /><FileTypeIcon kind="docx" size={42} /></span>
         <span className="me-rowbtn-txt"><b>PDF or Word file</b><small>or paste the text</small></span>
@@ -265,6 +266,7 @@ function Launcher() {
         <span className="me-rowbtn-txt"><b>Blank story</b><small>Write it from scratch</small></span>
         <Icon name="chevRight" size={20} />
       </button>
+      </div>
       <ol className="me-pipe" aria-label="What happens next">
         <li className="parse"><span className="pipe-top"><span className="pipe-ic"><Icon name="newspaper" size={16} /></span><i>01</i></span><b>Parse</b><small>Text &amp; photos are extracted</small></li>
         <li className="pipe-arrow" aria-hidden><svg viewBox="0 0 36 24" width="34" height="23"><path d="M1 17C9 6 22 5 29 11" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeDasharray="2.4 3.6" /><path d="M0 0L-8-3.7Q-5.8 0-8 3.7Z" transform="translate(32 12.4) rotate(34)" fill="currentColor" strokeLinejoin="round" /></svg></li>
