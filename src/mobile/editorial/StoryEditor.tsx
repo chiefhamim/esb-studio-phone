@@ -55,12 +55,23 @@ export function useBase(): Assets | null {
 /** A text box that always grows to show every word of what is in it (no inner scrolling, nothing hidden). */
 function AutoText({ value, ...rest }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { value: string }) {
   const ref = useRef<HTMLTextAreaElement>(null)
-  useLayoutEffect(() => {
+  const fit = () => {
     const el = ref.current
-    if (!el) return
+    if (!el || el.clientWidth === 0) return // on a hidden screen there is nothing to measure yet
     el.style.height = 'auto'
     el.style.height = `${el.scrollHeight}px`
-  }, [value])
+  }
+  useLayoutEffect(fit, [value])
+  // The Story screen stays mounted while another tab is shown, so the box is first measured at width 0. Re-measure whenever it gets a
+  // real width (the screen becomes visible, the phone rotates, the fonts finish loading).
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver(() => fit())
+    ro.observe(el)
+    void document.fonts?.ready.then(fit)
+    return () => ro.disconnect()
+  }, [])
   return <textarea ref={ref} value={value} {...rest} />
 }
 

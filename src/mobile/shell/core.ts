@@ -103,26 +103,36 @@ export function confirmAsk(req: Omit<ConfirmReq, 'resolve'>): Promise<boolean> {
 /** Keeps --m-kb (keyboard height) and html.kb-open current, and scrolls the focused field into view. */
 export function watchKeyboard(): () => void {
   const root = document.documentElement
-  const set = (h: number) => {
-    root.style.setProperty('--m-kb', `${Math.max(0, Math.round(h))}px`)
-    root.classList.toggle('kb-open', h > 0)
-    if (h > 0) setTimeout(() => {
+  const set = (covered: number, open: boolean) => {
+    root.style.setProperty('--m-kb', `${Math.max(0, Math.round(covered))}px`)
+    root.classList.toggle('kb-open', open)
+    if (open) setTimeout(() => {
       const el = document.activeElement as HTMLElement | null
       if (el && el !== document.body) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     }, 60)
   }
+  // The Android window is set to adjustResize, so when the keyboard opens the WebView itself gets shorter and everything fixed to
+  // the bottom already sits above the keyboard. Adding the keyboard's height on top of that threw the writing toolbar 245 px above
+  // the top of the screen. --m-kb is therefore only what the keyboard STILL covers after the resize (0 on this phone).
+  let rest = window.innerHeight
+  const onResize = () => { if (!root.classList.contains('kb-open')) rest = window.innerHeight }
+  window.addEventListener('resize', onResize)
   const subs: Array<() => void> = []
   if (Capacitor.isNativePlatform()) {
-    const show = Keyboard.addListener('keyboardWillShow', (i) => set(i.keyboardHeight))
-    const hide = Keyboard.addListener('keyboardWillHide', () => set(0))
+    const show = Keyboard.addListener('keyboardWillShow', (i) => {
+      set(i.keyboardHeight, true) // provisional, until the window has finished resizing
+      const settle = () => set(Math.max(0, i.keyboardHeight - Math.max(0, rest - window.innerHeight)), true)
+      setTimeout(settle, 150); setTimeout(settle, 400)
+    })
+    const hide = Keyboard.addListener('keyboardWillHide', () => set(0, false))
     subs.push(() => { void show.then((h) => h.remove()); void hide.then((h) => h.remove()) })
   } else if (window.visualViewport) {
     const vv = window.visualViewport
-    const on = () => set(window.innerHeight - vv.height - vv.offsetTop)
+    const on = () => { const c = window.innerHeight - vv.height - vv.offsetTop; set(c, c > 0) }
     vv.addEventListener('resize', on)
     subs.push(() => vv.removeEventListener('resize', on))
   }
-  return () => { subs.forEach((f) => f()); set(0) }
+  return () => { subs.forEach((f) => f()); window.removeEventListener('resize', onResize); set(0, false) }
 }
 
 // ---------------------------------------------------------------- unsaved work
