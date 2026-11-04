@@ -1277,3 +1277,7 @@ body:has(.gx-dropscrim) .gx-live-top { display: none; }
   .gx-ex-sec { padding: 14px; }
   .gx-export { padding-inline: 12px; }
 }
+
+/* ================================================================ Settings: the cards keep the same 12 dp from the top bar as from the screen edges, also when a link jumps straight to a section */
+.m-settings .m-section { scroll-margin-top: 12px; }
+@media (max-width: 599px) { .m-settings { padding-top: 12px; } }
