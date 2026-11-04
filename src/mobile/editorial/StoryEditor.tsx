@@ -120,6 +120,21 @@ function StoryTab() {
 }
 
 // ---------------------------------------------------------------- Details
+/** The featured photo, its zoom slider and the tone controls are locked until the editor taps "Adjust photo": a scrolling thumb can no
+ *  longer drag the picture or jump the zoom. They lock again when the editor leaves the tab. */
+function FramingLock({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className={'me-fi-wrap' + (open ? ' is-unlocked' : '')}>
+      <div className="fi-guard">
+        <span>{open ? 'Drag the photo to reframe it.' : 'Locked, so scrolling cannot move the photo.'}</span>
+        <Button kind="tonal" icon={open ? 'check' : 'lock'} onClick={() => setOpen(!open)}>{open ? 'Done' : 'Adjust photo'}</Button>
+      </div>
+      {children}
+    </div>
+  )
+}
+
 function DetailsTab() {
   const draft = useEditorialStore((s) => s.draft)
   const setField = useEditorialStore((s) => s.setDraftField)
@@ -173,7 +188,7 @@ function DetailsTab() {
       <section className="me-card" id="me-details-photo">
         <h3 className="me-h3">Featured image</h3>
         <p className="me-hint">The banner's photo slot: framing and tone here are the banner's own. Credit, alt text and caption go to the site.</p>
-        <PcHost className="me-fi"><FeaturedImage onToast={(m) => snack(m)} /></PcHost>
+        <FramingLock><PcHost className="me-fi"><FeaturedImage onToast={(m) => snack(m)} /></PcHost></FramingLock>
       </section>
       <section className="me-card">
         <h3 className="me-h3">Banner</h3>
@@ -220,6 +235,14 @@ function SocialTab() {
   const url = articleUrl(draft.slug)
   const text = draft.social[net] || ''
   const checks = useMemo(() => analyzeSocial(draft.social, draft.slug), [draft.social, draft.slug])
+  // The PC checklist never tells its "Fix all with AI" button which AI does the job; the PC styles colour the button by that attribute
+  // (SEO's buttons already carry it), so the Social one is given it here and takes the provider's colour like every other AI button.
+  useLayoutEffect(() => {
+    document.querySelectorAll<HTMLElement>('.me-social .ai-btn').forEach((b) => {
+      if (socialAi?.provider) b.setAttribute('data-provider', socialAi.provider)
+      else b.removeAttribute('data-provider')
+    })
+  })
   return (
     <div className="me-stack" data-provider={socialAi?.provider}>
       {(d.busy === 'social' || d.busy === 'fixSocial') && <JobProgress />}

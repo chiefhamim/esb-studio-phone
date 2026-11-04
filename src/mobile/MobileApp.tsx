@@ -21,6 +21,9 @@ import { UpdateDialog } from './shell/UpdateDialog'
 import AccountSheet from './shell/AccountSheet'
 import { startMobileCopy } from './shell/mobileCopy'
 import { startSliderReset } from './shell/sliderReset'
+import { startTouchGuards } from './shell/touchGuards'
+import { startFullValue } from './shell/fullValue'
+import { useShellStore } from '../pc/shell/shellStore'
 import HomeScreen from './home/HomeScreen'
 import EditorialScreen from './editorial/EditorialScreen'
 import GraphicsScreen from './graphics/GraphicsScreen'
@@ -54,6 +57,15 @@ export default function MobileApp() {
 
   useEffect(() => watchKeyboard(), [])
   useEffect(() => startSliderReset(), [])
+  useEffect(() => startTouchGuards(), [])
+  useEffect(() => startFullValue(), [])
+  // the PC panels ask for Graphics through their own shell store ("Edit in Graphics"); the phone's navigation answers it
+  useEffect(() => useShellStore.subscribe((s, prev) => {
+    if (s.graphicsFocus && s.graphicsFocus !== prev.graphicsFocus) {
+      s.consumeGraphicsFocus()
+      useNav.getState().intendGraphics('photos')
+    }
+  }), [])
   useEffect(() => startMobileCopy(), []) // the PC panels' help text, in phone wording
   useBackLayer(route !== 'home', () => go('home'), 'screen')
   useBackLayer(settingsOpen, closeSettings, 'dialog')
