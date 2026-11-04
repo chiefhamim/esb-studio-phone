@@ -1396,3 +1396,13 @@ body:has(.gx-dropscrim) .gx-live-top { display: none; }
 .me-bp .pcard-h .btn.xs::before { content: ''; width: 15px; height: 15px; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27black%27 stroke-width=%272.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M7 7h13M16 3l4 4-4 4M17 17H4M8 13l-4 4 4 4%27/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27black%27 stroke-width=%272.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M7 7h13M16 3l4 4-4 4M17 17H4M8 13l-4 4 4 4%27/%3E%3C/svg%3E") center / contain no-repeat; }
 .me-bp .pcard-h .btn.xs:active { background: var(--fill-active) !important; }
 .me-bp .pcard-t span { white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* ================================================================ Selection tray: a second row of chips behind "More" */
+.gx-act.is-on { background: var(--fill-active); }
+.gx-tray-acts { grid-auto-columns: minmax(0, 1fr); }
+.gx-act { min-height: 56px; }
+.gx-tray-more { display: flex; gap: 6px; margin-top: 6px; padding: 2px 0 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; }
+.gx-tray-more::-webkit-scrollbar { display: none; }
+.gx-chip { flex: none; display: inline-flex; align-items: center; gap: 7px; height: 44px; padding: 0 14px 0 12px; border: 0; border-radius: 13px; background: var(--fill); color: var(--text-primary); font: 600 13px/1 var(--font-ui); white-space: nowrap; cursor: pointer; scroll-snap-align: start; transition: transform .14s var(--m-spring), background .15s; }
+.gx-chip:active { transform: scale(.95); background: var(--fill-active); }
+.gx-chip.is-on { background: var(--accent); color: var(--on-accent); }

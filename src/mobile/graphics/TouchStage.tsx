@@ -3,6 +3,9 @@
 // photo inside its slot). This wrapper adds the two-finger gesture in the capture phase, before the Stage sees it:
 //   * two fingers on the canvas = pinch-zoom the stage about the fingers and pan with them;
 //   * two fingers on a photo while the photo block is selected = zoom that photo inside its slot (the PC's wheel zoom).
+// One-finger editing is gated so a stray touch cannot move or resize anything: a quick tap selects; a finger that starts moving
+// at once does nothing; to move, resize or pan, the finger rests a moment first ("hold, then drag"), with a small buzz when the
+// Stage takes over. The gate withholds the pointerdown from the Stage and replays it (tap: down + up; hold: down) when due.
 // When the second finger lands, the one-finger edit the Stage had begun is cancelled (and undone if it had moved).
 import { useEffect, useRef } from 'react'
 import { Stage } from '../../pc/components/Stage'
@@ -13,6 +16,7 @@ import { FORMATS } from '../../pc/core/tokens'
 import { imageAssets, useStore } from '../../pc/store'
 import { boxAt, dist, mid, pinchScale, PHOTO_ZOOM_MAX, PHOTO_ZOOM_MIN, toDesign, TouchSet } from './pinch'
 import { origin, zoomCanvas } from './zoom'
+import { snack } from '../shell/core'
 import type { Pt } from './pinch'
 
 // The PC Stage sizes its bitmap at scale x devicePixelRatio. On this phone (3.5) that is 18 megapixels at 100 % zoom and 40
@@ -34,6 +38,12 @@ function capStageDpr(): () => void {
   return () => { if (own) Object.defineProperty(window, 'devicePixelRatio', own); else delete (window as unknown as { devicePixelRatio?: number }).devicePixelRatio }
 }
 
+const HOLD_MS = 190 // rest this long before a drag starts editing
+const SLOP = 9 // px the finger may wander while resting
+let hinted = false // the "hold, then drag" tip is shown once per session
+
+type Gate = { id: number; x: number; y: number; target: Element; state: 'pending' | 'live' | 'dead'; timer: number }
+
 type Gesture =
   | { mode: 'stage'; m0: Pt; o0: Pt; s0: number; d0: number }
   | { mode: 'photo'; slot: number; z0: number; d0: number }
@@ -51,9 +61,22 @@ export function TouchStage({ base }: { base: Assets }) {
     let swallow = false // a two-finger gesture happened: keep the Stage out until every finger is up
     let at: { doc: unknown; past: number } | null = null
     let synthetic = false
+    let gate: Gate | null = null
     let raf = 0
     let pending: { s: number; m: Pt } | null = null
     const pt = (e: PointerEvent): Pt => ({ x: e.clientX, y: e.clientY })
+
+    /** Hand a (held-back) touch to the Stage as if it had just happened. */
+    const replay = (type: 'pointerdown' | 'pointerup', gt: Gate) => {
+      synthetic = true
+      try {
+        gt.target.dispatchEvent(new PointerEvent(type, {
+          pointerId: gt.id, pointerType: 'touch', isPrimary: true, clientX: gt.x, clientY: gt.y, bubbles: true, cancelable: true,
+          composed: true, button: 0, buttons: type === 'pointerdown' ? 1 : 0, pressure: type === 'pointerdown' ? 0.5 : 0, width: 1, height: 1,
+        }))
+      } catch { /* a Stage handler that needs a live pointer may refuse: nothing to do */ } finally { synthetic = false }
+    }
+    const dropGate = () => { if (gate) { clearTimeout(gate.timer); gate = null } }
 
     const begin = () => {
       const pair = touches.pair()
@@ -111,8 +134,19 @@ export function TouchStage({ base }: { base: Assets }) {
       if (touches.size === 1) {
         const s = useStore.getState()
         at = { doc: s.doc, past: s.past.length }
+        // withhold the touch from the Stage until it is clearly a tap or a deliberate hold
+        e.stopPropagation()
+        const g1: Gate = { id: e.pointerId, x: e.clientX, y: e.clientY, target: e.target as Element, state: 'pending', timer: 0 }
+        g1.timer = window.setTimeout(() => {
+          if (gate !== g1 || g1.state !== 'pending' || touches.size !== 1) return
+          g1.state = 'live'
+          try { navigator.vibrate?.(12) } catch { /* no haptics */ }
+          replay('pointerdown', g1)
+        }, HOLD_MS)
+        gate = g1
         return
       }
+      dropGate() // a second finger: this is a pinch, not an edit
       e.stopPropagation()
       e.preventDefault()
       if (g || touches.size > 2) return
@@ -130,7 +164,19 @@ export function TouchStage({ base }: { base: Assets }) {
     }
     const onMove = (e: PointerEvent) => {
       if (synthetic || e.pointerType !== 'touch') return
-      if (!touches.move(e.pointerId, pt(e)) || !swallow) return
+      const known = touches.move(e.pointerId, pt(e))
+      const gt = gate
+      if (gt && gt.id === e.pointerId && gt.state !== 'live') {
+        e.stopPropagation()
+        if (gt.state === 'pending' && Math.hypot(e.clientX - gt.x, e.clientY - gt.y) > SLOP) {
+          // the finger started travelling before the hold: a stray swipe, nothing is moved
+          gt.state = 'dead'
+          clearTimeout(gt.timer)
+          if (!hinted) { hinted = true; snack('To move or resize, hold on it a moment, then drag') }
+        }
+        return
+      }
+      if (!known || !swallow) return
       e.stopPropagation()
       e.preventDefault()
       if (g && !raf) raf = requestAnimationFrame(apply)
@@ -138,6 +184,16 @@ export function TouchStage({ base }: { base: Assets }) {
     const onUp = (e: PointerEvent) => {
       if (synthetic || e.pointerType !== 'touch') return
       const had = touches.up(e.pointerId)
+      const gt = gate
+      if (gt && gt.id === e.pointerId) {
+        clearTimeout(gt.timer)
+        gate = null
+        if (gt.state !== 'live') {
+          e.stopPropagation()
+          // lifted before the hold and without travelling: a tap, so select what is under the finger
+          if (gt.state === 'pending' && e.type === 'pointerup') { replay('pointerdown', gt); replay('pointerup', gt) }
+        }
+      }
       if (swallow && had) { e.stopPropagation(); e.preventDefault() }
       if (touches.size < 2) { if (raf) { cancelAnimationFrame(raf); apply() } commit(); g = null }
       if (touches.size === 0) { swallow = false; at = null }
@@ -149,6 +205,7 @@ export function TouchStage({ base }: { base: Assets }) {
     root.addEventListener('pointercancel', onUp, opts)
     return () => {
       cancelAnimationFrame(raf)
+      dropGate()
       root.removeEventListener('pointerdown', onDown, opts)
       root.removeEventListener('pointermove', onMove, opts)
       root.removeEventListener('pointerup', onUp, opts)
