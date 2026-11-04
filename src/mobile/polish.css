@@ -1425,21 +1425,20 @@ body:has(.gx-dropscrim) .gx-live-top { display: none; }
 .gx-size-val input:focus { color: var(--accent); }
 .gx-size-val span { font: 600 14px/1 var(--font-ui); color: var(--text-secondary); }
 
-/* ================================================================ Writing tools: one floating card above the keyboard. Every tool visible at once, in three clear groups per row; the active format is a soft tint, Done is the one solid button. */
-.me-toolbar, html:not(.kb-open) .me-toolbar { left: 8px; right: 8px; bottom: calc(var(--m-kb) + 8px); display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 2px; height: auto; align-items: center; padding: 6px; border: 0; border-radius: 22px; background: color-mix(in srgb, var(--surface-panel) 96%, transparent); -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4); box-shadow: 0 0 0 .5px var(--m-hair), 0 10px 32px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.08); }
-html:not(.kb-open) .me-toolbar { bottom: calc(var(--m-navbar) + var(--m-safe-bottom) + 8px); }
+/* ================================================================ Writing tools: the same family as the banner's selection tray: a soft floating card, each tool a rounded tile, the active format a solid tile, one solid Done pill */
+.me-toolbar, html:not(.kb-open) .me-toolbar { left: 12px; right: 12px; bottom: calc(var(--m-kb) + 10px); display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; height: auto; align-items: stretch; padding: 8px; border: 0; border-radius: 22px; background: color-mix(in srgb, var(--surface-panel) 94%, transparent); -webkit-backdrop-filter: blur(20px) saturate(1.5); backdrop-filter: blur(20px) saturate(1.5); box-shadow: 0 0 0 .5px var(--m-hair), 0 8px 28px rgba(0, 0, 0, 0.22); }
+html:not(.kb-open) .me-toolbar { bottom: calc(var(--m-navbar) + var(--m-safe-bottom) + 10px); }
 .me-toolbar-scroll, .me-toolbar-end { display: contents; }
 .me-toolbar .me-tb-sep { display: none; }
-.me-toolbar .me-tb { position: relative; width: auto; height: 42px; border-radius: 13px; color: var(--text-secondary); transition: background .15s, color .15s, transform .12s var(--m-spring); }
-.me-toolbar .me-tb svg { width: 20px; height: 20px; stroke-width: 1.9; }
-.me-toolbar .me-tb-txt { font: 700 14px/1 var(--font-ui); letter-spacing: -.01em; }
-.me-toolbar .me-tb:disabled { color: var(--text-disabled); opacity: .5; }
-.me-toolbar .me-tb:not(:disabled):active { transform: scale(.92); background: var(--fill-active); }
-.me-toolbar .me-tb.is-on { background: var(--fill-active); color: var(--text-primary); }
-.me-toolbar .me-tb[aria-label^='More formatting'] svg { stroke-width: 3.6; }
-/* groups are told apart by a little extra air, not by lines */
-.me-toolbar .me-tb.g-start { margin-left: 5px; }
-/* Done: the solid button, last two slots of the second row */
-.me-toolbar .me-tb.is-primary { grid-column: span 2; background: var(--accent); color: var(--on-accent); box-shadow: none; margin-left: 6px; }
-.me-toolbar .me-tb.is-primary .me-tb-txt { font: 700 14.5px/1 var(--font-ui); }
-.me-story.is-editing .me-scroll, .me-story.is-writing .me-scroll { padding-bottom: calc(124px + var(--m-kb) + var(--m-safe-bottom)); scroll-padding-bottom: calc(132px + var(--m-kb)); }
+.me-toolbar .me-tb { position: relative; width: auto; height: 46px; border-radius: 14px; background: var(--fill); color: var(--text-primary); transition: transform .14s var(--m-spring), background .15s, color .15s; }
+.me-toolbar .me-tb svg { width: 20px; height: 20px; }
+.me-toolbar .me-tb-txt { font: 750 14px/1 var(--font-ui); letter-spacing: -.01em; }
+.me-toolbar .me-tb:disabled { background: color-mix(in srgb, var(--fill) 60%, transparent); color: var(--text-disabled); }
+.me-toolbar .me-tb:not(:disabled):active { transform: scale(.94); background: var(--fill-active); }
+.me-toolbar .me-tb.is-on { background: var(--accent); color: var(--on-accent); }
+.me-toolbar .me-tb.g-start { margin-left: 0; }
+.me-toolbar .me-tb[aria-label^='More formatting'] svg { stroke-width: 3.4; }
+/* Done: the solid pill, the last two slots, like Done in the banner tray */
+.me-toolbar .me-tb.is-primary { grid-column: span 2; background: var(--accent); color: var(--on-accent); }
+.me-toolbar .me-tb.is-primary .me-tb-txt { font: 650 14px/1 var(--font-ui); }
+.me-story.is-editing .me-scroll, .me-story.is-writing .me-scroll { padding-bottom: calc(138px + var(--m-kb) + var(--m-safe-bottom)); scroll-padding-bottom: calc(146px + var(--m-kb)); }
