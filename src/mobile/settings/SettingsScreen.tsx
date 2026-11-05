@@ -15,6 +15,7 @@ import { snack, useOnline } from '../shell/core'
 import { checkForUpdate, getCurrentBundle } from '../../platform/ota'
 import { Banner, Button, Collapse, Dropdown, FullDialog, Icon, Row, Section, Segmented } from '../shell/ui'
 import { ProviderMark, brandColor } from '../shell/marks'
+import { HoldButton } from '../shell/HoldButton'
 import { FormatMark, RoleChip } from '../shell/cat'
 import { JOURNALISTIC_TRANSLATOR_PROMPT } from '../../pc/editorial/translator'
 import { platform } from '../../platform/platform'
@@ -143,7 +144,7 @@ function SiteAccount() {
         {featRow('Link fetching through the site', feat.fetchArticle)}
       </div>
       <Button kind="tonal" wide icon="refresh" busy={probing} onClick={() => { void reprobe() }}>Check site features</Button>
-      <Button kind="outlined" wide className="sa-out" onClick={() => { logout(); snack('Signed out') }}>Sign out</Button>
+      <HoldButton onConfirm={() => { logout(); snack('Signed out') }}>Sign out</HoldButton>
     </div>
   )
 }
@@ -367,7 +368,7 @@ function FacebookSection() {
           </Collapse>
         )}
         <Row title="Link in the first comment" meta="After a post, add the story link as the first comment." trail={<button type="button" role="switch" aria-checked={linkComment} aria-label="Link in first comment" className={`m-switch${linkComment ? ' is-on' : ''}`} onClick={() => setLinkComment(!linkComment)}><span /></button>} />
-        <Button kind="outlined" wide className="sa-out" onClick={() => { clearFacebook(); setFb(null); setLink({ s: 'checking' }); setPic(true); snack('Facebook Page removed from this phone') }}>Disconnect Page</Button>
+        <HoldButton onConfirm={() => { clearFacebook(); setFb(null); setLink({ s: 'checking' }); setPic(true); snack('Facebook Page removed from this phone') }}>Disconnect Page</HoldButton>
       </div>
     )
   }

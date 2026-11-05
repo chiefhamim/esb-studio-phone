@@ -3172,3 +3172,11 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 .m-settings .m-section:has(.ab2) > .m-section-head { padding-inline: 6px; }
 .ab-update { background: var(--surface-panel) !important; box-shadow: var(--drop-2) !important; border: 0 !important; border-radius: 26px !important; padding: 16px !important; margin-top: 10px; }
 .ab-update .m-btn, .ab-update button { background: var(--fill) !important; box-shadow: none !important; }
+
+/* Sign out / Disconnect: hold 2 s, the red fills across and counts down */
+.hold-danger { position: relative; overflow: hidden; width: 100%; min-height: 50px; border: 0; border-radius: 16px; background: var(--danger-soft, color-mix(in srgb, #dc2626 12%, transparent));
+  color: var(--danger, #dc2626); font: 650 15.5px/1.2 var(--font-ui); -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; transition: transform .2s cubic-bezier(.3, .7, .4, 1); }
+.hold-danger.is-holding { transform: scale(.98); color: #fff; }
+.hold-danger-fill { position: absolute; inset: 0; transform-origin: left; transform: scaleX(var(--hold, 0)); background: var(--danger, #dc2626); pointer-events: none; }
+.hold-danger-txt { position: relative; font-variant-numeric: tabular-nums; }
+.hold-danger.is-holding .hold-danger-txt { color: color-mix(in srgb, #fff calc(var(--hold) * 100%), var(--danger, #dc2626)); }
