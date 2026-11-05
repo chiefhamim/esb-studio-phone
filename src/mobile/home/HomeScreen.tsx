@@ -82,6 +82,26 @@ export function StoryRow({ s, onOpen, active }: { s: StoryItem; onOpen: () => vo
   )
 }
 
+/** Continue where you left off. Tap to open; press and hold to show a delete button (tap the card again to hide it). */
+function ContinueCard({ title, onOpen, onRemove }: { title: string; onOpen: () => void; onRemove: () => void }) {
+  const [armed, setArmed] = useState(false)
+  const timer = useRef(0)
+  const held = useRef(false)
+  const down = () => { held.current = false; timer.current = window.setTimeout(() => { held.current = true; navigator.vibrate?.(15); setArmed(true) }, 480) }
+  const up = () => window.clearTimeout(timer.current)
+  return (
+    <div className={'hm-cont-wrap' + (armed ? ' is-armed' : '')}>
+      <button type="button" className="hm-continue hm-glass" onPointerDown={down} onPointerUp={up} onPointerLeave={up} onPointerCancel={up} onContextMenu={(e) => e.preventDefault()}
+        onClick={() => { if (held.current) { held.current = false; return } if (armed) { setArmed(false); return } onOpen() }}>
+        <span className="hm-continue-ico"><Icon name="edit" size={20} /></span>
+        <span className="hm-continue-txt"><small>{armed ? 'Remove this story?' : 'Continue where you left off'}</small><strong lang={/[ঀ-৿]/.test(title) ? 'bn' : undefined}>{title}</strong></span>
+        {!armed && <Icon name="chevRight" size={20} />}
+      </button>
+      {armed && <button type="button" className="hm-cont-del" aria-label="Remove this story" onClick={() => { setArmed(false); onRemove() }}><Icon name="trash" size={20} /></button>}
+    </div>
+  )
+}
+
 export default function HomeScreen({ active }: ScreenProps) {
   const stories = useStoryQueue((s) => s.stories)
   const activeId = useStoryQueue((s) => s.activeId)
@@ -144,13 +164,11 @@ export default function HomeScreen({ active }: ScreenProps) {
             </button>
           </nav>
 
-          {current && (
-            <button type="button" className="hm-continue hm-glass" onClick={() => nav.intendEditorial('open')}>
-              <span className="hm-continue-ico"><Icon name="edit" size={20} /></span>
-              <span className="hm-continue-txt"><small>Continue where you left off</small><strong lang={/[ঀ-৿]/.test(phoneStoryTitle(current)) ? 'bn' : undefined}>{phoneStoryTitle(current)}</strong></span>
-              <Icon name="chevRight" size={20} />
-            </button>
-          )}
+          {current && <ContinueCard title={phoneStoryTitle(current)} onOpen={() => nav.intendEditorial('open')} onRemove={async () => {
+            if (await confirmAsk({ title: 'Remove this story?', body: `"${phoneStoryTitle(current)}" and its draft are deleted from this phone. An article already on esbpowerline.com is not touched.`, confirm: 'Remove', danger: true })) {
+              useStoryQueue.getState().remove(current.id); snack('Story removed')
+            }
+          }} />}
 
           {(stories.length === 0 || others.length > 0) && <section className="hm-sec" aria-labelledby="home-recent">
             <header className="hm-sech">

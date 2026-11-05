@@ -14,6 +14,7 @@ import { humanBytes, loadSettings, saveSettings } from '../../pc/export'
 import type { ExportSettings } from '../../pc/export'
 import { openProject, saveProject } from '../../pc/project'
 import { normalizeDoc, useStore } from '../../pc/store'
+import { HighlightSheet, openHighlight } from './HighlightSheet'
 import { getCollage } from '../../pc/core/collage'
 import { FORMAT_IDS } from '../../pc/core/tokens'
 import { readSharedFile } from '../../native/shareIn'
@@ -410,11 +411,14 @@ function Sheets() {
     <>
       <Sheet id="gx-story" title="Menu" wide>
         {/* the PC's Category row opens the phone's category sheet (numbered dots) instead of its own cramped grid */}
-        <div onClickCapture={(e) => { const t = e.target as HTMLElement; const sheetFor = t.closest('.pnl[data-panel="Category"] > header') ? 'gx-category' : null; if (sheetFor) { e.stopPropagation(); e.preventDefault(); useUi.getState().openSheet(sheetFor) } }}>
+        <div onClickCapture={(e) => { const t = e.target as HTMLElement; const sheetFor = t.closest('.pnl[data-panel="Category"] > header') ? 'gx-category' : null; if (sheetFor) { e.stopPropagation(); e.preventDefault(); useUi.getState().openSheet(sheetFor) } }}
+          onPointerDownCapture={(e) => { if ((e.target as HTMLElement).closest('button')?.textContent?.trim() === 'Use selection') e.preventDefault() /* keep the headline's text selection when the button is tapped */ }}>
           <LivePreview />
+          <button type="button" className="hl-row" onClick={openHighlight}><i><Icon name="highlight" size={20} /></i><span><b>Highlight</b><small>Tap the headline words to highlight</small></span><Icon name="chevRight" size={18} /></button>
           <PcHost className="gx-panel"><StoryPanel /></PcHost>
         </div>
       </Sheet>
+      <HighlightSheet />
       <Sheet id="gx-photos" title="Photos" wide actions={<span className="gx-sheet-count">{images ? `${images} in library` : ''}</span>}>
         <div className="gx-photo-actions">
           <Button kind="filled" icon="image" onClick={pickGallery}>Gallery</Button>

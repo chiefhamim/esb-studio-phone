@@ -79,7 +79,7 @@ export function PublishedSheet() {
           <button type="button" className="pbs-act" onClick={() => ext(art.link)}><i><Icon name="globe" size={20} /></i><span><b>View on esbpowerline.com</b><small>{art.link.replace(/^https?:\/\//, '')}</small></span><Icon name="externalLink" size={16} /></button>
           <button type="button" className="pbs-act" disabled={!fb?.ok} onClick={() => fb?.ok && ext(fb.post.url)}>
             <i className="is-fb"><Icon name="link" size={20} /></i>
-            <span><b>Open the Facebook post</b><small>{!fb ? 'Looking on the Page…' : fb.ok ? (fb.remembered ? 'Posted from this phone' : 'Found on the Page by its headline') : 'Not found'}</small></span>
+            <span><b>Open the Facebook post</b><small>{!fb ? 'Looking on the Page' : fb.ok ? (fb.remembered ? 'Posted from this phone' : 'Found on the Page by its headline') : 'Not found'}</small></span>
             <Icon name="externalLink" size={16} />
           </button>
         </div>

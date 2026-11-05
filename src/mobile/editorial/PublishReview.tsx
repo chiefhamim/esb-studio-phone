@@ -21,7 +21,7 @@ import { Banner, Button, FullDialog, Icon, IconBtn, Planned, Sheet } from '../sh
 import { snack, useOnline, useUi, useUnsavedGuard } from '../shell/core'
 import { useNav } from '../shell/nav'
 import { useDesk } from './deskStore'
-import { Steps } from './JobProgress'
+import { JobPanel } from './JobProgress'
 import { FlowTrack, StepSub } from './Pipeline'
 import { slideTo } from '../shell/slide'
 import { cmsPayload, linkedArticle, runPublish, usePublish } from './publish'
@@ -30,6 +30,7 @@ import { FormatMark } from '../shell/cat'
 import { detailOf, FIX_LABEL, useLeadPhoto, useReadiness, useStoryNumbers } from './useStory'
 import { useTapGate } from './tapGate'
 import { keepBanners, keepOn, setKeep } from './pictureKeep'
+import { HoldToPublish } from './HoldToPublish'
 
 /** Take the editor to where an open item is fixed (the PC sidebar's fixReady). */
 export function fixReady(fix: ReadyFix) {
@@ -46,7 +47,7 @@ export function fixReady(fix: ReadyFix) {
   else if (fix === 'photo') go('details', 'me-details-photo')
   else if (fix === 'tags') go('details', 'me-details-tags')
   else if (fix === 'sign-in') useNav.getState().openSettings('site')
-  else if (fix === 'site') { void useEditorialStore.getState().checkConnection(); snack('Checking esbpowerline.com…') }
+  else if (fix === 'site') { void useEditorialStore.getState().checkConnection(); snack('Checking esbpowerline.com') }
 }
 
 function Checklist({ compact }: { compact?: boolean }) {
@@ -144,14 +145,23 @@ export function PublishReview() {
   useUnsavedGuard(() => (P.busy ? 'A publish is still running. Leaving now may leave the article half-sent.' : null))
 
   const verb = linked ? 'Update' : 'Publish'
-  const goLive = useTapGate(() => void runPublish({ status: 'PUBLISHED', heroMode: hero, fbOn: fbOn && !!fb, fbLink }))
   const updateInstead = useTapGate(() => {
     const slug = P.result?.existingSlug
     if (!slug) return
     useStoryQueue.getState().linkArticle({ slug, url: `${SITE_BASE_URL}/articles/${slug}` })
     void runPublish({ status: 'PUBLISHED', heroMode: hero, fbOn: false, fbLink })
   })
-  const close = () => { if (P.busy) { snack('Publishing is still running — it continues if you close this'); } goLive.reset(); slideTo(-1, () => useUi.getState().closeSheet('ed-publish'), 'flow') }
+  const close = () => { if (P.busy) { snack('Publishing is still running — it continues if you close this'); } slideTo(-1, () => useUi.getState().closeSheet('ed-publish'), 'flow') }
+  // after a successful publish: back to Home, and the story just published leaves the desk (it lives on the site now)
+  const doneHome = () => {
+    const id = useStoryQueue.getState().activeId
+    useUi.getState().closeSheet('ed-publish')
+    usePublish.setState({ result: null, jobId: null })
+    if (id) useStoryQueue.getState().remove(id)
+    useDesk.setState({ view: 'home', homeTab: 'stories' })
+    useNav.getState().go('home')
+    snack('Published · the story is cleared from the desk')
+  }
   const blocked = P.busy || !draft.headline.trim() || !online
   const last = P.last[storyId]
   const willFb = fbOn && !!fb
@@ -160,12 +170,12 @@ export function PublishReview() {
     <FullDialog open={open} title={linked ? 'Update article' : 'Publish'} onClose={close} back sub={<StepSub />} under={<FlowTrack />}
       primary={<Button kind="text" disabled={blocked} onClick={() => void runPublish({ status: 'DRAFT', heroMode: hero, fbOn: false, fbLink })}>{linked ? 'Save as draft' : 'Save draft'}</Button>}
       footer={
-        <Button wide kind={goLive.armed ? 'danger' : 'filled'} icon="upload" busy={P.busy} disabled={blocked} onClick={goLive.tap}>
-          {P.busy ? (linked ? 'Updating' : 'Publishing') : goLive.armed ? 'Tap again to confirm' : <span className="me-pubbtn"><b>{verb}</b><small>{willFb ? 'Website and Facebook' : 'esbpowerline.com'}</small></span>}
-        </Button>
+        P.result?.ok && !P.busy
+          ? <Button wide kind="filled" icon="home" onClick={doneHome}>Done · back to Home</Button>
+          : <HoldToPublish label={verb} sub={willFb ? 'Website and Facebook' : 'esbpowerline.com'} disabled={blocked} busy={P.busy} busyLabel={linked ? 'Updating' : 'Publishing'}
+              onFire={() => void runPublish({ status: 'PUBLISHED', heroMode: hero, fbOn: fbOn && !!fb, fbLink })} />
       }>
       <div className="m-wrap me-stack me-pad">
-        {goLive.armed && <Banner tone="warn">Second tap needed: this goes live on esbpowerline.com{willFb ? ` and posts to Facebook (${fb?.pageName || 'your Page'})` : ''}. Wait a few seconds to cancel.</Banner>}
         {!online && <Banner tone="error">You are offline. Nothing can be sent until the phone is online.</Banner>}
         <section className="me-card">
           <div className="me-card-row"><Icon name={linked ? 'refresh' : 'link'} size={18} /><b className="me-grow">{linked ? 'Live article — Publish updates it, no second copy' : 'New article'}</b></div>
@@ -215,10 +225,7 @@ export function PublishReview() {
         </section>
 
         {job && (
-          <section className={'me-card me-progress' + (P.busy ? ' is-running' : '')} ref={progressRef} aria-live="polite">
-            <h3 className="me-h3">{P.busy ? (linked ? 'Updating now' : 'Publishing now') : 'Progress'}</h3>
-            <Steps job={job} />
-          </section>
+          <div ref={progressRef as React.RefObject<HTMLDivElement>}><JobPanel job={job} tone="publish" title={P.busy ? (linked ? 'Updating esbpowerline.com' : 'Publishing') : linked ? 'Update' : 'Publish'} /></div>
         )}
         {P.result && (
           <div ref={resultRef} className={'m-note ' + (P.result.ok ? 'm-note-success' : 'm-note-error')} role="status">

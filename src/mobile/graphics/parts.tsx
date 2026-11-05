@@ -31,11 +31,15 @@ function CatTiles({ onPick }: { onPick: () => void }) {
   )
 }
 
+/** The size menu order: Facebook Feed and Web hero first, side by side (the two used most for previewing), then the rest. */
+const SIZE_ORDER = [...FORMAT_LIST].sort((a, b) => rank(a.id) - rank(b.id))
+function rank(id: string) { return id === 'fb45' ? 0 : id === 'web' ? 1 : 2 + FORMAT_LIST.findIndex((f) => f.id === id) }
+
 function SizeTiles({ onPick }: { onPick: () => void }) {
   const format = useStore((s) => s.format)
   return (
     <div className="gx-grid">
-      {FORMAT_LIST.map((f) => {
+      {SIZE_ORDER.map((f) => {
         const long = Math.max(f.w, f.h)
         return (
           <button key={f.id} type="button" className={'gx-tile gx-tile-size' + (f.id === format ? ' is-on' : '')} aria-pressed={f.id === format} onClick={() => { useStore.getState().setFormat(f.id); onPick() }}>

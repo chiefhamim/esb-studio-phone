@@ -58,7 +58,7 @@ export function ExportSheet({ open, onClose, base, settings, setSettings }: { op
   const go = async () => {
     setError(null); setResults(null)
     cancel.current = { cancelled: false }
-    setRunning({ done: 0, total: jobs.length, label: 'Starting…' })
+    setRunning({ done: 0, total: jobs.length, label: 'Starting' })
     try {
       const files = await renderAll(doc, base, s, setRunning, cancel.current)
       const list: Result[] = files.map((file) => ({ file, state: 'pending' }))
@@ -123,7 +123,7 @@ export function ExportSheet({ open, onClose, base, settings, setSettings }: { op
                       <span className={'gx-ex-state is-' + r.state}><Icon name={r.state === 'saved' ? 'check' : r.state === 'failed' ? 'alert' : 'image'} size={18} /></span>
                       <span className="gx-ex-rtext">
                         <b>{r.file.name}</b>
-                        <small>{r.state === 'saved' ? `Saved · ${r.path}` : r.state === 'failed' ? `Not saved · ${r.error ?? ''}` : r.state === 'saving' ? 'Saving…' : `${humanBytes(r.file.bytes.length)} · not saved yet`}</small>
+                        <small>{r.state === 'saved' ? `Saved · ${r.path}` : r.state === 'failed' ? `Not saved · ${r.error ?? ''}` : r.state === 'saving' ? 'Saving' : `${humanBytes(r.file.bytes.length)} · not saved yet`}</small>
                       </span>
                       {r.state !== 'saved' && r.state !== 'saving' && <Button kind="text" icon="download" label={`Save ${r.file.name}`} onClick={() => void saveOne(i)} />}
                       <Button kind="text" icon="send" label={`Share ${r.file.name}`} onClick={() => void shareOut([r.file])} />

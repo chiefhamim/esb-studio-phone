@@ -323,3 +323,12 @@
 .ew-hl { display: block; }
 .ew-hl[lang='bn'] { font-family: 'Hind Siliguri', var(--font-ui) !important; line-height: 1.55 !important; letter-spacing: 0 !important; }
 .ew-hl[lang='en'] { line-height: 1.32; }
+
+/* search opens with Trending: the most frequent topics in the headlines, one tap to filter */
+.ew-trend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; animation: ew-drop .2s ease-out; }
+.ew-trend-h { display: inline-flex; align-items: center; gap: 5px; margin-right: 2px; font: 700 11.5px/1.3 var(--font-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--ew-teal); }
+.ew-trend-chip { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 0; border-radius: 999px; background: var(--surface-panel); box-shadow: var(--e1);
+  color: var(--text-primary); font: 600 13px/1.3 var(--font-ui); }
+.ew-trend-chip small { font: 700 11px/1 var(--font-ui); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.ew-trend-chip.is-on { background: var(--ew-teal); color: #fff; box-shadow: none; }
+.ew-trend-chip.is-on small { color: rgba(255, 255, 255, .8); }

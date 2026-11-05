@@ -60,3 +60,32 @@ export async function findFbPost(a: LiveArticleSummary): Promise<FbFind> {
     return { ok: false, reason: `Could not reach Facebook: ${(e as Error).message}` }
   }
 }
+
+/** Facebook posts for a whole list at once: one request for the Page's recent posts, each article matched by its
+ *  headline (same rule as findFbPost). Results are remembered, so each article is looked up once. */
+export async function matchFbPosts(arts: LiveArticleSummary[]): Promise<Record<string, FbPost>> {
+  const out: Record<string, FbPost> = {}
+  const known = loadAll()
+  const todo = arts.filter((a) => { if (known[a.slug]) { out[a.slug] = known[a.slug]; return false } return true })
+  const fb = getFacebook()
+  if (!todo.length || !fb) return out
+  const times = todo.map((a) => Date.parse(a.publishedAt)).filter(Number.isFinite)
+  if (!times.length) return out
+  const since = Math.floor((Math.min(...times) - 6 * 3600_000) / 1000)
+  try {
+    const res = await fetch(`${GRAPH}/${encodeURIComponent(fb.pageId)}/posts?fields=message,permalink_url,created_time,full_picture&since=${since}&limit=100`,
+      { headers: { Authorization: `Bearer ${fb.token}` } })
+    if (!res.ok) return out
+    const posts = ((await res.json()) as { data?: { message?: string; permalink_url?: string; created_time?: string; full_picture?: string }[] }).data ?? []
+    for (const a of todo) {
+      let best: { score: number; post: FbPost } | null = null
+      for (const p of posts) {
+        if (!p.permalink_url || !p.message) continue
+        const score = headlineMatch(a.title, p.message)
+        if (!best || score > best.score) best = { score, post: { url: p.permalink_url, image: p.full_picture, when: p.created_time } }
+      }
+      if (best && best.score >= 0.6) { out[a.slug] = best.post; rememberFbPost(a.slug, best.post) }
+    }
+  } catch { /* offline: the website image stays */ }
+  return out
+}

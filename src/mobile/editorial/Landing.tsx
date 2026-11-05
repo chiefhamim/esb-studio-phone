@@ -19,6 +19,7 @@ import type { HomeTab } from './deskStore'
 import { ago, hasStoryContent, hostOf } from './useStory'
 import { syncPublished } from './publishedLive'
 import { PublishedSheet, openPublishedItem } from './PublishedSheet'
+import { matchFbPosts, type FbPost } from './fbLookup'
 import { afterSlide } from '../shell/slide'
 import { publishedParts } from './publishedDate'
 import { WatchList, WatchSettingsSheet } from '../watch/WatchPanel'
@@ -32,10 +33,10 @@ function PubTime({ raw }: { raw?: string }) {
   return <small className="pb-time">{rel && <span className="pb-ago">{rel}</span>}<span>{when}</span></small>
 }
 
-function Thumb({ src, cat }: { src?: string | null; cat?: string }) {
+function Thumb({ src, cat, portrait }: { src?: string | null; cat?: string; portrait?: boolean }) {
   const [bad, setBad] = useState(false)
   const c = CATEGORIES.find((x) => x.id === cat || x.name.toLowerCase() === (cat ?? '').toLowerCase())
-  if (src && !bad && /^https?:|^blob:|^data:/.test(src)) return <img className="me-thumb" src={src} alt="" loading="lazy" decoding="async" onError={() => setBad(true)} />
+  if (src && !bad && /^https?:|^blob:|^data:/.test(src)) return <img className={'me-thumb' + (portrait ? ' is-portrait' : '')} src={src} alt="" loading="lazy" decoding="async" onError={() => setBad(true)} />
   return <span className="me-thumb me-thumb-empty" style={c ? ({ '--thumb-c': c.accent } as React.CSSProperties) : undefined} aria-hidden><Icon name="newspaper" size={20} /></span>
 }
 
@@ -95,6 +96,10 @@ function StoriesList() {
 }
 
 function PublishedList({ active }: { active: boolean }) {
+  // each story shows its Facebook 4:5 banner (portrait) when the Page has it; the website image otherwise
+  const [fbPics, setFbPics] = useState<Record<string, FbPost>>({})
+  const liveList = useEditorialStore((s) => s.liveArticles)
+  useEffect(() => { if (liveList.length) void matchFbPosts(liveList.slice(0, 60)).then(setFbPics) }, [liveList])
   const live = useEditorialStore((s) => s.liveArticles)
   const online = useOnline()
   const busy = useDesk((s) => s.busy)
@@ -121,7 +126,7 @@ function PublishedList({ active }: { active: boolean }) {
           const c = catOf(a.category)
           return (
             <button key={a.slug || a.link} type="button" className="pb-row" onClick={() => { if (!busy) openPublishedItem(a) }}>
-              <Thumb src={a.imageUrl} cat={a.category} />
+              <Thumb src={fbPics[a.slug]?.image ?? a.imageUrl} cat={a.category} portrait={!!fbPics[a.slug]?.image} />
               <span className="pb-txt">
                 <b className="pb-title" lang={/[ঀ-৿]/.test(a.title) ? 'bn' : undefined}>{a.title}</b>
                 <span className="pb-meta">{c ? <><CatDot cat={c} size={20} /><CatName cat={c} /></> : <span>{a.category}</span>}</span>

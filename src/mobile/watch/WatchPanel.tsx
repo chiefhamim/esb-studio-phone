@@ -83,6 +83,12 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
   const [q, setQ] = useState('')
   const [searching, setSearching] = useState(false)
   const searchOpen = searching || !!q
+  // the topics behind the headlines on screen, most frequent first: one tap filters to that topic
+  const trending = useMemo(() => {
+    const c = new Map<string, number>()
+    for (const x of items) for (const m of x.matched) c.set(m, (c.get(m) ?? 0) + 1)
+    return [...c].filter(([t]) => t.length > 1).sort((a, b) => b[1] - a[1]).slice(0, 8)
+  }, [items])
   const [cat, setCat] = useState<'all' | WatchCat>('all')
   const [, tick] = useState(0)
   useAutoCheck(active)
@@ -146,7 +152,7 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
               range.running ? <span className="ew-st"><i className="ew-live is-busy" aria-hidden />Searching {pct}%</span> : <span className="ew-st"><i className="ew-live" aria-hidden />{range.items.length} found{range.failed ? <> · <b className="ew-warn">{range.failed} failed</b></> : null}</span>
             ) : (
               <span className="ew-st"><i className={'ew-live' + (running ? ' is-busy' : failed ? ' is-warn' : '')} aria-hidden />
-                {running ? <>Reading…</> : lastRun ? <>{relTime(Math.min(lastRun, now), now)}{failed ? <> · <b className="ew-warn">{failed} down</b></> : null}</> : <>Not checked yet</>}
+                {running ? <>Reading</> : lastRun ? <>{relTime(Math.min(lastRun, now), now)}{failed ? <> · <b className="ew-warn">{failed} down</b></> : null}</> : <>Not checked yet</>}
               </span>
             )}
             </span><small>by <YeasinName /></small></span>
@@ -179,8 +185,14 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
         {searchOpen && (
           <div className="ew-search">
             <Icon name="search" size={17} />
-            <input type="search" autoFocus placeholder="Search headlines or portals" aria-label="Search headlines" value={q} onChange={(e) => setQ(e.target.value)} onBlur={() => { if (!q) setSearching(false) }} />
+            <input type="search" autoFocus placeholder="Search headlines or portals" aria-label="Search headlines" value={q} onChange={(e) => setQ(e.target.value)} />
             <button type="button" className="ew-search-x" aria-label="Close search" onClick={() => { setQ(''); setSearching(false) }}><Icon name="x" size={16} /></button>
+          </div>
+        )}
+        {searchOpen && trending.length > 0 && (
+          <div className="ew-trend" role="group" aria-label="Trending topics">
+            <span className="ew-trend-h"><Icon name="trendingUp" size={14} />Trending</span>
+            {trending.map(([t, n]) => <button key={t} type="button" className={'ew-trend-chip' + (q.toLowerCase() === t.toLowerCase() ? ' is-on' : '')} onClick={() => setQ(q.toLowerCase() === t.toLowerCase() ? '' : t)}>{t}<small>{n}</small></button>)}
           </div>
         )}
         {cats.length > 2 && (
@@ -206,7 +218,7 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
         {!shown.length && (
           <div className="wr-empty">
             <EwMark size={56} />
-            <h3>{range?.running || (!range && running) ? 'Reading the portals…' : base.length || items.length || range ? 'Nothing matches' : <EwName />}</h3>
+            <h3>{range?.running || (!range && running) ? 'Reading the portals' : base.length || items.length || range ? 'Nothing matches' : <EwName />}</h3>
             <p>{range ? (range.running ? 'Headlines appear here as each portal answers.' : 'No energy or PM & President headlines in this range. Try a wider one.') : items.length ? 'Try another search, or a longer time range.' : `Energy, power and PM & President headlines from ${PORTALS.length} Bangladeshi portals, picked by EnergyWatch's rules. Runs on this phone, anywhere with internet.`}</p>
             {!items.length && !running && !range && <Button icon="refresh" wide onClick={() => void check()}>Check now</Button>}
           </div>

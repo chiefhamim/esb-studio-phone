@@ -60,7 +60,7 @@ export function Intake() {
                       : <button type="button" className="me-link-paste" onClick={async () => { const t = (await readClipboardText()).trim(); if (t) d.set({ url: t, error: null }); else urlRef.current?.focus() }}><Icon name="copy" size={15} /><span>Paste</span></button>}
                   </label>
                   <button type="button" className="me-go" disabled={!d.url.trim() || busy || !online} onClick={() => void fetchLink()}>
-                    {main ? <ProviderMark id={main.provider} size={18} /> : <Icon name="sparkle" size={18} />}<span>{d.busy === 'fetch' ? 'Fetching…' : 'Fetch & Process'}</span>
+                    {main ? <ProviderMark id={main.provider} size={18} /> : <Icon name="sparkle" size={18} />}<span>{d.busy === 'fetch' ? 'Fetching the story' : 'Fetch & Process'}</span>
                   </button>
                   {getLinkFetchMode() === 'site' && (
                     <p className="me-hint"><Icon name="info" size={14} /> Links are read through esbpowerline.com (Settings). If that route is not live yet, switch to “This phone” or paste the text.</p>
@@ -87,7 +87,7 @@ export function Intake() {
               {(d.doc || d.busy === 'doc') && <div className="me-doc has">
                 <span className="me-doc-ic" aria-hidden>{d.doc ? <FileTypeIcon kind={d.doc.kind === 'pdf' ? 'pdf' : 'docx'} size={44} /> : <FileTypePair size={44} />}</span>
                 <div className="me-doc-t">
-                  {d.busy === 'doc' ? <><b>{d.status || 'Reading the file…'}</b><span>This takes a few seconds</span></>
+                  {d.busy === 'doc' ? <><b>{d.status || 'Reading the file'}</b><span>This takes a few seconds</span></>
                     : d.doc && <><b className="me-break">{d.doc.name}</b><span>{d.doc.kind === 'pdf' ? `${d.doc.pages} ${d.doc.pages === 1 ? 'page' : 'pages'} · ` : ''}{fmtFileSize(d.doc.size)} · {d.doc.words.toLocaleString()} words</span></>}
                 </div>
                 {d.doc && <IconBtn icon="x" label="Remove the file" onClick={() => d.set({ doc: null, raw: '' })} disabled={busy} />}

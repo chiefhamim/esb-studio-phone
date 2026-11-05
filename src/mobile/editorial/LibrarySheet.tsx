@@ -45,7 +45,7 @@ export function LibrarySheet() {
       <div className="me-stack">
         <Button kind="tonal" icon="plus" busy={L.busy} disabled={!L.loaded} onClick={() => void harvest()}>Harvest from this story</Button>
         {note && <Banner tone={err || L.problem ? 'error' : 'info'}>{note}</Banner>}
-        {!L.loaded ? <p className="me-hint">Opening the library…</p> : !L.entries.length ? (
+        {!L.loaded ? <p className="me-hint">Opening the library</p> : !L.entries.length ? (
           <Empty icon="quote" title="Nothing harvested yet" body="Quotes with their speakers and figures with their units are kept here from every story you harvest or publish, each with the story it came from." />
         ) : (
           <>

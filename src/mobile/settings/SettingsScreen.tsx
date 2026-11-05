@@ -24,24 +24,30 @@ const STATE_LABEL: Record<SiteFeatureState, string> = { live: 'Works', 'not-live
 /** The PC's About: what it is, who made it. */
 function AboutCard() {
   return (
-    <div className="ab">
-      <div className="ab-hero">
-        <img className="ab-mark" src="./brand/esb-avatar.png" alt="ESB Power Line" width={72} height={72} />
-        <h3>ESB AI <span>Studio</span></h3>
-        <div className="ab-stripe" aria-hidden><i /><i /><i /></div>
-        <p>Where stories are written, imagination is designed and reality is cut.</p>
-        <span className="ab-ver">Version {__APP_VERSION__}</span>
-      </div>
-      <div className="ab-desks">
-        <div><Icon name="newspaper" size={20} /><b>Editorial</b><small>Link in, English story out</small></div>
-        <div><Icon name="layers" size={20} /><b>Graphics</b><small>Banners and social cards</small></div>
-      </div>
-      <div className="ab-author">
-        <span className="ab-avatar" aria-hidden>HR</span>
-        <span className="ab-meta"><small>Designed &amp; engineered by</small><b>Hamim Ruwayfi</b><em>Editorial &amp; Newsroom Workflow</em></span>
-        <button type="button" className="ab-link" onClick={() => void platform().openExternal('https://facebook.com/chiefhamim')}><Icon name="link" size={16} />Facebook</button>
-      </div>
-      <p className="ab-foot">Fonts, artwork and templates are bundled with the app. © ESB Power Line.</p>
+    <div className="ab2">
+      <section className="ab2-hero">
+        <span className="ab2-glow" aria-hidden />
+        <img className="ab2-mark" src="./brand/esb-avatar.png" alt="ESB Power Line" width={84} height={84} />
+        <h3 className="ab2-title">ESB AI <span>Studio</span></h3>
+        <p className="ab2-tag">Where stories are written, imagination is designed and reality is cut.</p>
+        <span className="ab2-stripe" aria-hidden><i /><i /><i /></span>
+        <span className="ab2-ver">Version {__APP_VERSION__}</span>
+      </section>
+
+      <section className="ab2-grid" aria-label="What it does">
+        <div className="ab2-tile is-engine"><i><Icon name="power" size={20} /></i><b>Engine</b><small>Bangla or English link in, newsroom English out</small></div>
+        <div className="ab2-tile is-banner"><i><Icon name="layers" size={20} /></i><b>Banner</b><small>Facebook and web banners, on brand</small></div>
+        <div className="ab2-tile is-wire"><i><Icon name="inbox" size={20} /></i><b>Wire</b><small>EnergyWatch and your own feeds</small></div>
+        <div className="ab2-tile is-pub"><i><Icon name="globe" size={20} /></i><b>Publish</b><small>esbpowerline.com and Facebook</small></div>
+      </section>
+
+      <section className="ab2-credit">
+        <span className="ab2-avatar" aria-hidden>HR</span>
+        <span className="ab2-who"><small>Designed and engineered by</small><b>Hamim Ruwayfi</b><em>Editorial and newsroom workflow</em></span>
+        <button type="button" className="ab2-link" onClick={() => void platform().openExternal('https://facebook.com/chiefhamim')} aria-label="Hamim Ruwayfi on Facebook"><Icon name="externalLink" size={18} /></button>
+      </section>
+
+      <p className="ab2-foot">Fonts, artwork and templates are bundled with the app · © ESB Power Line</p>
     </div>
   )
 }
@@ -59,7 +65,7 @@ function UpdateCheck() {
       if (up) { setFound(up.version); setState('found'); window.dispatchEvent(new CustomEvent('esb-update-found', { detail: up })) } else setState('latest')
     } catch { setState('failed') }
   }
-  const meta = state === 'checking' ? 'Looking for a newer version…'
+  const meta = state === 'checking' ? 'Looking for a newer version'
     : state === 'found' ? `Version ${found} is ready. Tap Update now in the box that opened.`
     : state === 'latest' ? 'You have the latest version.'
     : state === 'failed' ? 'Could not reach the update server. Check the connection and try again.'
@@ -197,7 +203,7 @@ function KeyField({ id, ai, onSave, inline }: { id: AiProviderId; ai: AiSettings
         </div>
         {result && <Banner tone={result.ok ? 'success' : 'error'}>{result.text}</Banner>}
         <div className="st-actions">
-          <button type="button" className={'st-test' + (testing ? ' is-busy' : '')} disabled={testing || !val.trim() || ai.paused} onClick={() => { void test() }}><Icon name={testing ? 'refresh' : 'check'} size={18} className={testing ? 'st-spin' : ''} /><span>{testing ? 'Checking…' : 'Check'}</span></button>
+          <button type="button" className={'st-test' + (testing ? ' is-busy' : '')} disabled={testing || !val.trim() || ai.paused} onClick={() => { void test() }}><Icon name={testing ? 'refresh' : 'check'} size={18} className={testing ? 'st-spin' : ''} /><span>{testing ? 'Checking' : 'Check'}</span></button>
           <button type="button" className="st-save" disabled={!dirty || !val.trim()} onClick={save}><Icon name="check" size={18} /><span>Save</span></button>
         </div>
       </div>
@@ -347,7 +353,7 @@ function FacebookSection() {
           <span className="fbc-t"><b>{name}</b><small>Facebook Page · {fb.pageId}</small></span>
         </div>
         <div className="fbc-conn">
-          <span className={'fbc-pill is-' + link.s}><i aria-hidden />{link.s === 'ok' ? 'Connected' : link.s === 'bad' ? 'Needs attention' : 'Checking…'}</span>
+          <span className={'fbc-pill is-' + link.s}><i aria-hidden />{link.s === 'ok' ? 'Connected' : link.s === 'bad' ? 'Needs attention' : 'Checking'}</span>
           <button type="button" className="fbc-recheck" onClick={() => void recheck()} disabled={link.s === 'checking' || !online}><Icon name="refresh" size={16} className={link.s === 'checking' ? 'st-spin' : ''} />Check again</button>
         </div>
         {link.s === 'bad' && <Banner tone="error">{link.err}</Banner>}

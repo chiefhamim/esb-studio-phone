@@ -80,14 +80,14 @@ export default function AccountSheet() {
               <strong>esbpowerline.com</strong>
               <span className={'ac-status ' + (!online ? 'is-off' : session && site.connected ? 'is-ok' : 'is-warn')}><i aria-hidden />{siteMeta}</span>
             </span>
-            <button type="button" className="ac-check" disabled={checking || !online} onClick={() => void runCheck()}>{checking ? 'Checking…' : checks ? 'Run again' : 'Check'}</button>
+            <button type="button" className="ac-check" disabled={checking || !online} onClick={() => void runCheck()}>{checking ? 'Checking' : checks ? 'Run again' : 'Check'}</button>
           </div>
           <Tile icon="sparkle" title={`AI engine · ${engine}`} meta={aiState} onClick={go(() => nav.openSettings('ai'))} />
         </div>
 
         {checks && (
           <>
-            <div className="ac-h ac-h-row"><span>Connection check</span><em className={failed ? 'bad' : 'good'}>{checking ? 'Checking…' : failed ? `${failed} to fix` : 'All clear'}</em></div>
+            <div className="ac-h ac-h-row"><span>Connection check</span><em className={failed ? 'bad' : 'good'}>{checking ? 'Checking' : failed ? `${failed} to fix` : 'All clear'}</em></div>
             <ul className="ac-checks" aria-live="polite">
               {checks.map((c) => (
                 <li key={c.id} className={'ac-chk is-' + c.status}>

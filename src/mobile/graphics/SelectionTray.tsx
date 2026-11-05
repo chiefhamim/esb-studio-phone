@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { FORMATS } from '../../pc/core/tokens'
 import type { Align } from '../../pc/core/types'
 import { imageAssets, useStore } from '../../pc/store'
+import { openHighlight } from './HighlightSheet'
 import { loadImage } from '../../pc/core/assets'
 import { platform } from '../../platform/platform'
 import { snack, useUi } from '../shell/core'
@@ -131,7 +132,9 @@ export function SelectionTray() {
     const what = single.id.startsWith('date-') ? { icon: 'calendar' as const, label: 'Date' } : single.id.startsWith('chip') ? { icon: 'palette' as const, label: 'Category' } : { icon: 'sparkle' as const, label: 'Label' }
     acts.push({ ...what, run: () => document.querySelector<HTMLButtonElement>('.gx-canvas .qbar .qb-text')?.click() })
   }
-  else if (single?.kind === 'text') acts.push({ icon: 'edit', label: 'Edit text', run: () => open('gx-story') })
+  else if (single?.kind === 'text') acts.push({ icon: 'edit', label: 'Edit', run: () => open('gx-story') })
+  // the headline's highlighted phrase, right under the thumb: tap the words to highlight
+  if (single?.id === 'headline') acts.push({ icon: 'highlight', label: 'Highlight', run: () => openHighlight() })
   acts.push({ icon: 'sliders', label: 'Style', run: () => open('gx-inspector') })
   if (single?.kind === 'text') acts.push({ icon: 'type', label: 'Size', on: sizing, run: () => { setSizing(!sizing); setMore(false) } })
   if (extra || ids.length > 1) acts.push({ icon: 'trash', label: 'Delete', danger: true, run: () => st().deleteSelected() })
