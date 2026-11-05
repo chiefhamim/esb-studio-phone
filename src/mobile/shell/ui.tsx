@@ -2,7 +2,7 @@
 // Siliguri, PC icon set). Every interactive element has a 48 px hit area.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { Icon, type IconName } from '../../pc/ui/Icon'
+import { Icon, type IconName } from './TablerIcon'
 import { dismissSnack, useBackLayer, useUi } from './core'
 
 export { Icon, type IconName }
@@ -59,7 +59,7 @@ export function NavBar({ items, value, onChange, rail }: { items: NavItem[]; val
       {!rail && <span className="m-nav-glide" aria-hidden />}
       {items.map((it) => (
         <button key={it.id} type="button" className={`m-nav-item${value === it.id ? ' is-on' : ''}${it.primary ? ' is-primary' : ''}`} aria-current={value === it.id ? 'page' : undefined} onClick={() => onChange(it.id)}>
-          <span className="m-nav-pill"><Icon name={it.icon} size={it.primary ? 24 : 22} />{it.badge != null && <span className={'m-badge' + (it.tone ? ' is-' + it.tone : '')}>{it.badge}</span>}</span>
+          <span className="m-nav-pill"><Icon name={it.icon} size={24} filled={value === it.id} />{it.badge != null && <span className={'m-badge' + (it.tone ? ' is-' + it.tone : '')}>{it.badge}</span>}</span>
           <span className="m-nav-label">{it.label}</span>
         </button>
       ))}
