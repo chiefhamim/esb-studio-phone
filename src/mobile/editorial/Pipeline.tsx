@@ -90,9 +90,10 @@ export function StepSub({ extra }: { extra?: string }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   if (at < 0) return extra ? <span>{extra}</span> : null
   const items: MenuItem[] = STEPS.map((s, i) => ({
-    label: `${i + 1}  ${s}`,
+    label: s,
+    lead: String(i + 1),
+    leadOn: done[i] && i !== at,
     checked: i === at,
-    icon: done[i] && i !== at ? 'check' : undefined,
     hint: i === at ? 'You are here' : i === 3 && toCheck > 0 ? `${toCheck} ${bad ? 'to fix' : 'to check'}` : done[i] ? 'Done' : undefined,
     onClick: () => go(i),
   }))

@@ -3296,3 +3296,29 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 .seo-suggest .seo-chip { min-height: 34px !important; height: auto; padding: 6px 12px !important; border: 0 !important; border-radius: 10px !important;
   background: var(--fill) !important; box-shadow: none !important; color: var(--text-primary) !important; font: 500 14px/1.35 var(--font-ui) !important; text-align: left; }
 .seo-suggest .seo-chip.on { background: var(--accent) !important; color: var(--on-accent, #fff) !important; font-weight: 600 !important; }
+
+/* Menus: a row can lead with a short text tile ("1h", a step number) in the same 36 px column as the icon tiles, so
+   every row of a menu starts its text at one line. A finished step's tile turns green. */
+.m-menu-item:has(> .m-menu-lead:first-child) { grid-template-columns: 36px minmax(0, 1fr) auto; }
+.m-menu-lead { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: var(--fill); font: 700 13px/1 var(--font-ui); font-variant-numeric: tabular-nums; letter-spacing: -.01em; color: var(--text-secondary); }
+.m-menu-lead.is-on { background: color-mix(in srgb, #16a34a 16%, transparent); color: #15803d; }
+:root[data-theme='dark'] .m-menu-lead.is-on { color: #4ade80; }
+
+/* Quotes & figures sheet: the search icon clears its text; each entry is one Home-style card with 16 px padding,
+   the figure or quote, then its source on one muted line, then one row of actions (Insert · banner · remove). */
+.lib .me-search .m-input { padding-left: 46px !important; }
+.lib .me-search > svg { left: 16px; }
+.lib .me-list { display: flex; flex-direction: column; gap: 12px !important; padding: 0 !important; background: none !important; box-shadow: none !important; border: 0 !important; }
+.lib-card { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 20px; background: var(--surface-panel); box-shadow: var(--drop-2); }
+.lib-card p { margin: 0; }
+.lib-fig { display: flex; flex-direction: column; gap: 4px; }
+.lib-fig b { font: 700 22px/1.2 var(--font-ui); font-variant-numeric: tabular-nums; letter-spacing: -.01em; color: var(--text-primary); }
+.lib-fig span, .lib-quote { font: 400 15px/1.45 var(--font-ui); color: var(--text-secondary); }
+.lib-quote { color: var(--text-primary); font-size: 16px; }
+.lib-who { font: 600 14px/1.35 var(--font-ui); color: var(--text-secondary); }
+.lib-src { display: flex; align-items: flex-start; gap: 8px; padding-top: 10px; border-top: .5px solid var(--border-default); font: 500 13px/1.4 var(--font-ui); color: var(--text-tertiary, var(--text-secondary)); }
+.lib-src > svg { flex: none; margin-top: 2px; }
+.lib-src em { font-style: normal; }
+.lib-acts { display: grid; grid-template-columns: 1fr 1fr 44px; gap: 8px; align-items: center; }
+.lib-acts > .m-btn { min-height: 44px !important; min-width: 0; padding: 0 10px !important; border-radius: 12px !important; background: var(--fill) !important; color: var(--text-primary) !important; box-shadow: none !important; font: 600 14px/1.2 var(--font-ui) !important; }
+.lib-acts > .lib-del { width: 44px; height: 44px; border-radius: 12px; background: var(--danger-soft, var(--fill)); color: var(--danger); }

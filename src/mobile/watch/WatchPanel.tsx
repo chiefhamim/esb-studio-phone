@@ -134,7 +134,7 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
   const cats: ('all' | WatchCat)[] = ['all', ...(['energy', 'leadership'] as WatchCat[]).filter((c) => prefs.show[c])]
   const inCat = (c: 'all' | WatchCat) => (c === 'all' ? base.length : base.filter((x) => x.categories.includes(c)).length)
   const timeMenu: MenuItem[] = [
-    ...WINDOWS.map((h) => ({ label: windowLabel(h), checked: !range && prefs.maxAgeH === h, onClick: () => { useRange.getState().clear(); useWatch.getState().setPrefs({ maxAgeH: h }) } })),
+    ...WINDOWS.map((h) => ({ label: windowLabel(h), lead: `${h}h`, checked: !range && prefs.maxAgeH === h, onClick: () => { useRange.getState().clear(); useWatch.getState().setPrefs({ maxAgeH: h }) } })),
     { divider: true, label: '', onClick: () => {} },
     { label: 'Pick dates and times', icon: 'calendar', checked: !!range, onClick: () => useUi.getState().openSheet('ew-range') },
     { divider: true, label: '', onClick: () => {} },

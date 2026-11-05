@@ -68,7 +68,7 @@ export function NavBar({ items, value, onChange, rail }: { items: NavItem[]; val
 }
 
 // ---------------------------------------------------------------- menu anchored to its button
-export interface MenuItem { label: string; icon?: IconName; onClick: () => void; danger?: boolean; disabled?: boolean; hint?: string; checked?: boolean; divider?: boolean }
+export interface MenuItem { label: string; icon?: IconName; onClick: () => void; danger?: boolean; disabled?: boolean; hint?: string; checked?: boolean; divider?: boolean; /** short text drawn in the icon tile instead of an icon ("1h", a step number) */ lead?: string; /** tint the lead tile (a finished step) */ leadOn?: boolean }
 export function MenuButton({ icon = 'more', label, items, children, className = '' }: { icon?: IconName; label: string; items: MenuItem[]; children?: ReactNode; className?: string }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   return (
@@ -91,8 +91,12 @@ export function Menu({ anchor, items, onClose }: { anchor: HTMLElement | null; i
     const r = anchor?.getBoundingClientRect() ?? { left: window.innerWidth - 16, right: window.innerWidth - 16, bottom: 64, top: 64 }
     const w = m.offsetWidth, h = m.offsetHeight
     const vw = window.innerWidth, vh = window.innerHeight
-    let left = Math.min(Math.max(8, r.right - w), vw - w - 8)
-    if (left < 8) left = 8
+    // Menus sit on the page's 16 px gutters: one that would end just short of the right gutter (a row's ⋯ button)
+    // lines up with it, and one opened from the left never pokes past the left gutter.
+    const G = 16
+    let left = r.right - w
+    if (left + w > vw - G - 24) left = vw - G - w
+    left = Math.min(Math.max(G, left), vw - w - G)
     const below = vh - r.bottom - 8
     const top = below >= Math.min(h, 240) ? r.bottom + 4 : Math.max(8, r.top - h - 4)
     setPos({ top, left, maxH: vh - top - 8 })
@@ -102,7 +106,7 @@ export function Menu({ anchor, items, onClose }: { anchor: HTMLElement | null; i
       <div ref={ref} role="menu" className="m-menu" style={pos ? { top: pos.top, left: pos.left, maxHeight: pos.maxH } : { visibility: 'hidden' }} onClick={(e) => e.stopPropagation()}>
         {items.map((it, i) => it.divider ? <div key={i} className="m-menu-div" role="separator" /> : (
           <button key={i} type="button" role="menuitem" className={`m-menu-item${it.danger ? ' is-danger' : ''}`} disabled={it.disabled} onClick={() => { onClose(); it.onClick() }}>
-            {it.icon && <Icon name={it.icon} size={20} />}
+            {it.lead != null ? <span className={'m-menu-lead' + (it.leadOn ? ' is-on' : '')} aria-hidden>{it.lead}</span> : it.icon && <Icon name={it.icon} size={20} />}
             <span className="m-menu-text"><span>{it.label}</span>{it.hint && <small>{it.hint}</small>}</span>
             {it.checked && <Icon name="check" size={18} />}
           </button>

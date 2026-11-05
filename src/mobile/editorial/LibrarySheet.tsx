@@ -13,9 +13,10 @@ import { hostOf } from './useStory'
 
 installPublishHarvest()
 
+/** Where an entry came from: the story's headline, plus where it lives when that is not simply our published article. */
 function provenance(e: LibraryEntry): string {
-  const where = e.slug ? `/articles/${e.slug}` : e.url ? hostOf(e.url) : e.sourceUrl ? `source: ${hostOf(e.sourceUrl)}` : 'not published'
-  return `from ${e.headline} · ${where}${e.from === 'source' ? ' · original text' : ''}`
+  const where = e.slug ? '' : e.url ? hostOf(e.url) : e.sourceUrl ? `source: ${hostOf(e.sourceUrl)}` : 'not published'
+  return [where, e.from === 'source' ? 'original text' : ''].filter(Boolean).join(' · ')
 }
 
 function insert(e: LibraryEntry) {
@@ -42,7 +43,7 @@ export function LibrarySheet() {
   const harvest = async () => { setErr(null); try { await L.harvestActive() } catch (e) { setErr(e instanceof Error ? e.message : 'The harvest did not finish.') } }
   return (
     <Sheet id="ed-library" title="Quotes & figures" initial="full">
-      <div className="me-stack">
+      <div className="me-stack lib">
         <Button kind="tonal" icon="plus" busy={L.busy} disabled={!L.loaded} onClick={() => void harvest()}>Harvest from this story</Button>
         {note && <Banner tone={err || L.problem ? 'error' : 'info'}>{note}</Banner>}
         {!L.loaded ? <p className="me-hint">Opening the library</p> : !L.entries.length ? (
@@ -53,14 +54,14 @@ export function LibrarySheet() {
             <div className="m-chips">{(['all', 'quote', 'stat'] as const).map((k) => <Chip key={k} on={kind === k} onClick={() => setKind(k)}>{k === 'all' ? `All ${L.entries.length}` : k === 'quote' ? 'Quotes' : 'Figures'}</Chip>)}</div>
             <div className="me-list">
               {shown.map((e) => (
-                <section key={e.id} className="me-card">
-                  {e.kind === 'quote' ? <p className="me-quote">“{e.text}”</p> : <p><b className="me-figure">{e.text}</b> <span className="me-meta">{e.sentence}</span></p>}
-                  {e.kind === 'quote' && <p className="me-meta">{e.speaker ? `— ${[e.speaker, e.speakerTitle].filter(Boolean).join(', ')}` : 'Speaker not named in the story'}</p>}
-                  <p className="me-meta me-break">{provenance(e)}</p>
-                  <div className="me-btnrow">
-                    <Button kind="text" icon="edit" onClick={() => insert(e)}>Insert in story</Button>
-                    <Button kind="text" icon={e.kind === 'quote' ? 'quote' : 'chart'} onClick={() => { useStore.getState().setContent(e.kind === 'quote' ? quoteBannerPatch(e, L.speakers) : statBannerPatch(e)); useUi.getState().closeSheet('ed-library'); useNav.getState().go('graphics') }}>{e.kind === 'quote' ? 'Quote banner' : 'Stat banner'}</Button>
-                    <IconBtn icon="trash" label="Remove from the library" onClick={async () => { if (await confirmAsk({ title: 'Remove from the library?', confirm: 'Remove', danger: true })) void L.remove(e.id) }} />
+                <section key={e.id} className="lib-card">
+                  {e.kind === 'quote' ? <p className="lib-quote">“{e.text}”</p> : <p className="lib-fig"><b>{e.text}</b><span>{e.sentence.replace(/^[\s\-–—:;,.]+/, '')}</span></p>}
+                  {e.kind === 'quote' && <p className="lib-who">{e.speaker ? `— ${[e.speaker, e.speakerTitle].filter(Boolean).join(', ')}` : 'Speaker not named in the story'}</p>}
+                  <p className="lib-src me-break"><Icon name="newspaper" size={15} /><span>{e.headline}{provenance(e) && <em> · {provenance(e)}</em>}</span></p>
+                  <div className="lib-acts">
+                    <Button kind="tonal" icon="edit" onClick={() => insert(e)}>Insert</Button>
+                    <Button kind="tonal" icon={e.kind === 'quote' ? 'quote' : 'chart'} onClick={() => { useStore.getState().setContent(e.kind === 'quote' ? quoteBannerPatch(e, L.speakers) : statBannerPatch(e)); useUi.getState().closeSheet('ed-library'); useNav.getState().go('graphics') }}>{e.kind === 'quote' ? 'Quote banner' : 'Stat banner'}</Button>
+                    <IconBtn icon="trash" label="Remove from the library" className="lib-del" onClick={async () => { if (await confirmAsk({ title: 'Remove from the library?', confirm: 'Remove', danger: true })) void L.remove(e.id) }} />
                   </div>
                 </section>
               ))}

@@ -440,7 +440,7 @@ export function storyMenu(): MenuItem[] {
     { divider: true, label: '', onClick: () => {} },
     { label: 'AI keys and providers', icon: 'sparkle', onClick: () => nav.openSettings('ai') },
     { label: 'Site sign-in', icon: 'user', onClick: () => nav.openSettings('site') },
-    { label: 'Facebook Page', icon: 'link', onClick: () => nav.openSettings('facebook') },
+    { label: 'Facebook Page', icon: 'brandFacebook', onClick: () => nav.openSettings('facebook') },
     { divider: true, label: '', onClick: () => {} },
     { label: 'Remove this story', icon: 'trash', danger: true, onClick: async () => {
       const id = useStoryQueue.getState().activeId

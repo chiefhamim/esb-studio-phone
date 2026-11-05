@@ -48,12 +48,12 @@ export function homeMenu(): MenuItem[] {
     { divider: true, label: '', onClick: () => {} },
     { label: 'AI keys and providers', icon: 'sparkle', onClick: () => nav.openSettings('ai') },
     { label: 'Site sign-in', icon: 'user', onClick: () => nav.openSettings('site') },
-    { label: 'Facebook Page', icon: 'link', onClick: () => nav.openSettings('facebook') },
+    { label: 'Facebook Page', icon: 'brandFacebook', onClick: () => nav.openSettings('facebook') },
   ]
 }
 
 /** Each status has its own icon in the story menu (the current one also gets a tick). */
-const STATUS_ICON: Record<string, IconName> = { draft: 'edit', review: 'search', approved: 'checkDouble', published: 'globe' }
+const STATUS_ICON: Record<string, IconName> = { draft: 'filePencil', review: 'eyeCheck', approved: 'checkDouble', published: 'globe' }
 
 function StoryRow({ s, active }: { s: StoryItem; active: boolean }) {
   const setStatus = useStoryQueue((q) => q.setStatus)
