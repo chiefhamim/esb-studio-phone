@@ -61,27 +61,42 @@ export async function findFbPost(a: LiveArticleSummary): Promise<FbFind> {
   }
 }
 
-/** Facebook posts for a whole list at once: one request for the Page's recent posts, each article matched by its
- *  headline (same rule as findFbPost). Results are remembered, so each article is looked up once. */
+type GPost = { message?: string; permalink_url?: string; created_time?: string; full_picture?: string; comments?: { data?: { message?: string }[] } }
+
+/** How sure a post is this article: 1 when a comment carries the article's own address (Publish adds it as the first
+ *  comment), otherwise the share of the headline's words in the caption. */
+export function postScore(a: Pick<LiveArticleSummary, 'title' | 'slug' | 'link'>, p: GPost): number {
+  const slug = a.slug.toLowerCase()
+  const inComments = (p.comments?.data ?? []).some((c) => (c.message ?? '').toLowerCase().includes(slug))
+  const inCaption = (p.message ?? '').toLowerCase().includes(slug)
+  if (slug && (inComments || inCaption)) return 1
+  return p.message ? headlineMatch(a.title, p.message) : 0
+}
+
+async function pagePosts(pageId: string, token: string, since: number): Promise<GPost[]> {
+  const base = `${GRAPH}/${encodeURIComponent(pageId)}/posts?since=${since}&limit=100&fields=message,permalink_url,created_time,full_picture`
+  const get = async (url: string) => { const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } }); return r.ok ? (((await r.json()) as { data?: GPost[] }).data ?? []) : null }
+  // with the first comments (where Publish puts the article link); without them if the token may not read comments
+  return (await get(base + ',comments.limit(3){message}')) ?? (await get(base)) ?? []
+}
+
+/** Facebook posts for a whole list at once: one request for the Page's recent posts, each article matched by the link
+ *  in its first comment, or by its headline. Matches are remembered, so each article is looked up once. */
 export async function matchFbPosts(arts: LiveArticleSummary[]): Promise<Record<string, FbPost>> {
   const out: Record<string, FbPost> = {}
   const known = loadAll()
-  const todo = arts.filter((a) => { if (known[a.slug]) { out[a.slug] = known[a.slug]; return false } return true })
+  const todo = arts.filter((a) => { if (known[a.slug]?.image) { out[a.slug] = known[a.slug]; return false } return true })
   const fb = getFacebook()
   if (!todo.length || !fb) return out
   const times = todo.map((a) => Date.parse(a.publishedAt)).filter(Number.isFinite)
   if (!times.length) return out
-  const since = Math.floor((Math.min(...times) - 6 * 3600_000) / 1000)
   try {
-    const res = await fetch(`${GRAPH}/${encodeURIComponent(fb.pageId)}/posts?fields=message,permalink_url,created_time,full_picture&since=${since}&limit=100`,
-      { headers: { Authorization: `Bearer ${fb.token}` } })
-    if (!res.ok) return out
-    const posts = ((await res.json()) as { data?: { message?: string; permalink_url?: string; created_time?: string; full_picture?: string }[] }).data ?? []
+    const posts = await pagePosts(fb.pageId, fb.token, Math.floor((Math.min(...times) - 6 * 3600_000) / 1000))
     for (const a of todo) {
       let best: { score: number; post: FbPost } | null = null
       for (const p of posts) {
-        if (!p.permalink_url || !p.message) continue
-        const score = headlineMatch(a.title, p.message)
+        if (!p.permalink_url) continue
+        const score = postScore(a, p)
         if (!best || score > best.score) best = { score, post: { url: p.permalink_url, image: p.full_picture, when: p.created_time } }
       }
       if (best && best.score >= 0.6) { out[a.slug] = best.post; rememberFbPost(a.slug, best.post) }

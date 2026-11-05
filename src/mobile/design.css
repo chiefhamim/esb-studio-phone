@@ -3192,3 +3192,10 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 .m-nav-item.is-primary:active .m-nav-pill { transform: scale(.92) !important; }
 /* measured on the S25 Ultra: the Engine slot sat 4 px below the others (its slot centres a taller box); lift it onto the shared line */
 .m-nav-item.is-primary { position: relative; top: -4px; }
+
+/* Bottom bar: Editorial is a tab like the others (no purple): grey pill when it is the current page, plain otherwise */
+.m-nav-item.is-primary .m-nav-pill { background: transparent !important; color: inherit !important; box-shadow: none !important; }
+.m-nav-item.is-primary.is-on .m-nav-pill { background: var(--fill-active, var(--fill)) !important; color: var(--text-primary) !important; }
+.m-nav-item.is-primary .m-nav-label, .m-navbar .m-nav-item.is-primary .m-nav-label { color: inherit !important; font-weight: 500 !important; }
+.m-nav-item.is-primary.is-on .m-nav-label { color: var(--text-primary) !important; font-weight: 600 !important; }
+.m-navbar .m-nav-item.is-primary { color: var(--text-secondary) !important; }

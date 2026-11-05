@@ -36,8 +36,8 @@ import './design.css' // last: the one design file (scales, look, motion, contro
 // Graphics is not a place on its own: a banner belongs to a story, so it is a step inside the story (and a tile on Home); the tablet rail keeps a direct entry.
 const NAV: NavItem[] = [
   { id: 'home', label: 'Home', icon: 'home' },
-  { id: 'ed-wire', label: 'Wire', icon: 'inbox' },
-  { id: 'add', label: 'Engine', icon: 'power', primary: true },
+  { id: 'ed-wire', label: 'News', icon: 'inbox' },
+  { id: 'add', label: 'Editorial', icon: 'power', primary: true },
   { id: 'ed-stories', label: 'Stories', icon: 'newspaper' },
   { id: 'ed-published', label: 'Published', icon: 'globe' },
 ]

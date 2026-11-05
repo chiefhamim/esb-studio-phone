@@ -13,7 +13,7 @@ import { hasStoryContent, useLeadPhoto, useReadiness } from './useStory'
 import { slideTo } from '../shell/slide'
 import { useNav } from '../shell/nav'
 
-const STEPS = ['Engine', 'Parse', 'Banner', 'Check', 'Publish']
+const STEPS = ['Editorial', 'Parse', 'Banner', 'Check', 'Publish']
 
 export function PipelineStrip({ at, busy }: { at: number; busy?: boolean }) {
   return (
@@ -52,7 +52,7 @@ function useFlow() {
     const leave = () => { if (inPub) useUi.getState().closeSheet('ed-publish'); if (inGx) useNav.setState({ route: 'editorial', backTo: null }) }
     const move = (fn: () => void) => slideTo(dir, () => { leave(); fn() }, !inGx && at >= 0 ? 'flow' : undefined)
     if (i === 0) { move(() => d.set({ view: 'intake', intakeTab: 'link', error: null, writing: false })); return }
-    if (!onDesk) { snack('Bring a story in first: paste a link, a file or text in Engine.'); return }
+    if (!onDesk) { snack('Bring a story in first: paste a link, a file or text in Editorial.'); return }
     if (i === 4) {
       if (!headline.trim()) { snack('Write a headline first, then publish.'); d.set({ view: 'story', tab: 'story', writing: false }); return }
       move(() => { d.set({ view: 'story', writing: false }); useUi.getState().openSheet('ed-publish') }); return

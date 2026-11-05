@@ -38,7 +38,7 @@ export function Intake() {
   const link = d.intakeTab === 'link'
   return (
     <>
-      <TopBar leading={<IconBtn icon="chevLeft" label="Back to stories" onClick={() => slideTo(-1, () => d.set({ view: 'home', error: null }))} />} title="Engine"
+      <TopBar leading={<IconBtn icon="chevLeft" label="Back to stories" onClick={() => slideTo(-1, () => d.set({ view: 'home', error: null }))} />} title="Editorial"
         sub={<StepSub extra={main ? providerMeta(main.provider).name : 'Free translation'} />} under={<FlowTrack />} overflow={homeMenu()} />
       <div className="m-scroll">
         <div className="m-wrap me-intake">

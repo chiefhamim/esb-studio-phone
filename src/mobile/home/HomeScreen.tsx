@@ -152,7 +152,7 @@ export default function HomeScreen({ active }: ScreenProps) {
           <nav className="hm-launch hm-glass" aria-label="Workspaces">
             <button type="button" className="hm-cell" onClick={() => nav.intendEditorial('paste-link')}>
               <span className="hm-cell-ico"><Icon name="power" size={22} /></span>
-              <span className="hm-cell-name">Engine</span>
+              <span className="hm-cell-name">Editorial</span>
               <span className="hm-cell-note">Paste a link, get English</span>
               <Icon name="chevRight" size={20} />
             </button>

@@ -11,7 +11,7 @@ import { CATEGORIES } from '../../pc/core/tokens'
 import { useWire, filterItems, relTime, sourceStatus, DEFAULT_INTERVAL } from '../../pc/editorial/wire'
 import { getLinkFetchMode } from '../../platform/fetchGuarded'
 import { Banner, Button, Chip, Empty, ErrorState, IconBtn, Icon, MenuButton, Row, Segmented, Sheet, Skeleton, TopBar } from '../shell/ui'
-import type { MenuItem } from '../shell/ui'
+import type { IconName, MenuItem } from '../shell/ui'
 import { confirmAsk, snack, useOnline, useUi } from '../shell/core'
 import { useNav } from '../shell/nav'
 import { newStory, openStory, useDesk } from './deskStore'
@@ -52,13 +52,16 @@ export function homeMenu(): MenuItem[] {
   ]
 }
 
+/** Each status has its own icon in the story menu (the current one also gets a tick). */
+const STATUS_ICON: Record<string, IconName> = { draft: 'edit', review: 'search', approved: 'checkDouble', published: 'globe' }
+
 function StoryRow({ s, active }: { s: StoryItem; active: boolean }) {
   const setStatus = useStoryQueue((q) => q.setStatus)
   const remove = useStoryQueue((q) => q.remove)
   const img = s.snapshot.source?.images?.[0]?.src
   const items: MenuItem[] = [
     { label: 'Open', icon: 'edit', onClick: () => openStory(s.id) },
-    ...STORY_STATUSES.filter((v) => v !== 'published').map((v) => ({ label: `Mark ${STATUS_LABEL[v]}`, checked: s.status === v, onClick: () => setStatus(s.id, v) })),
+    ...STORY_STATUSES.filter((v) => v !== 'published').map((v) => ({ label: `Mark ${STATUS_LABEL[v]}`, icon: STATUS_ICON[v], checked: s.status === v, onClick: () => setStatus(s.id, v) })),
     { label: 'Remove from this phone', icon: 'trash', danger: true, onClick: async () => {
       if (await confirmAsk({ title: 'Remove this story?', body: `"${storyTitle(s.snapshot)}" and its draft are deleted from this phone. An article already on esbpowerline.com is not touched.`, confirm: 'Remove', danger: true })) { remove(s.id); snack('Story removed') }
     } },
@@ -79,7 +82,7 @@ function StoriesList() {
   const [f, setF] = useState<'all' | StoryStatus>('all')
   const counts = useMemo(() => Object.fromEntries(STORY_STATUSES.map((s) => [s, stories.filter((x) => x.status === s).length])) as Record<StoryStatus, number>, [stories])
   const shown = stories.filter((s) => (f === 'all' || s.status === f) && (!q.trim() || storyTitle(s.snapshot).toLowerCase().includes(q.trim().toLowerCase()) || hostOf(s.snapshot.source?.url).includes(q.trim().toLowerCase())))
-  if (!stories.length) return <Empty icon="layers" title="No stories yet" body="Start one from Engine (a link, a file or pasted text). Every story is kept here with its draft." />
+  if (!stories.length) return <Empty icon="layers" title="No stories yet" body="Start one from Editorial (a link, a file or pasted text). Every story is kept here with its draft." />
   return (
     <>
       <label className="me-search"><Icon name="search" size={18} /><input type="search" className="m-input" placeholder="Search stories" aria-label="Search stories" value={q} onChange={(e) => setQ(e.target.value)} /></label>
@@ -253,7 +256,7 @@ function WireTab({ onUse, active }: { onUse: (url: string) => void; active: bool
   )
 }
 
-const TAB_TITLE: Record<HomeTab, string> = { stories: 'Stories', published: 'Published', wire: 'Wire' }
+const TAB_TITLE: Record<HomeTab, string> = { stories: 'Stories', published: 'Published', wire: 'News' }
 
 export function Landing({ active }: { active: boolean }) {
   const homeTab = useDesk((s) => s.homeTab)
