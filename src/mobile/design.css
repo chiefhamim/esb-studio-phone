@@ -2886,3 +2886,13 @@ html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-n
 .me-group { border-radius: 18px !important; }
 .me-desk .me-or { margin: 6px 0 2px !important; }
 .me-desk .me-or { margin: 14px 2px 8px !important; }
+
+/* SEO → Google preview: Google's own colours in each theme (light: white page, #1a0dab title; dark: Google's dark
+   results page #202124, #8ab4f8 title, #bdc1c6 text) instead of a white card in dark mode */
+:root[data-theme='dark'] .me-seo .seo-serp, :root[data-theme='dark'] .ed-card-body.seo > .seo-serp { background: #202124 !important; color: #bdc1c6; box-shadow: 0 0 0 1px rgba(255, 255, 255, .08) !important; }
+:root[data-theme='dark'] .me-seo .seo-serp .seo-serp-title { color: #8ab4f8 !important; }
+:root[data-theme='dark'] .me-seo .seo-serp .seo-serp-site b, :root[data-theme='dark'] .me-seo .seo-serp p { color: #dadce0 !important; }
+:root[data-theme='dark'] .me-seo .seo-serp .seo-serp-desc { color: #bdc1c6 !important; }
+:root[data-theme='dark'] .me-seo .seo-serp .seo-serp-desc b { color: #e8eaed !important; }
+:root[data-theme='dark'] .me-seo .seo-serp .seo-serp-site span, :root[data-theme='dark'] .me-seo .seo-serp .seo-serp-note, :root[data-theme='dark'] .me-seo .seo-serp .hint { color: #9aa0a6 !important; }
+:root[data-theme='dark'] .me-seo .seo-serp .seo-serp-fav { box-shadow: 0 0 0 1px rgba(255, 255, 255, .14); }
