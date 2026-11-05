@@ -2951,3 +2951,27 @@ html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-n
 .hm-launch .hm-cell-note { color: rgba(255, 255, 255, .78) !important; }
 .hm-launch .hm-cell:active { transform: scale(.97); transition: transform .18s cubic-bezier(.2, .9, .3, 1.2); }
 @media (prefers-reduced-motion: reduce) { .hm-launch .hm-cell::before { animation: none; } }
+
+/* ---- Home tiles, One UI 9 style (replaces the glass look above) ----
+   Solid, opaque cards with One UI's large soft corners, one flat colour each with a quiet tonal lift, no blur, no
+   orbs, no rims. Icon in a rounded square, plain chevron, bold title. Shadow barely there, as One UI does. */
+.hm-launch .hm-cell {
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  min-height: 148px; padding: 18px !important; border-radius: 26px !important;
+}
+.hm-launch .hm-cell::before, .hm-launch .hm-cell::after { display: none !important; animation: none !important; }
+.hm-launch .hm-cell:nth-child(1) { background: linear-gradient(180deg, #2b2b31 0%, #1c1c21 100%) !important; }
+.hm-launch .hm-cell:nth-child(2) { background: linear-gradient(180deg, #5a51f2 0%, #4a40e0 100%) !important; }
+:root[data-theme='dark'] .hm-launch .hm-cell:nth-child(1) { background: linear-gradient(180deg, #303037 0%, #25252b 100%) !important; }
+.hm-launch .hm-cell, .hm-launch .hm-cell:nth-child(1), .hm-launch .hm-cell:nth-child(2) {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .08), 0 4px 14px -6px rgba(0, 0, 0, .18) !important; }
+.hm-launch .hm-cell-ico {
+  width: 46px !important; height: 46px !important; border-radius: 15px !important; color: #fff !important;
+  background: rgba(255, 255, 255, .16) !important; box-shadow: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+.hm-launch .hm-cell-ico svg { filter: none; }
+.hm-launch .hm-cell > svg:last-child { width: 22px; height: 22px; padding: 0; background: none; box-shadow: none; opacity: .75 !important; }
+.hm-launch .hm-cell-name { margin-top: 22px !important; text-shadow: none; font-family: var(--font-ui) !important; font-weight: 700 !important; font-size: 22px !important; letter-spacing: -.015em !important; }
+.hm-launch .hm-cell-note { color: rgba(255, 255, 255, .72) !important; font-weight: 500 !important; }
+.hm-launch .hm-cell:active { transform: scale(.96); filter: brightness(.94); transition: transform .2s cubic-bezier(.3, .7, .4, 1), filter .2s; }
