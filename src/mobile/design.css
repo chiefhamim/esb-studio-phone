@@ -3180,3 +3180,15 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 .hold-danger-fill { position: absolute; inset: 0; transform-origin: left; transform: scaleX(var(--hold, 0)); background: var(--danger, #dc2626); pointer-events: none; }
 .hold-danger-txt { position: relative; font-variant-numeric: tabular-nums; }
 .hold-danger.is-holding .hold-danger-txt { color: color-mix(in srgb, #fff calc(var(--hold) * 100%), var(--danger, #dc2626)); }
+
+/* Engine in the bottom bar, option B: the same 56 × 32 pill as the other tabs, filled indigo with a white icon, its
+   label on the shared baseline (it no longer sits higher and taller than the rest) */
+.m-nav-item.is-primary .m-nav-pill {
+  width: 56px !important; height: 32px !important; min-height: 32px !important; max-height: 32px !important; aspect-ratio: auto !important;
+  margin-top: 0 !important; border-radius: 16px !important; background: var(--action) !important; color: #fff !important;
+  box-shadow: 0 4px 10px -4px color-mix(in srgb, var(--action) 70%, transparent) !important; }
+.m-nav-item.is-primary { justify-content: center !important; }
+.m-nav-item.is-primary .m-nav-label { margin-top: 0 !important; color: var(--action) !important; font-weight: 700 !important; }
+.m-nav-item.is-primary:active .m-nav-pill { transform: scale(.92) !important; }
+/* measured on the S25 Ultra: the Engine slot sat 4 px below the others (its slot centres a taller box); lift it onto the shared line */
+.m-nav-item.is-primary { position: relative; top: -4px; }
