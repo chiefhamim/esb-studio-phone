@@ -23,6 +23,7 @@ import { useStore } from '../../pc/store'
 import { CATEGORIES } from '../../pc/core/tokens'
 import type { HeroMode } from '../../pc/editorial/heroMode'
 import { syncPublished } from './publishedLive'
+import { rememberFbPost } from './fbLookup'
 
 export interface PublishOutcome { ok: boolean; msg: string; url?: string; fbUrl?: string; existingSlug?: string }
 
@@ -178,6 +179,7 @@ export async function runPublish(opts: { status: 'PUBLISHED' | 'DRAFT'; heroMode
       if (post.ok) {
         jobBy += ' + Facebook'
         fbUrl = post.url
+        rememberFbPost(result.slug ?? draft.slug, { url: post.url, when: new Date().toISOString() }) // so Published can open it later
         if (link && !opts.fbLink) fbNote += ' The article link was not added (that option is off).'
         if (link && opts.fbLink) {
           jl.step(jobId, 'Adding the article link as a comment')

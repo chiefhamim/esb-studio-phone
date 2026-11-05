@@ -9,16 +9,16 @@ import { useStoryQueue, storyTitle, STATUS_LABEL, STORY_STATUSES } from '../../p
 import type { StoryItem, StoryStatus } from '../../pc/editorial/storyQueue'
 import { CATEGORIES } from '../../pc/core/tokens'
 import { useWire, filterItems, relTime, sourceStatus, DEFAULT_INTERVAL } from '../../pc/editorial/wire'
-import type { LiveArticleSummary } from '../../pc/editorial/siteApi'
 import { getLinkFetchMode } from '../../platform/fetchGuarded'
 import { Banner, Button, Chip, Empty, ErrorState, IconBtn, Icon, MenuButton, Row, Segmented, Sheet, Skeleton, TopBar } from '../shell/ui'
 import type { MenuItem } from '../shell/ui'
 import { confirmAsk, snack, useOnline, useUi } from '../shell/core'
 import { useNav } from '../shell/nav'
-import { editLive, newStory, openStory, useDesk } from './deskStore'
+import { newStory, openStory, useDesk } from './deskStore'
 import type { HomeTab } from './deskStore'
 import { ago, hasStoryContent, hostOf } from './useStory'
 import { syncPublished } from './publishedLive'
+import { PublishedSheet, openPublishedItem } from './PublishedSheet'
 import { afterSlide } from '../shell/slide'
 import { publishedParts } from './publishedDate'
 import { WatchList, WatchSettingsSheet } from '../watch/WatchPanel'
@@ -105,9 +105,6 @@ function PublishedList({ active }: { active: boolean }) {
   // every visit refreshes quietly (at most every 20 s), so a story just published is there when you come back
   const lastLoad = useRef(0)
   useEffect(() => { if (active && online && state !== 'loading' && Date.now() - lastLoad.current > 20_000) { lastLoad.current = Date.now(); afterSlide(() => { window.setTimeout(() => void load(), 120) }) } }, [active, online]) // eslint-disable-line react-hooks/exhaustive-deps
-  const open = async (a: LiveArticleSummary) => {
-    if (await confirmAsk({ title: 'Open this article for editing?', body: `"${a.title}" opens as a story on the desk, linked to the live article: Publish will update it, never add a second copy. The story on the desk now stays in your list.`, confirm: 'Open for editing' })) void editLive(a)
-  }
   const shown = live.filter((a) => !q.trim() || a.title.toLowerCase().includes(q.trim().toLowerCase()) || a.slug.includes(q.trim().toLowerCase()))
   if (!online && !live.length) return <ErrorState title="You are offline" body="Published stories load from esbpowerline.com when the phone is online." onRetry={() => void load()} />
   if (state === 'loading' && !live.length) return <Skeleton rows={5} thumb />
@@ -123,7 +120,7 @@ function PublishedList({ active }: { active: boolean }) {
         {shown.slice(0, 60).map((a) => {
           const c = catOf(a.category)
           return (
-            <button key={a.slug || a.link} type="button" className="pb-row" onClick={() => { if (!busy) void open(a) }}>
+            <button key={a.slug || a.link} type="button" className="pb-row" onClick={() => { if (!busy) openPublishedItem(a) }}>
               <Thumb src={a.imageUrl} cat={a.category} />
               <span className="pb-txt">
                 <b className="pb-title" lang={/[ঀ-৿]/.test(a.title) ? 'bn' : undefined}>{a.title}</b>
@@ -321,6 +318,7 @@ export function Landing({ active }: { active: boolean }) {
       </div>
       <WireSourcesSheet />
       <WatchSettingsSheet />
+      <PublishedSheet />
     </>
   )
 }

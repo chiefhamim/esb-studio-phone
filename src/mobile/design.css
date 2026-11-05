@@ -2836,3 +2836,53 @@ html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-n
 @media (prefers-reduced-motion: reduce) { .me-pane-in-fwd, .me-pane-in-back, .me-pane-out-fwd, .me-pane-out-back { animation: none; } }
 /* each pane is its own compositor layer, painted once: the slide only moves finished layers */
 .me-stage > .me-pane { will-change: transform; transform: translateZ(0); }
+
+/* Published → tap a story: what you can do with it */
+.pbs { display: flex; flex-direction: column; gap: 14px; padding-bottom: 12px; }
+.pbs-head { display: flex; flex-direction: column; gap: 6px; }
+.pbs-kicker .cat-name { font: 700 11.5px/1.3 var(--font-ui) !important; letter-spacing: .07em !important; text-transform: uppercase; color: var(--cc) !important; }
+.pbs-title { margin: 0; font: 700 20px/1.28 var(--font-serif, Georgia, serif); color: var(--text-primary); text-wrap: balance; }
+.pbs-title[lang='bn'] { font-family: 'Hind Siliguri', var(--font-ui); line-height: 1.55; }
+.pbs-pics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pbs-pic { display: flex; flex-direction: column; gap: 6px; padding: 0; border: 0; background: none; text-align: left; color: var(--text-secondary); }
+.pbs-pic-img { display: grid; place-items: center; aspect-ratio: 4 / 5; border-radius: 14px; overflow: hidden; background: var(--fill); box-shadow: inset 0 0 0 1px var(--border-subtle, rgba(0,0,0,.06)); }
+.pbs-pic-img img { width: 100%; height: 100%; object-fit: cover; }
+.pbs-pic-empty { font: 500 13px/1.4 var(--font-ui); color: var(--text-tertiary, var(--text-secondary)); }
+.pbs-pic-label { display: inline-flex; align-items: center; gap: 5px; padding-left: 2px; font: 650 13px/1.3 var(--font-ui); }
+.pbs-pic:disabled { opacity: 1; }
+.pbs-note { margin: -4px 2px 0; font: 400 12.5px/1.45 var(--font-ui); color: var(--text-secondary); }
+.pbs-group { display: flex; flex-direction: column; border-radius: 16px; background: var(--fill); overflow: hidden; }
+.pbs-act { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 14px; border: 0; background: none; color: var(--text-primary); text-align: left; }
+.pbs-act + .pbs-act { border-top: .5px solid var(--border-subtle, rgba(0, 0, 0, .08)); }
+.pbs-act:active:not(:disabled) { background: var(--fill-active, rgba(0,0,0,.06)); }
+.pbs-act:disabled { opacity: .45; }
+.pbs-act > i { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: color-mix(in srgb, #0ea5e9 14%, transparent); color: #0284c7; }
+.pbs-act > i.is-fb { background: color-mix(in srgb, #1877f2 14%, transparent); color: #1877f2; }
+.pbs-act > i.is-edit { background: color-mix(in srgb, var(--action) 14%, transparent); color: var(--action); }
+.pbs-act > i.is-banner { background: color-mix(in srgb, #db2777 14%, transparent); color: #db2777; }
+.pbs-act > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pbs-act b { font: 650 15px/1.3 var(--font-ui); }
+.pbs-act small { font: 400 12.5px/1.4 var(--font-ui); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pbs-act > svg { flex: none; color: var(--text-tertiary, var(--text-secondary)); }
+.pbs-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* each image in its own shape: the website banner wide, the Facebook banner 4:5, the same height */
+.pbs-pics { grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); }
+.pbs-pic-img { aspect-ratio: auto; height: 168px; }
+
+/* ---- One container rhythm on every screen (the Wire rhythm): Engine, the five steps, Stories, Published, Wire ----
+   Page: 12 from the title bar to the first block, 12 between blocks.
+   Lists: 8 between cards (it was applied twice before: the list's gap plus a margin on each card).
+   Containers: 14 inside, 10 between their parts, radius 18. */
+.m-wrap.me-intake, .me-scroll > .m-wrap { gap: 12px !important; padding-top: 12px !important; }
+.m-wrap.me-home { gap: 12px !important; }
+.me-stack { gap: 10px !important; }
+.me-list { gap: 8px !important; }
+.me-listrow + .me-listrow { margin-top: 0 !important; }
+.me-card, .me-stack .me-card, .me-compose, .me-seo .ed-field, .me-seo .seo-ai, .me-seo .seo-checks, .me-social > *, .me-linkrow {
+  padding: 14px !important; border-radius: 18px !important; }
+.me-card { gap: 10px !important; }
+.me-compose .me-go { margin-top: 10px !important; }
+.me-desk-head { margin-bottom: 12px !important; gap: 12px !important; }
+.me-group { border-radius: 18px !important; }
+.me-desk .me-or { margin: 6px 0 2px !important; }
+.me-desk .me-or { margin: 14px 2px 8px !important; }
