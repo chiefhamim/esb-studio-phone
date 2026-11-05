@@ -78,7 +78,7 @@ export default function MobileApp() {
     if (!inEl || !outEl || !dim || isSliding() || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setLive(route); return }
     const dir = route === 'graphics' && from === 'editorial' ? 'up' : from === 'graphics' && route === 'editorial' ? 'down' : ORDER.indexOf(route) > ORDER.indexOf(from) ? 'fwd' : 'back'
     const topIsIn = dir === 'fwd' || dir === 'up'
-    const lay = (el: HTMLElement, z: number) => { el.style.cssText = 'opacity:1;position:absolute;inset:0;z-index:' + z + ';background:var(--surface-app);will-change:transform,opacity;' }
+    const lay = (el: HTMLElement, z: number) => { el.style.cssText = 'opacity:1;visibility:visible;position:absolute;inset:0;z-index:' + z + ';background:var(--surface-app);will-change:transform,opacity;' }
     lay(inEl, topIsIn ? 3 : 1); lay(outEl, topIsIn ? 1 : 3); dim.style.zIndex = '2'
     const vertical = dir === 'up' || dir === 'down'
     const o = { duration: vertical ? 340 : 260, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'both' as const }

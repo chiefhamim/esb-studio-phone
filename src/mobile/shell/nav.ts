@@ -17,6 +17,8 @@ interface NavState {
   settingsSection: string | null
   /** A request for the Editorial screen (e.g. Home's "Paste a link" opens Editorial intake with focus on the URL). */
   editorialIntent: { kind: 'new' | 'paste-link' | 'open'; at: number } | null
+  /** Editorial was opened from Home (its tiles, Continue, Recent): Back from the story or intake returns to Home in one step. */
+  editorialFromHome: boolean
   graphicsIntent: { kind: 'new' | 'photos' | 'export'; at: number; format?: string } | null
   intendEditorial: (kind: 'new' | 'paste-link' | 'open') => void
   intendGraphics: (kind: 'new' | 'photos' | 'export', format?: string) => void
@@ -25,14 +27,15 @@ interface NavState {
 export const useNav = create<NavState>((set) => ({
   route: 'home',
   backTo: null,
-  go: (route) => set((s) => ({ route, backTo: route === 'graphics' && s.route === 'editorial' ? 'editorial' : route === 'graphics' ? s.backTo : null })),
+  go: (route) => set((s) => ({ route, editorialFromHome: false, backTo: route === 'graphics' && s.route === 'editorial' ? 'editorial' : route === 'graphics' ? s.backTo : null })),
   back: () => set((s) => (s.route === 'graphics' && s.backTo ? { route: s.backTo, backTo: null } : { route: 'home', backTo: null })),
   settingsOpen: false,
   settingsSection: null,
   openSettings: (section) => set({ settingsOpen: true, settingsSection: section ?? null }),
   closeSettings: () => set({ settingsOpen: false, settingsSection: null }),
   editorialIntent: null,
+  editorialFromHome: false,
   graphicsIntent: null,
-  intendEditorial: (kind) => set({ route: 'editorial', editorialIntent: { kind, at: Date.now() } }),
+  intendEditorial: (kind) => set((s) => ({ route: 'editorial', editorialFromHome: s.route === 'home', editorialIntent: { kind, at: Date.now() } })),
   intendGraphics: (kind, format) => set((s) => ({ route: 'graphics', backTo: s.route === 'editorial' ? 'editorial' : s.backTo, graphicsIntent: { kind, at: Date.now(), format } })),
 }))

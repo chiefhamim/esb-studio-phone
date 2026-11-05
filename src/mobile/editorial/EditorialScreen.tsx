@@ -80,7 +80,12 @@ export default function EditorialScreen({ active }: ScreenProps) {
     return () => { clearInterval(t); window.removeEventListener('online', run); window.removeEventListener('offline', run) }
   }, [active, checkConnection])
 
-  useBackLayer(active && view !== 'home', () => useDesk.setState({ view: 'home', writing: false, editing: false }), 'screen')
+  useBackLayer(active && view !== 'home', () => {
+    const nav = useNav.getState()
+    // opened from Home: one step back to Home (the desk's landing is not slid through on the way)
+    if (nav.editorialFromHome) { useDesk.setState({ writing: false, editing: false }); nav.back(); return }
+    useDesk.setState({ view: 'home', writing: false, editing: false })
+  }, 'screen')
   useBackLayer(active && writing, () => useDesk.setState({ writing: false }), 'sheet')
   useUnsavedGuard(() => {
     const b = useDesk.getState().busy

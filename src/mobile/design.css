@@ -2717,14 +2717,15 @@ html[data-slide] :is(.m-view-fwd, .m-view-back) { animation: none !important; } 
 .me-continue .m-row-meta > span:last-child, .me-listrow .m-row-meta > span:last-child { white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .me-continue .m-row-meta { flex-wrap: nowrap !important; min-width: 0; }
 
-/* ---- page shift, final tuning: one even, swift curve; a touch of motion blur at peak speed that clears as the page lands ---- */
+/* ---- page shift, final tuning: one even, swift curve. Transform + opacity only: a blur here made the GPU filter two
+   full-screen layers every frame (50-90 ms frames on Back, measured 2026-11-06), so the "motion blur" was removed. ---- */
 html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-new(page) {
   animation-duration: 380ms !important; animation-timing-function: cubic-bezier(.3, .8, .25, 1) !important;
 }
-@keyframes pg-in-right { 0% { transform: translate3d(100%, 0, 0); filter: blur(3px); } 55% { filter: blur(.6px); } 100% { transform: none; filter: blur(0); } }
-@keyframes pg-out-left { 0% { transform: none; opacity: 1; filter: blur(0); } 45% { filter: blur(1.5px); } 100% { transform: translate3d(-30%, 0, 0); opacity: .5; filter: blur(2px); } }
-@keyframes pg-out-right { 0% { transform: none; filter: blur(0); } 45% { filter: blur(1.5px); } 100% { transform: translate3d(100%, 0, 0); filter: blur(3px); } }
-@keyframes pg-in-left { 0% { transform: translate3d(-30%, 0, 0); opacity: .5; filter: blur(2px); } 55% { filter: blur(.6px); } 100% { transform: none; opacity: 1; filter: blur(0); } }
+@keyframes pg-in-right { from { transform: translate3d(100%, 0, 0); } to { transform: none; } }
+@keyframes pg-out-left { from { transform: none; opacity: 1; } to { transform: translate3d(-30%, 0, 0); opacity: .5; } }
+@keyframes pg-out-right { from { transform: none; } to { transform: translate3d(100%, 0, 0); } }
+@keyframes pg-in-left { from { transform: translate3d(-30%, 0, 0); opacity: .5; } to { transform: none; opacity: 1; } }
 html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-new(page) { filter: none; }
 .m-view-fwd, .m-view-back, .m-fulldialog:has(.me-track5) { animation-duration: 380ms !important; animation-timing-function: cubic-bezier(.3, .8, .25, 1) !important; }
 
@@ -3396,3 +3397,16 @@ img.u-avatar { box-shadow: inset 0 0 0 .5px var(--m-hair); }
 .av-credit { margin: -4px 4px 0; font: 500 12.5px/1.4 var(--font-ui); color: var(--text-secondary); }
 .av-remove { align-self: center; color: var(--danger) !important; }
 
+
+/* ===================================================================== smooth Back (2026-11-06)
+   A screen inside Editorial keeps nothing after its slide: no held end frame, no standing will-change layer (the old
+   "both" fill kept a full-screen filter layer alive on every frame after the slide). The bottom bars are solid: at 94 %
+   the 22 px blur was barely visible and re-blurred whatever scrolled or slid under it, every frame. */
+.m-view-fwd, .m-view-back { animation-fill-mode: backwards !important; will-change: auto !important; }
+.m-navbar, .m-actionbar, .gx-dock, .m-navbar:has(.is-primary)::before {
+  background: var(--surface-panel) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+/* Screens you are not on are hidden, not faded to .001: kept "painted", all three screens (Home's photo, the Graphics
+   canvas and its dock, Editorial) were composited as separate layers on every frame. State and scroll stay (still mounted);
+   the route slide makes both screens visible for its run (MobileApp lay()). */
+.m-screens > .m-screen.is-off { visibility: hidden; }
