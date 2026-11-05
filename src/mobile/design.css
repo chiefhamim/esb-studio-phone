@@ -3286,3 +3286,13 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 .bp-which .bp-card .pcard-h { padding: 0 !important; margin: 0 0 12px !important; }
 .bp-which .bp-card .pcard-h > .btn { padding: 0 11px !important; font-size: 13px !important; }
 .bp-which .bp-card .pcard-h > .btn svg { width: 15px; height: 15px; }
+
+/* Check → SEO → Focus keyphrase: the same inner rhythm as "SEO by AI" (title at the card's 14 padding, 10 between parts)
+   and light, compact suggestion chips instead of 50 px pills */
+.ed-card-body.seo > .ed-field > .ed-field-row:first-child { margin-top: 0 !important; }
+.ed-card-body.seo > .ed-field { display: flex; flex-direction: column; gap: 10px; }
+.ed-card-body.seo > .ed-field > * { margin: 0 !important; }
+.seo-suggest { display: flex; flex-wrap: wrap; gap: 8px !important; margin: 2px 0 0 !important; }
+.seo-suggest .seo-chip { min-height: 34px !important; height: auto; padding: 6px 12px !important; border: 0 !important; border-radius: 10px !important;
+  background: var(--fill) !important; box-shadow: none !important; color: var(--text-primary) !important; font: 500 14px/1.35 var(--font-ui) !important; text-align: left; }
+.seo-suggest .seo-chip.on { background: var(--accent) !important; color: var(--on-accent, #fff) !important; font-weight: 600 !important; }
