@@ -170,7 +170,7 @@ export function PublishReview() {
     <FullDialog open={open} title={linked ? 'Update article' : 'Publish'} onClose={close} back sub={<StepSub />} under={<FlowTrack />}
       primary={<Button kind="text" disabled={blocked} onClick={() => void runPublish({ status: 'DRAFT', heroMode: hero, fbOn: false, fbLink })}>{linked ? 'Save as draft' : 'Save draft'}</Button>}
       footer={
-        P.result?.ok && !P.busy
+        P.result?.ok && P.result.status === 'PUBLISHED' && !P.busy
           ? <Button wide kind="filled" icon="home" onClick={doneHome}>Done · back to Home</Button>
           : <HoldToPublish label={verb} sub={willFb ? 'Website and Facebook' : 'esbpowerline.com'} disabled={blocked} busy={P.busy} busyLabel={linked ? 'Updating' : 'Publishing'}
               onFire={() => void runPublish({ status: 'PUBLISHED', heroMode: hero, fbOn: fbOn && !!fb, fbLink })} />

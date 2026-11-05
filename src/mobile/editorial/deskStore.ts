@@ -24,6 +24,7 @@ import { useStore } from '../../pc/store'
 import { CATEGORIES } from '../../pc/core/tokens'
 import { confirmAsk, snack } from '../shell/core'
 import { useNav } from '../shell/nav'
+import { usePublish } from './publish'
 
 export type View = 'home' | 'intake' | 'story'
 export type Tab = 'story' | 'details' | 'seo' | 'social' | 'preview'
@@ -390,14 +391,22 @@ export async function aiFixSocial() {
 }
 
 // ---------------------------------------------------------------- stories
+/** True (and says so) while a job is writing to the story on the desk: an AI or translation result, or a publish, would
+ *  otherwise land in whichever story is open when it finishes. Every switch, new story or removal of the open story asks. */
+export function storyLocked(): boolean {
+  if (!desk().busy && !usePublish.getState().busy) return false
+  snack(usePublish.getState().busy ? 'Wait for the publish to finish first' : 'Wait for the running job to finish, or cancel it, first')
+  return true
+}
+
 export function openStory(id: string) {
-  if (desk().busy) { snack('Wait for the running job to finish, or cancel it, first'); return }
+  if (storyLocked()) return
   useStoryQueue.getState().switchTo(id)
   useDesk.setState({ view: 'story', tab: 'story', notice: null, undo: null, seoFixNote: null, error: null, bodyMode: 'edit' })
 }
 
 export function newStory(to: View = 'story') {
-  if (desk().busy) { snack('Wait for the running job to finish, or cancel it, first'); return }
+  if (storyLocked()) return
   useStoryQueue.getState().newStory()
   if (ed().bannerLink) useStore.getState().newBanner(true)
   useDesk.setState({ view: to, tab: 'story', intakeTab: 'link', url: '', raw: '', doc: null, notice: null, undo: null, seoFixNote: null, error: null, bodyMode: 'edit' })
@@ -405,7 +414,7 @@ export function newStory(to: View = 'story') {
 
 /** Open an article that is live on esbpowerline.com for editing; Publish then updates it (never a duplicate). */
 export async function editLive(art: LiveArticleSummary) {
-  if (desk().busy) return
+  if (storyLocked()) return
   useDesk.setState({ busy: 'open' })
   try {
     const r = await openArticleForEdit(art)

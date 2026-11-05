@@ -35,7 +35,7 @@ import type { IconName } from '../shell/ui'
 import type { MenuItem } from '../shell/ui'
 import { confirmAsk, snack, useSizeClass, useUi } from '../shell/core'
 import { useNav } from '../shell/nav'
-import { aiFixSeo, aiFixSocial, aiWriteCaptions, aiWriteSeo, canCancel, cancelJob, newStory, retranslate, useDesk } from './deskStore'
+import { aiFixSeo, aiFixSocial, aiWriteCaptions, aiWriteSeo, canCancel, cancelJob, newStory, retranslate, storyLocked, useDesk } from './deskStore'
 import type { Tab } from './deskStore'
 import { BodyEditor } from './BodyEditor'
 import { JobProgress } from './JobProgress'
@@ -443,6 +443,7 @@ export function storyMenu(): MenuItem[] {
     { label: 'Facebook Page', icon: 'brandFacebook', onClick: () => nav.openSettings('facebook') },
     { divider: true, label: '', onClick: () => {} },
     { label: 'Remove this story', icon: 'trash', danger: true, onClick: async () => {
+      if (storyLocked()) return
       const id = useStoryQueue.getState().activeId
       if (!(await confirmAsk({ title: 'Remove this story?', body: 'Its draft is deleted from this phone. An article already on esbpowerline.com is not touched.', confirm: 'Remove', danger: true }))) return
       if (id) useStoryQueue.getState().remove(id); else useEditorialStore.getState().clear()

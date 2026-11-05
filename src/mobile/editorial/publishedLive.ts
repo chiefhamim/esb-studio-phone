@@ -38,9 +38,11 @@ export async function syncPublished(): Promise<{ ok: boolean; message: string }>
   try { list = await fromDatabase() } catch { list = null }
   if (!list) {
     // the database did not answer: the public feed (may be up to ~15 minutes behind)
+    const old = st.liveArticles
     await st.syncFromLiveFeed().catch(() => undefined)
     const after = useEditorialStore.getState().liveArticles
-    return after.length ? { ok: true, message: 'Updated from the site feed (it can lag a few minutes)' } : { ok: false, message: 'Could not reach esbpowerline.com. Check the connection and try again.' }
+    // the same list object back means the feed did not answer either: nothing was refreshed
+    return after.length && after !== old ? { ok: true, message: 'Updated from the site feed (it can lag a few minutes)' } : { ok: false, message: 'Could not reach esbpowerline.com. Check the connection and try again.' }
   }
   if (!list.length) return { ok: false, message: 'The site returned no published stories.' }
   const categories = [...new Set(list.map((a) => a.category))]

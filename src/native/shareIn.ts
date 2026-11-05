@@ -53,12 +53,17 @@ export function listenForIncoming(cb: (s: IncomingShare) => void): () => void {
   let handle: PluginListenerHandle | null = null
   let dead = false
   let busy = false
+  let again = false
   const pull = async () => {
-    if (busy) return
+    // a share that arrives while one is being taken is taken right after it (never dropped)
+    if (busy) { again = true; return }
     busy = true
     try {
-      const s = await takeIncoming()
-      if (s && !dead) cb(s)
+      do {
+        again = false
+        const s = await takeIncoming()
+        if (s && !dead) cb(s)
+      } while (again && !dead)
     } finally { busy = false }
   }
   void pull()

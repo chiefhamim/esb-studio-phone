@@ -34,6 +34,8 @@ function TB({ icon, text, label, on, disabled, onTap, group, primary }: { icon?:
   )
 }
 
+// one shared empty list: a fresh [] from a store selector re-renders (and can loop) on every store change
+const NO_IDEAS: NonNullable<ReturnType<typeof useEditorialStore.getState>['draft']['chartIdeas']> = []
 const TOOLS_POS_KEY = 'esb-phone/tools-offset'
 const readOffset = () => { try { return Math.min(0, Number(localStorage.getItem(TOOLS_POS_KEY)) || 0) } catch { return 0 } }
 
@@ -313,7 +315,7 @@ const toText = (c: Partial<ChartSpec>) => (c.labels && c.series?.length ? [['Lab
 export function ChartSheet({ ed }: { ed: Editor | null }) {
   const isOpen = useUi((s) => s.sheet === 'ed-chart')
   const ideaIx = useDesk((s) => s.chartIdea)
-  const ideas = useEditorialStore((s) => s.draft.chartIdeas ?? [])
+  const ideas = useEditorialStore((s) => s.draft.chartIdeas ?? NO_IDEAS)
   const cat = useCategory()
   const init = ideaIx != null ? ideas[ideaIx] : undefined
   const [type, setType] = useState<ChartType>('bar')
@@ -377,7 +379,7 @@ export function ChartSheet({ ed }: { ed: Editor | null }) {
 export function BodyEditor() {
   const body = useEditorialStore((s) => s.draft.body)
   const bodyHtml = useEditorialStore((s) => s.draft.bodyHtml)
-  const ideas = useEditorialStore((s) => s.draft.chartIdeas ?? [])
+  const ideas = useEditorialStore((s) => s.draft.chartIdeas ?? NO_IDEAS)
   const setField = useEditorialStore((s) => s.setDraftField)
   const editing = useDesk((s) => s.editing)
   const writing = useDesk((s) => s.writing)
@@ -404,7 +406,7 @@ export function BodyEditor() {
           <span className="me-meta"><Icon name="sparkle" size={14} /> AI chart idea{ideas.length > 1 ? 's' : ''} — numbers taken from the source</span>
           <div className="m-chips">
             {ideas.map((c, i) => (
-              <span key={i} className="me-idea">
+              <span key={`${i}-${c.title}`} className="me-idea">
                 <button type="button" className="m-chip" onClick={() => { useDesk.setState({ chartIdea: i }); useUi.getState().openSheet('ed-chart') }}><Icon name="chart" size={16} /><span>{c.title}</span></button>
                 <IconBtn icon="x" label={`Dismiss the chart idea ${c.title}`} onClick={() => setField('chartIdeas', ideas.filter((_, k) => k !== i))} />
               </span>

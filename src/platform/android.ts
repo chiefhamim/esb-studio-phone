@@ -61,5 +61,6 @@ export const androidPlatform: Platform = {
   async copyText(text) { try { await Clipboard.write({ string: text }); return true } catch { try { await navigator.clipboard.writeText(text); return true } catch { return false } } },
   fetchUrl,
   fetchImageData,
-  async openExternal(url) { window.open(url, '_system', 'noopener') },
+  // only web links leave the app (never javascript:, intent: or file: from a feed, the site or an API answer)
+  async openExternal(url) { if (/^https?:\/\//i.test(url)) window.open(url, '_system', 'noopener') },
 }

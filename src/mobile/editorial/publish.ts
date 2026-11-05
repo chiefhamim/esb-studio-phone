@@ -25,7 +25,7 @@ import type { HeroMode } from '../../pc/editorial/heroMode'
 import { syncPublished } from './publishedLive'
 import { rememberFbPost } from './fbLookup'
 
-export interface PublishOutcome { ok: boolean; msg: string; url?: string; fbUrl?: string; existingSlug?: string }
+export interface PublishOutcome { ok: boolean; msg: string; url?: string; fbUrl?: string; existingSlug?: string; /** what was asked for: only a PUBLISHED story leaves the desk */ status?: 'PUBLISHED' | 'DRAFT' }
 
 interface PubState {
   busy: boolean
@@ -81,7 +81,7 @@ export async function runPublish(opts: { status: 'PUBLISHED' | 'DRAFT'; heroMode
   const ed = useEditorialStore.getState()
   const draft = ed.draft
   const finish = (r: PublishOutcome, lastText: string) => {
-    usePublish.setState((s) => ({ result: r, last: { ...s.last, [storyId]: { ok: r.ok, at: Date.now(), text: lastText } } }))
+    usePublish.setState((s) => ({ result: { ...r, status: opts.status }, last: { ...s.last, [storyId]: { ok: r.ok, at: Date.now(), text: lastText } } }))
     // a story that went live shows in Published straight away (read from the database, not the lagging feed)
     if (r.ok && opts.status === 'PUBLISHED') void syncPublished()
   }
@@ -127,6 +127,12 @@ export async function runPublish(opts: { status: 'PUBLISHED' | 'DRAFT'; heroMode
         : ' The photo is a file on this phone the site cannot reach, so no image was attached — add one in the CMS.'
     }
 
+    // the story must still be the one on the desk (switching is blocked while this runs; this is the backstop)
+    if ((useStoryQueue.getState().activeId ?? '') !== storyId) {
+      jobError = 'Another story was opened while this one was being prepared. Nothing was sent. Open the story again, then publish.'
+      finish({ ok: false, msg: jobError }, 'Not sent — story changed')
+      return
+    }
     const payload = cmsPayload(opts.status, imageUrl)
     const q = useStoryQueue.getState()
     const cur = q.stories.find((x) => x.id === q.activeId)
@@ -203,7 +209,7 @@ export async function runPublish(opts: { status: 'PUBLISHED' | 'DRAFT'; heroMode
     }
     if (opts.status === 'PUBLISHED') useStoryQueue.getState().markPublished({ url: result.liveUrl, id: result.articleId, slug: result.slug })
     else if (result.updated) useStoryQueue.getState().linkArticle({ url: result.liveUrl, id: result.articleId, slug: result.slug ?? draft.slug })
-    useEditorialStore.getState().syncFromLiveFeed().catch(() => {})
+    if (opts.status !== 'PUBLISHED') void syncPublished()
   } catch (err) {
     jobError = (err as Error)?.message || 'Publish error'
     finish({ ok: false, msg: jobError }, 'Not saved — ' + jobError)

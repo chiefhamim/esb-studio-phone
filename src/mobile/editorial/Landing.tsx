@@ -102,7 +102,12 @@ function PublishedList({ active }: { active: boolean }) {
   // each story shows its Facebook 4:5 banner (portrait) when the Page has it; the website image otherwise
   const [fbPics, setFbPics] = useState<Record<string, FbPost>>({})
   const liveList = useEditorialStore((s) => s.liveArticles)
-  useEffect(() => { if (liveList.length) void matchFbPosts(liveList.slice(0, 60)).then(setFbPics) }, [liveList])
+  useEffect(() => {
+    if (!liveList.length) return
+    let live = true // an older match that answers late must not replace the newer list's pictures
+    matchFbPosts(liveList.slice(0, 60)).then((p) => { if (live) setFbPics(p) }).catch(() => undefined)
+    return () => { live = false }
+  }, [liveList])
   const live = useEditorialStore((s) => s.liveArticles)
   const online = useOnline()
   const busy = useDesk((s) => s.busy)
@@ -244,7 +249,7 @@ export function WireSourcesSheet() {
 type WireSource = 'watch' | 'feeds'
 const WIRE_SRC_KEY = 'esb-phone/wire/source'
 function WireTab({ onUse, active }: { onUse: (url: string) => void; active: boolean }) {
-  const [src, setSrc] = useState<WireSource>(() => (localStorage.getItem(WIRE_SRC_KEY) === 'feeds' ? 'feeds' : 'watch'))
+  const [src, setSrc] = useState<WireSource>(() => { try { return localStorage.getItem(WIRE_SRC_KEY) === 'feeds' ? 'feeds' : 'watch' } catch { return 'watch' } })
   const pick = (v: WireSource) => { setSrc(v); try { localStorage.setItem(WIRE_SRC_KEY, v) } catch { /* not kept */ } }
   return (
     <div className="ew-tab">

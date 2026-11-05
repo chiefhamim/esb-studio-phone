@@ -1,10 +1,11 @@
 // The work, as the app teaches it: Link -> Parse -> Banner -> Check -> Publish. Two small views of it:
-//  - PipelineStrip: the five steps with a marker on where you are (the new-story screen).
+//  - StepSub: the title-bar "Step n of 5" with a pull-down of every step.
 //  - StepTrack: four segments for a story in the list, driven by its status (draft = writing, review = checking, approved = ready to publish).
 import type { StoryStatus } from '../../pc/editorial/storyQueue'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import { useStoryQueue } from '../../pc/editorial/storyQueue'
 import { useState } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { Icon, Menu } from '../shell/ui'
 import type { MenuItem } from '../shell/ui'
 import { snack, useUi } from '../shell/core'
@@ -15,22 +16,10 @@ import { useNav } from '../shell/nav'
 
 const STEPS = ['Editorial', 'Parse', 'Banner', 'Check', 'Publish']
 
-export function PipelineStrip({ at, busy }: { at: number; busy?: boolean }) {
-  return (
-    <ol className="me-strip" aria-label="Steps">
-      {STEPS.map((s, i) => (
-        <li key={s} className={i < at ? 'is-done' : i === at ? 'is-now' + (busy ? ' is-busy' : '') : ''} aria-current={i === at ? 'step' : undefined}>
-          <i aria-hidden>{i < at ? <Icon name="check" size={12} /> : i + 1}</i>
-          <span>{s}</span>
-        </li>
-      ))}
-    </ol>
-  )
-}
-
 /** Where the story stands in the five steps, and how to move: one source for every view of the flow. */
 function useFlow() {
-  const d = useDesk()
+  // only the fields the flow reads: the whole desk store would re-render every screen on each keystroke in the intake box
+  const d = useDesk(useShallow((s) => ({ tab: s.tab, view: s.view, busy: s.busy, set: s.set })))
   const headline = useEditorialStore((s) => s.draft.headline)
   const body = useEditorialStore((s) => s.draft.body)
   const source = useEditorialStore((s) => s.source)
@@ -61,27 +50,6 @@ function useFlow() {
   }
   const bad = ready.blockers > 0
   return { at, done, go, toCheck, bad, onDesk, busy: !!d.busy }
-}
-
-/** The whole flow as five tappable steps (kept for wide screens). */
-export function FlowStrip({ compact }: { compact?: boolean }) {
-  const { at, done, go, toCheck, bad, onDesk, busy } = useFlow()
-  return (
-    <ol className={'me-strip is-live' + (compact ? ' is-compact' : '')} aria-label="Steps">
-      {STEPS.map((s, i) => {
-        const now = i === at
-        const dn = done[i] && !now
-        return (
-          <li key={s} className={(dn ? 'is-done' : now ? 'is-now' + (busy ? ' is-busy' : '') : '') + (!onDesk && i > 0 ? ' is-off' : '')}>
-            <button type="button" onClick={() => go(i)} aria-current={now ? 'step' : undefined} aria-label={`${s}${dn ? ', done' : now ? ', current' : ''}${i === 3 && !dn && toCheck > 0 ? `, ${toCheck} to fix` : ''}`}>
-              <i aria-hidden>{dn ? <Icon name="check" size={12} /> : i + 1}{i === 3 && onDesk && !dn && toCheck > 0 && <em className={'me-strip-badge is-' + (bad ? 'bad' : 'warn')}>{toCheck}</em>}</i>
-              <span>{s}</span>
-            </button>
-          </li>
-        )
-      })}
-    </ol>
-  )
 }
 
 /** Title-bar subtitle: "Step 3 of 5" with a pull-down of every step (ticks, the current one, the fix count). */

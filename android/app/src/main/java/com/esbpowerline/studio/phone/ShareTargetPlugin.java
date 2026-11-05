@@ -142,6 +142,9 @@ public class ShareTargetPlugin extends Plugin {
         for (Uri u : uris) {
             // Only content:// grants are read; never a file:// path another app names.
             if (!ContentResolver.SCHEME_CONTENT.equals(u.getScheme())) continue;
+            // Never this app's own provider: another app could name one of our private cache files and have it "shared" back in.
+            String auth = u.getAuthority();
+            if (auth == null || auth.startsWith(ctx.getPackageName())) continue;
             String mime = cr.getType(u);
             if (mime == null || mime.equals("application/octet-stream")) mime = fallbackType;
             if (mime == null) continue;

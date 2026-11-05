@@ -52,5 +52,5 @@ export const webPlatform: Platform = {
     return guardedFetch(url, opts)
   },
   fetchImageData: (url, opts) => guardedImage(url, opts),
-  async openExternal(url) { window.open(url, '_blank', 'noopener') },
+  async openExternal(url) { if (/^https?:\/\//i.test(url)) window.open(url, '_blank', 'noopener') },
 }

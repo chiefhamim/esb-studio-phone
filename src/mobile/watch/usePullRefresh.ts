@@ -60,7 +60,7 @@ export function usePullRefresh(onRefresh: () => Promise<unknown> | void, enabled
       if (dist >= PULL_TRIGGER) {
         setBusy(true)
         paint(0, true)
-        Promise.resolve(cb.current()).finally(() => { setBusy(false); paint(0, true) })
+        Promise.resolve().then(() => cb.current()).catch(() => undefined).finally(() => { setBusy(false); paint(0, true) })
       } else paint(0, true)
       dist = 0
     }

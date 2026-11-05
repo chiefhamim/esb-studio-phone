@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from './ui'
+import { useBackLayer } from './core'
 import { downloadAndApplyUpdate, watchForUpdatesOnResume, type AvailableUpdate } from '../../platform/ota'
 
 export function UpdateDialog() {
@@ -24,6 +25,9 @@ export function UpdateDialog() {
     })
   }, [])
 
+  // Back closes the offer (not while a bundle is being written)
+  useBackLayer(!!update && !dismissed && !downloading, () => setDismissed(true), 'dialog')
+
   if (!update || dismissed) return null
 
   const onUpdate = async () => {
@@ -32,6 +36,8 @@ export function UpdateDialog() {
     setProgress(0)
     try {
       await downloadAndApplyUpdate(update, (pct) => setProgress(pct))
+      // the APK is handed to Android's own installer: this dialog's part is done (cancelling there must not leave it stuck)
+      if (update.needsApk) { setDownloading(false); setDismissed(true) }
     } catch (err: unknown) {
       setDownloading(false)
       const msg = err instanceof Error ? err.message : String(err)

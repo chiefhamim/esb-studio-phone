@@ -7,21 +7,13 @@ import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import { aiFor, loadAiSettings, providerMeta } from '../../pc/editorial/aiProviders'
 import type { ScreenProps } from '../shell/nav'
 import { useNav } from '../shell/nav'
-import { useDesk } from '../editorial/deskStore'
+import { storyLocked, useDesk } from '../editorial/deskStore'
 import { confirmAsk, snack, useOnline } from '../shell/core'
 import { Button, Empty, Icon, Menu, Row } from '../shell/ui'
 import { openAccount } from '../shell/AccountSheet'
 import { ProviderMark, brandColor } from '../shell/marks'
+import { ago } from '../editorial/useStory'
 import './home.css'
-
-function ago(t: number): string {
-  const s = Math.round((Date.now() - t) / 1000)
-  if (s < 60) return 'just now'
-  if (s < 3600) return `${Math.floor(s / 60)} min ago`
-  if (s < 86400) return `${Math.floor(s / 3600)} h ago`
-  if (s < 7 * 86400) return `${Math.floor(s / 86400)} d ago`
-  return new Date(t).toLocaleDateString()
-}
 
 
 /** The PC's story title, or (for a story that only has its source so far) the source's first words. */
@@ -59,6 +51,7 @@ export function StoryRow({ s, onOpen, active }: { s: StoryItem; onOpen: () => vo
   const [menuAt, setMenuAt] = useState<HTMLElement | null>(null)
   const hold = useHold(setMenuAt)
   const remove = async () => {
+    if (s.id === useStoryQueue.getState().activeId && storyLocked()) return
     if (await confirmAsk({ title: 'Remove this story?', body: `"${title}" and its draft are deleted from this phone. An article already on esbpowerline.com is not touched.`, confirm: 'Remove', danger: true })) {
       useStoryQueue.getState().remove(s.id)
       snack('Story removed')
@@ -118,7 +111,7 @@ export default function HomeScreen({ active }: ScreenProps) {
 
   useEffect(() => { if (active) void checkConnection() }, [active, checkConnection])
 
-  const open = (id: string) => { useStoryQueue.getState().switchTo(id); nav.intendEditorial('open') }
+  const open = (id: string) => { if (id !== activeId && storyLocked()) return; useStoryQueue.getState().switchTo(id); nav.intendEditorial('open') }
   const name = session ? (session.name || session.email).split(/[\s@]/)[0] : ''
   const siteState = !online ? { dot: 'off', text: 'Offline' } : !session ? { dot: 'warn', text: 'Not signed in' } : site.connected ? { dot: 'ok', text: 'Site connected' } : site.sessionEnded ? { dot: 'warn', text: 'Sign in again' } : { dot: 'warn', text: 'Site unreachable' }
   const ai = loadAiSettings()
@@ -166,6 +159,7 @@ export default function HomeScreen({ active }: ScreenProps) {
           </nav>
 
           {current && <ContinueCard title={phoneStoryTitle(current)} onOpen={() => nav.intendEditorial('open')} onRemove={async () => {
+            if (storyLocked()) return
             if (await confirmAsk({ title: 'Remove this story?', body: `"${phoneStoryTitle(current)}" and its draft are deleted from this phone. An article already on esbpowerline.com is not touched.`, confirm: 'Remove', danger: true })) {
               useStoryQueue.getState().remove(current.id); snack('Story removed')
             }

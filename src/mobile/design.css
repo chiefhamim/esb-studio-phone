@@ -3348,8 +3348,8 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
    Sheets, confirm dialogs, the update dialog, ⋯ menus and dropdown lists all sit over the same frosted glass: the page
    behind softly blurred and slightly dimmed, so the pop-up floats. Menus use a lighter frost so you still see where
    they came from. Only opacity fades in (blur is never animated, which keeps it smooth at 120 Hz). */
-:root { --frost: blur(18px) saturate(150%); --frost-tint: rgba(28, 22, 16, .26); --frost-light: blur(12px) saturate(140%); --frost-light-tint: rgba(28, 22, 16, .12); }
-:root[data-theme='dark'] { --frost-tint: rgba(0, 0, 0, .46); --frost-light-tint: rgba(0, 0, 0, .28); }
+:root { --frost: blur(4px) saturate(115%); --frost-tint: rgba(28, 22, 16, .22); --frost-light: blur(2px); --frost-light-tint: rgba(28, 22, 16, .08); }
+:root[data-theme='dark'] { --frost-tint: rgba(0, 0, 0, .42); --frost-light-tint: rgba(0, 0, 0, .22); }
 .m-scrim, .gx-dropscrim {
   background: var(--frost-tint) !important;
   -webkit-backdrop-filter: var(--frost) !important; backdrop-filter: var(--frost) !important;
@@ -3362,9 +3362,6 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 @media (prefers-reduced-transparency: reduce) {
   .m-scrim, .gx-dropscrim, .m-menu-scrim { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
-/* frost toned down: a soft haze, the page behind stays readable */
-:root { --frost: blur(4px) saturate(115%); --frost-tint: rgba(28, 22, 16, .22); --frost-light: blur(2px); --frost-light-tint: rgba(28, 22, 16, .08); }
-:root[data-theme='dark'] { --frost-tint: rgba(0, 0, 0, .42); --frost-light-tint: rgba(0, 0, 0, .22); }
 
 /* ===================================================================== profile picture (preset avatars) */
 .u-avatar { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: var(--fill); }

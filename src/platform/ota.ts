@@ -5,6 +5,25 @@ import { App } from '@capacitor/app'
 /** Where updates are published (Cloudflare, tools/release.mjs). Not GitHub, not Capgo's service. */
 export const UPDATE_HOST = 'https://esb-studio-updates.hamim2964.workers.dev'
 
+/** The release signing key (Ed25519, public half). The private half lives only on the release PC
+ *  (~/.esb-ota/ed25519-private.pem, tools/release.mjs), never on the update host: whoever controls the host can swap a
+ *  file and its sha256, but cannot sign it, so a swapped update is refused. */
+const OTA_PUBLIC_KEY = '4OXe45T/O6IbbBYk++MoFqCEOG2rwbAKqa/xzJOdhnA='
+
+/** The exact text a release signs (tools/release.mjs builds the same). */
+export const signedText = (version: string, file: { file: string; sha256: string }) => `esb-ota-v1\n${version}\n${file.file}\n${file.sha256}`
+
+const b64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0))
+async function signatureOk(text: string, sig: string | undefined): Promise<boolean> {
+  if (!sig) return false
+  try {
+    const key = await crypto.subtle.importKey('raw', b64(OTA_PUBLIC_KEY), { name: 'Ed25519' }, false, ['verify'])
+    return await crypto.subtle.verify({ name: 'Ed25519' }, key, b64(sig), new TextEncoder().encode(text))
+  } catch {
+    return false
+  }
+}
+
 export interface AvailableUpdate {
   version: string
   url: string
@@ -16,8 +35,8 @@ export interface AvailableUpdate {
 
 interface Manifest {
   version: string
-  bundle?: { file: string; sha256: string }
-  apk?: { file: string; sha256: string }
+  bundle?: { file: string; sha256: string; sig?: string }
+  apk?: { file: string; sha256: string; sig?: string }
   /** Oldest installed app version that can take the web bundle; older installs need the APK. */
   minNative?: string
   message?: string
@@ -79,6 +98,11 @@ export async function checkForUpdate(): Promise<AvailableUpdate | null> {
     const needsApk = !!m.minNative && isNewer(m.minNative, native)
     const file = needsApk ? m.apk : m.bundle
     if (!file) return null
+    // an unsigned or wrongly signed release is never offered (see OTA_PUBLIC_KEY)
+    if (!/^[0-9a-f]{64}$/.test(file.sha256) || !(await signatureOk(signedText(m.version, file), file.sig))) {
+      console.warn('Update refused: the release signature did not verify')
+      return null
+    }
     return { version: m.version, url: `${UPDATE_HOST}/${file.file}`, checksum: file.sha256, message: m.message, needsApk }
   } catch (err) {
     console.warn('Update check failed:', err)
@@ -93,16 +117,11 @@ export async function downloadAndApplyUpdate(
 ): Promise<void> {
   // A native change cannot be swapped in silently: hand the APK to Android, which shows its own Install confirmation.
   if (update.needsApk) { window.open(update.url, '_system'); return }
-  let sub: { remove: () => Promise<void> } | null = null
-  if (onProgress) {
-    sub = await CapacitorUpdater.addListener('download', (ev) => {
-      onProgress(Math.round(ev.percent || 0))
-    })
-  }
-
   // An update replaces the whole web layer, which can read every secret the app holds: refuse one the server did not give a checksum for.
   if (!update.checksum) throw new Error('This update has no integrity checksum, so it was not installed.')
+  let sub: { remove: () => Promise<void> } | null = null
   try {
+    if (onProgress) sub = await CapacitorUpdater.addListener('download', (ev) => onProgress(Math.round(ev.percent || 0)))
     const bundle = await CapacitorUpdater.download({
       url: update.url,
       version: update.version,

@@ -2,8 +2,9 @@
 // Home · Editorial · Graphics (bottom bar on phones, navigation rail from 600 dp). Screens stay mounted so the editor,
 // the canvas and their undo history survive switching. Android back: menu -> sheet -> dialog -> screen -> home ->
 // minimise (never exits; work is autosaved, and an unfinished job asks first).
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
+import { storageError } from '../platform/storage'
 import { App as CapApp } from '@capacitor/app'
 import { useStore } from '../pc/store'
 import { CATEGORIES } from '../pc/core/tokens'
@@ -30,7 +31,8 @@ import { useShellStore } from '../pc/shell/shellStore'
 import HomeScreen from './home/HomeScreen'
 import EditorialScreen from './editorial/EditorialScreen'
 import GraphicsScreen from './graphics/GraphicsScreen'
-import SettingsScreen from './settings/SettingsScreen'
+// Settings loads on first open (it is not part of start-up)
+const SettingsScreen = lazy(() => import('./settings/SettingsScreen'))
 import './design.css' // last: the one design file (scales, look, motion, controls) every screen follows
 
 // The bar reads left to right as the work does: find a story (Wire) -> start it (the raised Link button) -> work on it (Stories) -> done (Published).
@@ -165,7 +167,11 @@ export default function MobileApp() {
 
   // a background save that failed is said out loud (never a silent "saved")
   useEffect(() => {
-    const on = (e: Event) => snack(`Could not save on the phone: ${String((e as CustomEvent).detail)}`, { tone: 'error', ms: 8000 })
+    const say = (t: string) => snack(/^Could not/.test(t) ? t : `Could not save on the phone: ${t}`, { tone: 'error', ms: 8000 })
+    const on = (e: Event) => say(String((e as CustomEvent).detail))
+    // a load that failed at start-up happened before this listener existed: say it now
+    const early = storageError()
+    if (early) say(early)
     window.addEventListener('esb-storage-error', on)
     return () => window.removeEventListener('esb-storage-error', on)
   }, [])
@@ -216,7 +222,7 @@ export default function MobileApp() {
         <div className={'m-screen' + (route === 'graphics' ? '' : ' is-off')} ref={(e) => { screenEls.current.graphics = e }} inert={route !== 'graphics'}><GraphicsScreen active={liveRoute === 'graphics'} /></div>
       </div>
       {!rail && <NavBar items={NAV} value={navValue} onChange={onNav} />}
-      {settingsOpen && <SettingsScreen onClose={closeSettings} />}
+      {settingsOpen && <Suspense fallback={null}><SettingsScreen onClose={closeSettings} /></Suspense>}
       <AccountSheet />
       <AvatarSheet />
       <UiHost />

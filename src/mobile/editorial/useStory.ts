@@ -98,5 +98,7 @@ export function ago(t: number, now = Date.now()): string {
   if (m < 60) return `${m} min ago`
   const h = Math.round(m / 60)
   if (h < 24) return `${h} h ago`
+  const d = Math.round(h / 24)
+  if (d < 7) return `${d} d ago`
   return new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }

@@ -21,13 +21,39 @@ function tablerIcons(): Plugin {
   }
 }
 
+// Release builds only (dev keeps Vite's inline refresh script): no inline or remote script can run, so an HTML injection
+// from a feed, the site or an AI answer cannot reach the native bridge (secure storage, publish). Network and images stay
+// open: the app talks to many hosts (site, AI providers, Facebook, feeds) and those calls carry no script.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval'",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src * data: blob:",
+  "media-src * data: blob:",
+  "font-src 'self' data: https:",
+  "connect-src * data: blob:",
+  "frame-src 'self' about: blob: https:",
+].join('; ')
+function contentSecurityPolicy(): Plugin {
+  return {
+    name: 'csp',
+    apply: 'build',
+    transformIndexHtml: (html) => html.replace('<head>', `<head>
+    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`),
+  }
+}
+
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
 
 // The vendored PC code (src/pc, see tools/sync-pc.mjs) reads __APP_VERSION__ and talks to window.esb; the phone
 // installs its own window.esb (src/platform/esbShim.ts) before any vendored module runs.
 export default defineConfig({
   base: './',
-  plugins: [tablerIcons(), pcCssScope(), react()],
+  plugins: [tablerIcons(), pcCssScope(), react(), contentSecurityPolicy()],
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   build: { chunkSizeWarningLimit: 2500 },
 })
