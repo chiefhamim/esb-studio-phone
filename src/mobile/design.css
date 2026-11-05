@@ -3212,3 +3212,5 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 .pbs-group, .pbs-head { border-radius: 22px; }
 .pbs-group { background: var(--surface-panel) !important; box-shadow: var(--drop-2); }
 .pbs-note { margin: -2px 4px 0 !important; }
+/* the headline uses the full width: no balanced wrapping (it evened the lines out and left space on the right) */
+.pbs-title { text-wrap: wrap !important; max-width: none !important; width: 100%; }
