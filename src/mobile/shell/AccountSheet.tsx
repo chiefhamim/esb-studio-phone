@@ -12,6 +12,17 @@ import { useOnline, useUi } from './core'
 import { Icon, Segmented, Sheet, type IconName } from './ui'
 import './account.css'
 
+/** Change the theme smoothly: the slider finishes its glide first, then the new colours land in one frame with every
+ *  colour transition switched off (dozens of elements each animating their own colour was the clunky part). */
+function switchTheme(v: ThemePref) {
+  window.setTimeout(() => {
+    const root = document.documentElement
+    root.dataset.vtTheme = '1'
+    setThemePref(v)
+    requestAnimationFrame(() => requestAnimationFrame(() => { delete root.dataset.vtTheme }))
+  }, 260)
+}
+
 export function openAccount() { useUi.getState().openSheet('account') }
 
 function Tile({ icon, title, meta, trail, onClick }: { icon: IconName; title: string; meta?: string; trail?: React.ReactNode; onClick?: () => void }) {
@@ -90,7 +101,7 @@ export default function AccountSheet() {
 
         <h3 className="ac-h">Appearance</h3>
         <div className="ac-card ac-pad">
-          <Segmented<ThemePref> label="Theme" value={pref} onChange={(v) => { setPref(v); setThemePref(v) }} options={[
+          <Segmented<ThemePref> label="Theme" value={pref} onChange={(v) => { setPref(v); switchTheme(v) }} options={[
             { value: 'auto', label: 'Auto', icon: 'chip' },
             { value: 'light', label: 'Light', icon: 'sun' },
             { value: 'dark', label: 'Dark', icon: 'moon' },

@@ -2975,3 +2975,40 @@ html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-n
 .hm-launch .hm-cell-name { margin-top: 22px !important; text-shadow: none; font-family: var(--font-ui) !important; font-weight: 700 !important; font-size: 22px !important; letter-spacing: -.015em !important; }
 .hm-launch .hm-cell-note { color: rgba(255, 255, 255, .72) !important; font-weight: 500 !important; }
 .hm-launch .hm-cell:active { transform: scale(.96); filter: brightness(.94); transition: transform .2s cubic-bezier(.3, .7, .4, 1), filter .2s; }
+
+/* Home tiles, One UI tonal colours: a soft tinted card, the colour on the icon, dark text (light theme); a deep tone
+   of the same colour with light text (dark theme). Engine = the app's indigo (the Engine button), Banner = ESB orange. */
+.hm-launch .hm-cell:nth-child(1) { --t: #4f46e5; --t-soft: #e9e7ff; --t-deep: #2a2670; }
+.hm-launch .hm-cell:nth-child(2) { --t: #ea6c0a; --t-soft: #ffeadb; --t-deep: #5c2a07; }
+.hm-launch .hm-cell:nth-child(1), .hm-launch .hm-cell:nth-child(2) { background: var(--t-soft) !important; }
+.hm-launch .hm-cell .hm-cell-ico { background: var(--t) !important; color: #fff !important; }
+.hm-launch .hm-cell .hm-cell-name { color: #17171c !important; }
+.hm-launch .hm-cell .hm-cell-note { color: color-mix(in srgb, #17171c 62%, var(--t)) !important; }
+.hm-launch .hm-cell > svg:last-child { color: var(--t) !important; opacity: 1 !important; }
+.hm-launch .hm-cell, .hm-launch .hm-cell:nth-child(1), .hm-launch .hm-cell:nth-child(2) { box-shadow: 0 1px 2px rgba(0, 0, 0, .05) !important; }
+:root[data-theme='dark'] .hm-launch .hm-cell:nth-child(1), :root[data-theme='dark'] .hm-launch .hm-cell:nth-child(2) { background: var(--t-deep) !important; }
+:root[data-theme='dark'] .hm-launch .hm-cell .hm-cell-name { color: #fff !important; }
+:root[data-theme='dark'] .hm-launch .hm-cell .hm-cell-note { color: rgba(255, 255, 255, .7) !important; }
+:root[data-theme='dark'] .hm-launch .hm-cell > svg:last-child { color: rgba(255, 255, 255, .75) !important; }
+
+/* Home tiles: the same card as "Site connected" and "Continue where you left off" (same surface, same shadow, light and
+   dark); the colour lives only in the icon and the arrow. Engine indigo, Banner ESB orange. */
+.hm-launch .hm-cell:nth-child(1), .hm-launch .hm-cell:nth-child(2),
+:root[data-theme='dark'] .hm-launch .hm-cell:nth-child(1), :root[data-theme='dark'] .hm-launch .hm-cell:nth-child(2) { background: var(--surface-panel) !important; }
+.hm-launch .hm-cell, .hm-launch .hm-cell:nth-child(1), .hm-launch .hm-cell:nth-child(2) { box-shadow: var(--e1) !important; }
+.hm-launch .hm-cell .hm-cell-name, :root[data-theme='dark'] .hm-launch .hm-cell .hm-cell-name { color: var(--text-primary) !important; }
+.hm-launch .hm-cell .hm-cell-note, :root[data-theme='dark'] .hm-launch .hm-cell .hm-cell-note { color: var(--text-secondary) !important; }
+.hm-launch .hm-cell > svg:last-child, :root[data-theme='dark'] .hm-launch .hm-cell > svg:last-child { color: var(--t) !important; }
+.hm-launch .hm-cell .hm-cell-ico { background: var(--t) !important; box-shadow: 0 4px 10px -4px color-mix(in srgb, var(--t) 60%, transparent) !important; }
+/* Engine / Banner: literally the "Site connected" / "Gemini" chip style: same surface, no border, the same drop shadow
+   (--drop-2) and the same pressed shadow */
+.hm-launch .hm-cell, .hm-launch .hm-cell:nth-child(1), .hm-launch .hm-cell:nth-child(2) { border: 0 !important; box-shadow: var(--drop-2) !important; }
+.hm-launch .hm-cell:active { box-shadow: 0 1px 2px rgba(20, 20, 50, .12) !important; filter: none; }
+
+/* Theme switch (AccountSheet.switchTheme): the new colours land in one frame; nothing animates its own colour */
+html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::after { transition: none !important; }
+
+/* Account sheet: as tall as its content, no taller. The credits line ends the sheet with the same space below it as
+   there is above the "Account" title (40 + the gesture bar), so the sheet is balanced top and bottom. */
+.m-sheet-half[aria-label='Account'] { height: auto !important; max-height: calc(100dvh - var(--m-safe-top) - 12px) !important; }
+.m-sheet[aria-label='Account'] .m-sheet-body { padding-bottom: calc(12px + var(--m-safe-bottom)) !important; }

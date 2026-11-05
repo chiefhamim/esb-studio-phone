@@ -283,7 +283,7 @@ export function Landing({ active }: { active: boolean }) {
   return (
     <>
       <TopBar title={TAB_TITLE[homeTab]} sub={site.connected ? undefined : <><i className="me-dot" aria-hidden />esbpowerline.com not reachable</>}
-        actions={<IconBtn icon="activity" label="Activity" onClick={() => useUi.getState().openSheet('ed-activity')} />} overflow={homeMenu()} />
+        overflow={homeMenu()} />
       <div className="me-stage">
       {opened.has('stories') && (
         <div {...pane('stories')}>
