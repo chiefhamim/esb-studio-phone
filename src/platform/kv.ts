@@ -16,7 +16,14 @@ function open(): Promise<IDBDatabase | null> {
     if (typeof indexedDB === 'undefined') { resolve(null); return }
     const req = indexedDB.open(DB, 1)
     req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE) }
-    req.onsuccess = () => resolve(req.result)
+    req.onsuccess = () => {
+      const db = req.result
+      // Android closes IndexedDB connections behind the app (backgrounding, low memory): forget a closed one so the next
+      // call reopens instead of failing every save until the app restarts
+      db.onclose = () => { dbp = null }
+      db.onversionchange = () => { db.close(); dbp = null }
+      resolve(db)
+    }
     // a failure is not remembered: the next call tries again instead of living on RAM for the rest of the session
     req.onerror = () => { dbp = null; resolve(null) }
     req.onblocked = () => { dbp = null; resolve(null) }
@@ -24,7 +31,7 @@ function open(): Promise<IDBDatabase | null> {
   return dbp
 }
 
-function tx<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<T>): Promise<T | undefined> {
+function txOnce<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<T>): Promise<T | undefined> {
   return open().then((db) => new Promise<T | undefined>((resolve, reject) => {
     if (!db) { resolve(undefined); return }
     const t = db.transaction(STORE, mode)
@@ -33,6 +40,14 @@ function tx<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<
     t.onerror = () => reject(t.error ?? new Error('IndexedDB write failed'))
     t.onabort = () => reject(t.error ?? new Error('IndexedDB write aborted (storage full?)'))
   }))
+}
+
+/** One retry on a fresh connection: a transaction on a connection Android has closed throws (InvalidStateError / TypeError). */
+async function tx<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<T>): Promise<T | undefined> {
+  try { return await txOnce(mode, run) } catch (e) {
+    dbp = null
+    try { return await txOnce(mode, run) } catch { throw e }
+  }
 }
 
 export async function kvGet(key: string): Promise<string | null> {

@@ -19,6 +19,7 @@ import { useNav } from '../shell/nav'
 import { editLive, newStory, openStory, useDesk } from './deskStore'
 import type { HomeTab } from './deskStore'
 import { ago, hasStoryContent, hostOf } from './useStory'
+import { syncPublished } from './publishedLive'
 
 export function StatusChip({ s }: { s: StoryStatus }) {
   return <span className={'me-status s-' + s}>{STATUS_LABEL[s]}</span>
@@ -88,13 +89,15 @@ function StoriesList() {
 
 function PublishedList({ active }: { active: boolean }) {
   const live = useEditorialStore((s) => s.liveArticles)
-  const sync = useEditorialStore((s) => s.syncFromLiveFeed)
   const online = useOnline()
   const busy = useDesk((s) => s.busy)
   const [state, setState] = useState<'idle' | 'loading' | 'done'>(live.length ? 'done' : 'idle')
   const [q, setQ] = useState('')
-  const load = async () => { setState('loading'); try { await sync() } finally { setState('done') } }
-  useEffect(() => { if (active && state === 'idle' && online) void load() }, [active, state, online]) // eslint-disable-line react-hooks/exhaustive-deps
+  // quiet on the automatic first load; a tap on sync always says what happened
+  const load = async (said = false) => { setState('loading'); try { const r = await syncPublished(); if (said) snack(r.message, r.ok ? undefined : { tone: 'error' }) } finally { setState('done') } }
+  // every visit refreshes quietly (at most every 20 s), so a story just published is there when you come back
+  const lastLoad = useRef(0)
+  useEffect(() => { if (active && online && state !== 'loading' && Date.now() - lastLoad.current > 20_000) { lastLoad.current = Date.now(); void load() } }, [active, online]) // eslint-disable-line react-hooks/exhaustive-deps
   const open = async (a: LiveArticleSummary) => {
     if (await confirmAsk({ title: 'Open this article for editing?', body: `"${a.title}" opens as a story on the desk, linked to the live article: Publish will update it, never add a second copy. The story on the desk now stays in your list.`, confirm: 'Open for editing' })) void editLive(a)
   }
@@ -107,7 +110,7 @@ function PublishedList({ active }: { active: boolean }) {
       {!online && <Banner tone="warn">Offline — this is the list from the last sync.</Banner>}
       <div className="me-searchrow">
         <label className="me-search"><Icon name="search" size={18} /><input type="search" className="m-input" placeholder="Search published" aria-label="Search published stories" value={q} onChange={(e) => setQ(e.target.value)} /></label>
-        <IconBtn icon="refresh" label="Sync from esbpowerline.com" onClick={() => void load()} disabled={state === 'loading'} className={state === 'loading' ? 'me-spin' : ''} />
+        <IconBtn icon="refresh" label="Sync from esbpowerline.com" onClick={() => void load(true)} disabled={state === 'loading'} className={state === 'loading' ? 'me-spin' : ''} />
       </div>
       <div className="me-list">
         {shown.slice(0, 60).map((a) => {

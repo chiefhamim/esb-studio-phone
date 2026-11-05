@@ -30,7 +30,7 @@ export function IconBtn({ icon, label, onClick, active, disabled, badge, classNa
 }
 
 // ---------------------------------------------------------------- top app bar (one row)
-export function TopBar({ title, sub, leading, actions, overflow }: { title: ReactNode; sub?: ReactNode; leading?: ReactNode; actions?: ReactNode; overflow?: MenuItem[] }) {
+export function TopBar({ title, sub, leading, actions, overflow, under }: { title: ReactNode; sub?: ReactNode; leading?: ReactNode; actions?: ReactNode; overflow?: MenuItem[]; under?: ReactNode }) {
   return (
     <header className="m-topbar">
       <div className="m-topbar-row">
@@ -44,6 +44,7 @@ export function TopBar({ title, sub, leading, actions, overflow }: { title: Reac
           {overflow && overflow.length > 0 && <MenuButton icon="more" label="More options" items={overflow} />}
         </div>
       </div>
+      {under}
     </header>
   )
 }
@@ -158,17 +159,18 @@ export function Sheet({ id, title, children, footer, actions, initial = 'half', 
 }
 
 // ---------------------------------------------------------------- full-screen dialog (long forms: publish, export, source)
-export function FullDialog({ open, title, onClose, primary, children, footer }: { open: boolean; title: ReactNode; onClose: () => void; primary?: ReactNode; children: ReactNode; footer?: ReactNode }) {
+export function FullDialog({ open, title, onClose, primary, children, footer, under, sub, back }: { open: boolean; title: ReactNode; onClose: () => void; primary?: ReactNode; children: ReactNode; footer?: ReactNode; under?: ReactNode; sub?: ReactNode; back?: boolean }) {
   useBackLayer(open, onClose, 'dialog')
   if (!open) return null
   return createPortal(
     <div className="m-fulldialog" role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined}>
       <header className="m-topbar m-fulldialog-bar">
         <div className="m-topbar-row">
-          <IconBtn icon="x" label="Close" onClick={onClose} />
-          <div className="m-topbar-title"><h1>{title}</h1></div>
+          <IconBtn icon={back ? 'chevLeft' : 'x'} label={back ? 'Back' : 'Close'} onClick={onClose} />
+          <div className="m-topbar-title"><h1>{title}</h1>{sub && <div className="m-topbar-sub">{sub}</div>}</div>
           <div className="m-topbar-actions">{primary}</div>
         </div>
+        {under}
       </header>
       <div className="m-fulldialog-body">{children}</div>
       {footer && <footer className="m-actionbar">{footer}</footer>}
@@ -217,7 +219,7 @@ export function Segmented<T extends string>({ value, options, onChange, label, c
     <div className={'m-seg' + (compact ? ' m-seg-compact' : '')} role="radiogroup" aria-label={label} style={{ '--i': Math.max(0, options.findIndex((o) => o.value === value)), '--n': options.length } as React.CSSProperties}>
       {options.map((o) => (
         <button key={o.value} type="button" role="radio" aria-checked={value === o.value} className={`m-seg-item${value === o.value ? ' is-on' : ''}`} onClick={() => onChange(o.value)}>
-          {compact ? (o.node ?? (o.icon && <Icon name={o.icon} size={20} />)) : <>{value === o.value && <Icon name="check" size={16} />}{o.icon && value !== o.value && <Icon name={o.icon} size={16} />}</>}<span>{o.label}</span>
+          {compact ? (o.node ?? (o.icon && <Icon name={o.icon} size={20} />)) : <>{o.icon && <Icon name={o.icon} size={16} />}</>}<span>{o.label}</span>
         </button>
       ))}
     </div>

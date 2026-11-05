@@ -6,12 +6,35 @@
 import { useEffect, useRef, useState } from 'react'
 import { FORMATS } from '../../pc/core/tokens'
 import type { Align } from '../../pc/core/types'
-import { useStore } from '../../pc/store'
-import { useUi } from '../shell/core'
+import { imageAssets, useStore } from '../../pc/store'
+import { loadImage } from '../../pc/core/assets'
+import { platform } from '../../platform/platform'
+import { snack, useUi } from '../shell/core'
 import { Icon } from '../shell/ui'
 import type { IconName } from '../shell/ui'
 
 interface Act { icon: IconName; label: string; run: () => void; danger?: boolean; on?: boolean }
+
+/** Replace the picture in the selected photo slot with one from the gallery. Only that slot changes: the other slots and the
+ *  collage stay as they are (adding photos the usual way can refill slots or switch the layout). */
+async function replaceSlotPhoto() {
+  const files = await platform().pickFiles({ accept: ['image/*'] }).catch(() => [])
+  const file = files[0]
+  if (!file) return
+  const url = URL.createObjectURL(file)
+  try {
+    const img = await loadImage(url)
+    const id = 'img-' + Math.random().toString(36).slice(2, 9)
+    imageAssets[id] = img
+    const st = useStore.getState()
+    useStore.setState({ images: [...st.images, { id, name: file.name, url, w: img.naturalWidth, h: img.naturalHeight }] })
+    useStore.getState().assignImage(useStore.getState().selectedSlot, id)
+    snack('Photo replaced')
+  } catch {
+    URL.revokeObjectURL(url)
+    snack('That picture could not be read', { tone: 'error' })
+  }
+}
 
 const OPACITY_STEPS = [1, 0.75, 0.5, 0.25]
 const NEXT_ALIGN: Record<Align, Align> = { left: 'center', center: 'right', right: 'left' }
@@ -121,6 +144,7 @@ export function SelectionTray() {
   const setAll = (patch: { locked?: boolean; opacity?: number }) => { els.forEach((e) => st().setOverride(e.id, patch)) }
 
   const extras: Act[] = [
+    ...(single?.kind === 'photos' ? [{ icon: 'image' as IconName, label: 'Replace', run: () => void replaceSlotPhoto() }] : []),
     { icon: 'copy', label: 'Duplicate', run: () => st().duplicateSelected() },
     { icon: allLocked ? 'lock' : 'unlock', label: allLocked ? 'Unlock' : 'Lock', on: allLocked, run: () => setAll({ locked: !allLocked }) },
   ]

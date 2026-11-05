@@ -1382,22 +1382,9 @@ html:not(.kb-open) .me-toolbar { bottom: calc(var(--m-navbar) + var(--m-safe-bot
 .hm-tag { font-size: 3.05cqw !important; text-align: justify; text-align-last: justify; letter-spacing: 0; }
 
 /* Story top bar: back / tab name + status line / Publish. The headline is never repeated here (it is in the field below), so nothing is cut. */
-.me-story .m-topbar-row { height: auto; min-height: 64px; }
-.me-story .m-topbar-title h1 { white-space: nowrap !important; overflow: visible !important; font: 700 18px/1.2 var(--font-ui); }
-.me-story .m-topbar-sub { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin-top: 5px; white-space: nowrap !important; overflow: visible !important; }
-.me-story .m-topbar-sub > span:not(.me-status) { white-space: nowrap !important; flex: none; }
-.me-story .m-topbar-sub .me-ready, .me-story .m-topbar-sub .me-status { flex: none; white-space: nowrap; }
-.me-story .m-topbar-sub .me-ready { min-height: 26px; padding: 0 9px 0 7px; border-radius: 9px; font: 650 12px/1 var(--font-ui); }
 /* two rows so the status line has the full width under the Publish button's row */
-.me-story .m-topbar-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; row-gap: 6px; padding-block: 8px 12px; }
-.me-story .m-topbar-row > :first-child { grid-column: 1; grid-row: 1; }
-.me-story .m-topbar-title { display: contents; }
-.me-story .m-topbar-title h1 { grid-column: 2; grid-row: 1; padding-left: 6px; }
-.me-story .m-topbar-actions { grid-column: 3; grid-row: 1; }
-.me-story .m-topbar-sub { grid-column: 1 / -1; grid-row: 2; margin: 0; padding-left: 14px; }
 /* headlines are shown whole, never cut with an ellipsis */
 .pb-title, .m-row-title, .hm-continue-txt strong, .gx-tile-txt b { display: block !important; -webkit-line-clamp: unset !important; line-clamp: unset !important; overflow: visible !important; text-overflow: clip !important; }
-.me-story .m-topbar-actions { margin-right: 8px; }
 /* card-type slider: the selected thumb is the button itself; it must sit centred in the 4px padding, not run to the bottom edge */
 .gx-panel .card-type-seg { box-sizing: border-box; height: 52px; align-items: stretch; }
 .gx-panel .card-type-seg > button { min-height: 0 !important; height: auto !important; align-self: stretch; margin: 0; }
@@ -2132,14 +2119,8 @@ html[data-slide] .m-screens { view-transition-name: page; background: var(--surf
 ::view-transition-group(root) { animation: none; }
 ::view-transition-old(root) { display: none; }
 ::view-transition-new(root) { animation: none; }
-html[data-slide-scope='steps'] .me-story > .me-hide-writing { view-transition-name: ed-head; }
-html[data-slide-scope='steps'] .me-stepbar { view-transition-name: ed-foot; }
-html[data-slide-scope='steps'] .me-substeps { view-transition-name: ed-sub; }
 ::view-transition-group(m-nav), ::view-transition-new(m-nav) { animation: none; }
 ::view-transition-old(m-nav) { display: none; }
-::view-transition-group(ed-head), ::view-transition-group(ed-foot), ::view-transition-group(ed-sub) { animation-duration: 0s; }
-::view-transition-old(ed-head), ::view-transition-old(ed-foot), ::view-transition-old(ed-sub) { display: none; }
-::view-transition-new(ed-head), ::view-transition-new(ed-foot), ::view-transition-new(ed-sub) { animation: none; }
 
 html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-new(page) {
   animation-duration: 460ms; animation-timing-function: cubic-bezier(.32, .72, 0, 1); animation-fill-mode: both; mix-blend-mode: normal;
@@ -2154,7 +2135,6 @@ html[data-slide='back']::view-transition-new(page) { animation-name: pg-in-left;
 @keyframes pg-in-left { from { transform: translate3d(-28%, 0, 0); filter: brightness(.9); } to { transform: none; filter: none; } }
 /* the older entrance animations stand down while a page shift is running (otherwise the new page would animate twice) */
 html[data-slide] .m-tab-fwd, html[data-slide] .m-tab-back, html[data-slide] .me-scroll, html[data-slide] .me-home { animation: none !important; }
-html[data-slide-scope='steps'] .me-story > .me-hide-writing, html[data-slide-scope='steps'] .me-substeps { background: var(--surface-app); position: relative; z-index: 2; }
 
 /* Page shifts own all tab/step motion. The older entrance animations used to restart the moment a shift ended (they were
  * only paused by html[data-slide]), which showed as a one-frame flash. Where View Transitions exist they are retired. */
@@ -2621,3 +2601,194 @@ section > .me-h2 + .me-stack > .me-readysum:first-child { margin-top: 0 !importa
 
 /* opened sections: 16 px between the row divider and the content, same as the sides */
 :root .m-sheet .gx-panel > .pnl.open > .pnl-body { padding: 16px 16px 20px !important; }
+
+/* nav bar + Engine bump: ONE surface. The bar was 76 % glass while the bump was solid, so content showed through one and
+   not the other. Both are now the same near-opaque glass, so the dome reads as part of the bar. */
+.m-navbar { background: color-mix(in srgb, var(--surface-panel) 94%, transparent) !important; }
+.m-navbar:has(.is-primary)::before {
+  background: color-mix(in srgb, var(--surface-panel) 94%, transparent) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(22px); backdrop-filter: saturate(180%) blur(22px);
+}
+
+/* segmented controls inside the desktop panels: ONE thumb (the chosen button itself). The old gliding ::before thumb sat
+   behind it at a slightly different size, which read as a doubled edge under Heavy / As typed. */
+:root :is(.pc-host, .gx-panel, .m-sheet) :is(.seg-ctl, .caption-platform-tabs, .card-type-seg)::before,
+:root :is(.pc-host, .gx-panel, .m-sheet) :is(.seg-ctl, .caption-platform-tabs, .card-type-seg)::after { content: none !important; display: none !important; }
+:root[data-theme='dark'] :is(.pc-host, .gx-panel, .gx-dockhost, .m-sheet) :is(.seg-ctl, .caption-platform-tabs, .io-chips) > :is(button, .chip):is(.on, [aria-selected='true'], [aria-pressed='true']) {
+  background: color-mix(in srgb, #fff 16%, var(--surface-panel)) !important; color: #fff !important; box-shadow: 0 1px 2px rgba(0, 0, 0, .4) !important; }
+
+/* Publish: the step strip under the title (step 5 of the flow; any other step goes back) */
+.m-fulldialog-bar > .me-strip { margin: 0 !important; padding: 2px var(--m-margin) 10px !important; }
+/* the publish button: the verb, and a quiet line saying where it goes */
+.me-pubbtn { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px; line-height: 1.1; text-align: left; }
+.me-pubbtn b { font: 700 16px/1.15 var(--font-ui); }
+.me-pubbtn small { font: 500 12.5px/1.15 var(--font-ui); opacity: .8; }
+.m-actionbar .m-btn-wide:has(.me-pubbtn) { min-height: 56px; }
+/* checklist header: the status on one line, the count under it */
+.me-readysum { flex-wrap: wrap !important; align-items: center !important; row-gap: 2px !important; padding: 14px 16px !important; }
+.me-readysum::before { align-self: center; }
+.me-readysum b { flex: 1 1 calc(100% - 26px) !important; }
+.me-readysum span { flex-basis: 100% !important; margin: 0 0 0 22px !important; }
+
+/* ---- icon + text rhythm (measured 2026-11-05): 18 px icons; 8 px icon→text in compact controls, 10 px in buttons;
+        buttons 44 inside cards, 48 on the page, 52 for the screen's main action ---- */
+.m-btn { gap: 10px !important; }
+.m-btn > svg, .m-btn > .m-spin { width: 18px !important; height: 18px !important; flex: none; }
+:is(.me-card, .m-note, .me-compose, .seo-ai, .ed-field, .m-sheet .bx-card, .m-fulldialog .me-card) .m-btn { min-height: 44px !important; }
+:is(.m-wrap, .me-stack, .me-home) > .m-btn, .me-start-row > .m-btn, .me-btnrow > .m-btn { min-height: 48px !important; }
+.m-actionbar > .m-btn-filled, .me-stepbar .m-btn-filled { min-height: 52px !important; }
+.m-actionbar .m-btn-wide:has(.me-pubbtn) { min-height: 56px !important; }
+:root .m-seg-item, :root .pc-host :is(.seg-ctl, .caption-platform-tabs) > button { gap: 8px !important; }
+:root .m-seg-item > svg, :root .pc-host :is(.seg-ctl, .caption-platform-tabs) > button > svg { width: 18px !important; height: 18px !important; flex: none; }
+.me-ready { gap: 8px !important; }
+.me-ready > svg { width: 18px; height: 18px; flex: none; }
+.gx-drop { gap: 10px !important; }
+
+/* ==================================================================================================
+ * The flow lives in the title bar (Apple Health / Fitness style): the subtitle "Step 3 of 5 ⌄" opens a pull-down of every
+ * step, and a slim five-segment track runs along the foot of the sticky bar, filled to where you are; each segment jumps.
+ * ================================================================================================== */
+.me-stepsub {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 28px; margin: -4px 0 -4px -6px; padding: 0 6px; border: 0; border-radius: 8px;
+  background: none; color: var(--text-secondary); font: 600 13px/1 var(--font-ui); letter-spacing: -.005em; white-space: nowrap; cursor: pointer;
+  transition: background-color 140ms var(--smooth);
+}
+.me-stepsub:active, .me-stepsub[aria-expanded='true'] { background: var(--fill-hover); }
+.me-stepsub > span:first-child { color: var(--accent); }
+.me-stepsub-x { overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.me-stepsub > svg { flex: none; color: var(--text-tertiary); }
+
+.me-track5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; margin: 0; padding: 2px var(--m-margin) 4px; list-style: none; }
+.me-track5 li { min-width: 0; }
+.me-track5 button { position: relative; display: flex; align-items: center; width: 100%; height: 22px; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.me-track5 i { display: block; width: 100%; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--text-primary) 12%, transparent);
+  transition: background-color 320ms var(--smooth), height 240ms var(--spring-soft), box-shadow 320ms var(--smooth); }
+.me-track5 li.is-done i { background: color-mix(in srgb, var(--accent) 55%, transparent); }
+.me-track5 li.is-now i { height: 6px; border-radius: 3px; background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
+.me-track5 li.is-off:not(.is-now) { opacity: .5; }
+.me-track5 button:active i { height: 8px; }
+.m-fulldialog-bar .me-track5 { padding-bottom: 6px; }
+.me-track5 li.has-fix:not(.is-now):not(.is-done) i { background: color-mix(in srgb, #d97706 55%, transparent); }
+.me-track5 li.has-fix.is-bad:not(.is-now):not(.is-done) i { background: color-mix(in srgb, #e5484d 60%, transparent); }
+
+/* ---- one action tint (Apple: the tint is for "tap here", colour is for meaning). The story's desk colour stays as identity
+        (step track, step label, category, keyword chips); every primary action is the brand indigo, so Publish is never red. ---- */
+:root { --action: #4f46e5; --on-action: #fff; }
+:root[data-theme='dark'] { --action: #5b53f0; }
+:root .m-btn-filled:not(:disabled), :root .me-stepbar .m-btn-filled:not(:disabled), :root .gx-tools > .m-btn.m-btn-filled:not(:disabled),
+:root .me-go:not(:disabled), :root [data-provider] .me-go:not(:disabled), :root .m-actionbar .m-btn-filled:not(:disabled) {
+  background: var(--action) !important; background-image: none !important; color: var(--on-action) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .14), 0 8px 18px -10px color-mix(in srgb, var(--action) 70%, transparent) !important;
+}
+:root .pc-host .btn.primary:not(:disabled) { background: var(--action) !important; color: var(--on-action) !important; }
+/* the track: where you are is the strongest mark; finished steps recede */
+.me-track5 li.is-done i { background: color-mix(in srgb, var(--accent) 32%, transparent) !important; }
+.me-track5 li.is-now i { height: 6px !important; background: var(--accent) !important; }
+
+/* segmented tabs keep their own icon when chosen (it used to swap to a hidden check, so the label jumped on every switch) */
+:root .m-seg-item.is-on > svg { display: block !important; }
+
+/* page shifts: compositor-only motion (transform + opacity). The brightness filter and the moving shadow made the GPU
+   repaint both full-screen layers every frame; dropped frames on the S25 Ultra came from there and from the Banner step. */
+html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-new(page) { box-shadow: none !important; }
+@keyframes pg-out-left { from { transform: none; opacity: 1; } to { transform: translate3d(-30%, 0, 0); opacity: .55; } }
+@keyframes pg-in-left { from { transform: translate3d(-30%, 0, 0); opacity: .55; } to { transform: none; opacity: 1; } }
+
+/* Publish is step 5 of the flow: it slides in from the right like every other step, not up like a pop-up */
+.m-fulldialog:has(.me-track5) { animation: pub-in 420ms cubic-bezier(.32, .72, 0, 1) both !important; will-change: transform; }
+@keyframes pub-in { from { transform: translate3d(100%, 0, 0); } to { transform: none; } }
+.me-fi-hold { min-height: 520px; border-radius: var(--r-md); background: var(--fill); }
+/* while a page shifts, the frosted bars go solid: re-blurring two moving full-screen layers every frame cost ~40 ms frames */
+html[data-slide] :is(.m-navbar, .m-actionbar, .gx-dock, .m-topbar, .m-navbar::before) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+html[data-slide] .m-actionbar { background: var(--surface-panel) !important; }
+.me-bp-hold { min-height: 640px; border-radius: var(--r-lg); background: var(--surface-panel); box-shadow: var(--e1); }
+
+/* screen changes inside Stories / Engine / the story: the same sideways motion as the step shifts (no more rising from the bottom) */
+.m-view-fwd { animation: pg-in-right 420ms cubic-bezier(.32, .72, 0, 1) both; background: var(--surface-app); will-change: transform; }
+.m-view-back { animation: pg-in-left 420ms cubic-bezier(.32, .72, 0, 1) both; will-change: transform, opacity; }
+html[data-slide] :is(.m-view-fwd, .m-view-back) { animation: none !important; } /* a page shift is already moving the page */
+@media (prefers-reduced-motion: reduce) { .m-view-fwd, .m-view-back { animation: none; } }
+/* Continue editing: the label sits 10 px above its card (the card used to ride over the label) */
+.me-continue { display: flex !important; flex-direction: column; gap: 10px !important; margin: 0 0 8px !important; }
+.me-continue > .me-h2 { margin: 0 !important; }
+.me-continue .m-row-meta > span:last-child, .me-listrow .m-row-meta > span:last-child { white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.me-continue .m-row-meta { flex-wrap: nowrap !important; min-width: 0; }
+
+/* ---- page shift, final tuning: one even, swift curve; a touch of motion blur at peak speed that clears as the page lands ---- */
+html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-new(page) {
+  animation-duration: 380ms !important; animation-timing-function: cubic-bezier(.3, .8, .25, 1) !important;
+}
+@keyframes pg-in-right { 0% { transform: translate3d(100%, 0, 0); filter: blur(3px); } 55% { filter: blur(.6px); } 100% { transform: none; filter: blur(0); } }
+@keyframes pg-out-left { 0% { transform: none; opacity: 1; filter: blur(0); } 45% { filter: blur(1.5px); } 100% { transform: translate3d(-30%, 0, 0); opacity: .5; filter: blur(2px); } }
+@keyframes pg-out-right { 0% { transform: none; filter: blur(0); } 45% { filter: blur(1.5px); } 100% { transform: translate3d(100%, 0, 0); filter: blur(3px); } }
+@keyframes pg-in-left { 0% { transform: translate3d(-30%, 0, 0); opacity: .5; filter: blur(2px); } 55% { filter: blur(.6px); } 100% { transform: none; opacity: 1; filter: blur(0); } }
+html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-new(page) { filter: none; }
+.m-view-fwd, .m-view-back, .m-fulldialog:has(.me-track5) { animation-duration: 380ms !important; animation-timing-function: cubic-bezier(.3, .8, .25, 1) !important; }
+
+/* ---- bottom bar: flat (the dome is retired). Engine stays the strongest thing on the bar: a solid indigo circle inside it ---- */
+.m-navbar:has(.is-primary)::before { content: none !important; display: none !important; }
+.m-navbar:has(.is-primary) { filter: none !important; box-shadow: 0 -.5px 0 var(--border-default) !important; }
+.m-nav-item.is-primary { transform: none !important; margin-top: 0 !important; }
+.m-nav-item.is-primary .m-nav-pill {
+  width: 52px !important; height: 52px !important; margin-top: -6px !important; border-radius: 50% !important; transform: none !important;
+  background: var(--action) !important; color: var(--on-action) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 6px 16px -6px color-mix(in srgb, var(--action) 70%, transparent) !important;
+}
+.m-nav-item.is-primary .m-nav-label { margin-top: 0 !important; color: var(--action) !important; }
+.m-nav-item.is-primary:active .m-nav-pill { transform: scale(.92) !important; }
+
+/* ==================================================================================================
+ * Flow shifts (the five steps): iOS navigation. The title bar and the action bar stay put; only the title text moves
+ * (a short slide + fade), the progress track re-colours in place, and the content slides as a page.
+ * ================================================================================================== */
+html[data-slide-scope='flow'] .m-topbar:has(.me-track5) { view-transition-name: flow-head; background: var(--surface-app); }
+html[data-slide-scope='flow'] .m-topbar:has(.me-track5) .m-topbar-title { view-transition-name: flow-title; }
+html[data-slide-scope='flow'] :is(.me-stepbar, .m-fulldialog:has(.me-track5) > .m-actionbar) { view-transition-name: flow-foot; }
+html[data-slide-scope='flow'] .me-substeps { view-transition-name: flow-sub; }
+/* Publish is its own layer: during a flow shift its body is the page that slides (never two "page" layers at once) */
+html[data-slide]:has(.m-fulldialog .me-track5) .m-screens { view-transition-name: none !important; }
+html[data-slide] .m-fulldialog:has(.me-track5) .m-fulldialog-body { view-transition-name: page; background: var(--surface-app); }
+html[data-slide] .m-fulldialog { animation: none !important; }
+
+::view-transition-group(flow-head), ::view-transition-group(flow-foot), ::view-transition-group(flow-title), ::view-transition-group(flow-sub) { animation: none; }
+::view-transition-old(flow-head), ::view-transition-new(flow-head) { animation-duration: 260ms; } /* the track re-colours */
+::view-transition-old(flow-foot) { animation: ft-out 160ms ease-out both; }
+::view-transition-new(flow-foot) { animation: ft-in 260ms 80ms cubic-bezier(.3, .8, .25, 1) both; }
+::view-transition-old(flow-sub) { animation: ft-out 160ms ease-out both; }
+::view-transition-new(flow-sub) { animation: ft-in 260ms 60ms cubic-bezier(.3, .8, .25, 1) both; }
+@keyframes ft-out { to { opacity: 0; } }
+@keyframes ft-in { from { opacity: 0; } }
+/* the title: a short glide in the direction of travel, crossfading */
+html[data-slide='fwd']::view-transition-old(flow-title) { animation: ttl-out-l 220ms cubic-bezier(.3, .8, .25, 1) both; }
+html[data-slide='fwd']::view-transition-new(flow-title) { animation: ttl-in-r 340ms 40ms cubic-bezier(.3, .8, .25, 1) both; }
+html[data-slide='back']::view-transition-old(flow-title) { animation: ttl-out-r 220ms cubic-bezier(.3, .8, .25, 1) both; }
+html[data-slide='back']::view-transition-new(flow-title) { animation: ttl-in-l 340ms 40ms cubic-bezier(.3, .8, .25, 1) both; }
+::view-transition-old(flow-title), ::view-transition-new(flow-title) { height: 100%; object-position: left center; overflow: visible; }
+@keyframes ttl-out-l { to { transform: translate3d(-28px, 0, 0); opacity: 0; } }
+@keyframes ttl-in-r { from { transform: translate3d(36px, 0, 0); opacity: 0; } }
+@keyframes ttl-out-r { to { transform: translate3d(28px, 0, 0); opacity: 0; } }
+@keyframes ttl-in-l { from { transform: translate3d(-36px, 0, 0); opacity: 0; } }
+/* with Publish open, the story underneath gives up its names (two "flow-head" layers would make the browser cancel the shift) */
+html[data-slide]:has(.m-fulldialog .me-track5) .m-screens :is(.m-topbar, .m-topbar-title, .me-stepbar, .me-substeps) { view-transition-name: none !important; }
+
+/* Engine: a perfect circle (the column layout squeezed it to 52 × 46) */
+.m-nav-item.is-primary .m-nav-pill { flex: none !important; width: 52px !important; height: 52px !important; min-height: 52px !important; max-height: 52px !important; aspect-ratio: 1 / 1; padding: 0 !important; }
+/* flow screens never animate themselves: the page shift is the only motion (these replayed after it, so Publish moved twice) */
+.m-fulldialog:has(.me-track5), .m-fulldialog:has(.me-track5) * { animation-name: none !important; }
+.bp-which .bp-card { animation: none !important; }
+/* the checklist count lives in the title bar on Check: a small pill beside the menu */
+.me-readymini { display: inline-flex; align-items: center; gap: 4px; height: 30px; margin-right: 2px; padding: 0 10px 0 8px; border: 0; border-radius: 15px;
+  font: 700 13px/1 var(--font-ui); cursor: pointer; transition: transform var(--t-soft) var(--spring-soft); }
+.me-readymini:active { transform: scale(.92); transition: transform var(--press-in); }
+.me-readymini.is-blocked { background: color-mix(in srgb, #e5484d 14%, transparent); color: #c4282d; }
+.me-readymini.is-review { background: color-mix(in srgb, #d97706 15%, transparent); color: #a45a00; }
+.me-readymini.is-ready { background: color-mix(in srgb, var(--sw-on) 15%, transparent); color: #17803d; }
+:root[data-theme='dark'] .me-readymini.is-blocked { color: #ff8a8d; }
+:root[data-theme='dark'] .me-readymini.is-review { color: #f5b04a; }
+:root[data-theme='dark'] .me-readymini.is-ready { color: #5fd38a; }
+/* motion blur retired: measured on the S25 Ultra it cost ~25 % of the frames (two full-screen blurred layers per frame) */
+html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-new(page) { filter: none !important; }
+/* the slide eases in for its first frames, then glides: the one slow frame while the browser captures the page now lands
+   where the page has barely moved, instead of showing as a jump at full speed */
+html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-new(page),
+.m-view-fwd, .m-view-back { animation-duration: 400ms !important; animation-timing-function: cubic-bezier(.42, 0, .12, 1) !important; }

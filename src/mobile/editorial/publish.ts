@@ -22,6 +22,7 @@ import type { Assets } from '../../pc/core/render'
 import { useStore } from '../../pc/store'
 import { CATEGORIES } from '../../pc/core/tokens'
 import type { HeroMode } from '../../pc/editorial/heroMode'
+import { syncPublished } from './publishedLive'
 
 export interface PublishOutcome { ok: boolean; msg: string; url?: string; fbUrl?: string; existingSlug?: string }
 
@@ -80,6 +81,8 @@ export async function runPublish(opts: { status: 'PUBLISHED' | 'DRAFT'; heroMode
   const draft = ed.draft
   const finish = (r: PublishOutcome, lastText: string) => {
     usePublish.setState((s) => ({ result: r, last: { ...s.last, [storyId]: { ok: r.ok, at: Date.now(), text: lastText } } }))
+    // a story that went live shows in Published straight away (read from the database, not the lagging feed)
+    if (r.ok && opts.status === 'PUBLISHED') void syncPublished()
   }
   try {
     const fresh = await ensureFreshSession(ed.staffSession)

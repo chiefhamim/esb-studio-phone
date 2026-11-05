@@ -22,6 +22,8 @@ import { snack, useOnline, useUi, useUnsavedGuard } from '../shell/core'
 import { useNav } from '../shell/nav'
 import { useDesk } from './deskStore'
 import { Steps } from './JobProgress'
+import { FlowTrack, StepSub } from './Pipeline'
+import { slideTo } from '../shell/slide'
 import { cmsPayload, linkedArticle, runPublish, usePublish } from './publish'
 import { useBase } from './StoryEditor'
 import { FormatMark } from '../shell/cat'
@@ -97,6 +99,9 @@ function capability(state: ReturnType<typeof siteFeatureState>, live: string, pl
 
 export function PublishReview() {
   const open = useUi((s) => s.sheet === 'ed-publish')
+  // the two full banner previews are drawn once Publish has slid in (drawing them on open froze the slide for ~300 ms)
+  const [landed, setLanded] = useState(false)
+  useEffect(() => { if (!open) { setLanded(false); return } const t = window.setTimeout(() => setLanded(true), 440); return () => window.clearTimeout(t) }, [open])
   const draft = useEditorialStore((s) => s.draft)
   const staff = useEditorialStore((s) => s.staffSession)
   const site = useEditorialStore((s) => s.siteStatus)
@@ -146,17 +151,17 @@ export function PublishReview() {
     useStoryQueue.getState().linkArticle({ slug, url: `${SITE_BASE_URL}/articles/${slug}` })
     void runPublish({ status: 'PUBLISHED', heroMode: hero, fbOn: false, fbLink })
   })
-  const close = () => { if (P.busy) { snack('Publishing is still running — it continues if you close this'); } goLive.reset(); useUi.getState().closeSheet('ed-publish') }
+  const close = () => { if (P.busy) { snack('Publishing is still running — it continues if you close this'); } goLive.reset(); slideTo(-1, () => useUi.getState().closeSheet('ed-publish'), 'flow') }
   const blocked = P.busy || !draft.headline.trim() || !online
   const last = P.last[storyId]
   const willFb = fbOn && !!fb
 
   return (
-    <FullDialog open={open} title={linked ? 'Update article' : 'Publish'} onClose={close}
+    <FullDialog open={open} title={linked ? 'Update article' : 'Publish'} onClose={close} back sub={<StepSub />} under={<FlowTrack />}
       primary={<Button kind="text" disabled={blocked} onClick={() => void runPublish({ status: 'DRAFT', heroMode: hero, fbOn: false, fbLink })}>{linked ? 'Save as draft' : 'Save draft'}</Button>}
       footer={
         <Button wide kind={goLive.armed ? 'danger' : 'filled'} icon="upload" busy={P.busy} disabled={blocked} onClick={goLive.tap}>
-          {P.busy ? (linked ? 'Updating' : 'Publishing') : goLive.armed ? 'Tap again to confirm' : `${verb}${willFb ? ' + post to Facebook' : ' to esbpowerline.com'}`}
+          {P.busy ? (linked ? 'Updating' : 'Publishing') : goLive.armed ? 'Tap again to confirm' : <span className="me-pubbtn"><b>{verb}</b><small>{willFb ? 'Website and Facebook' : 'esbpowerline.com'}</small></span>}
         </Button>
       }>
       <div className="m-wrap me-stack me-pad">
@@ -191,7 +196,7 @@ export function PublishReview() {
           <button type="button" role="radio" aria-checked={which === 'web'} className={'m-seg-item' + (which === 'web' ? ' is-on' : '')} onClick={() => setWhich('web')}><FormatMark id="web" size={18} /><span>Website <b>16:9</b></span></button>
           <button type="button" role="radio" aria-checked={which === 'fb'} className={'m-seg-item' + (which === 'fb' ? ' is-on' : '')} onClick={() => setWhich('fb')}><FormatMark id="fb45" size={18} /><span>Facebook <b>4:5</b></span></button>
         </div>
-        <div className="bp-which" data-which={which}><PcHost className="me-bp"><BannerPreviews base={base} heroMode={hero} onHeroMode={setHero} photoUrl={photo} caption={willFb || !fb ? draft.social.facebook : undefined} pageName={fb ? fb.pageName || fb.pageId : null} webExtra={<ImageOptions dest="web" base={base} />} fbExtra={<ImageOptions dest="fb" base={base} />} /></PcHost></div>
+        <div className="bp-which" data-which={which}>{!landed ? <div className="me-bp-hold" aria-hidden /> : <PcHost className="me-bp"><BannerPreviews base={base} heroMode={hero} onHeroMode={setHero} photoUrl={photo} caption={willFb || !fb ? draft.social.facebook : undefined} pageName={fb ? fb.pageName || fb.pageId : null} webExtra={<ImageOptions dest="web" base={base} />} fbExtra={<ImageOptions dest="fb" base={base} />} /></PcHost>}</div>
 
         <section className="me-card">
           <h3 className="me-h3">Keep a copy</h3>

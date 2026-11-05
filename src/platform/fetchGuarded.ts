@@ -12,6 +12,7 @@
 import type { EsbFetchImageDataResult, EsbFetchUrlResult } from '../pc/esb'
 import { ALLOWED_HTML_TYPES, ALLOWED_IMAGE_TYPES, MAX_HTML_BYTES, MAX_IMAGE_BYTES, checkPublicUrl, typeAllowed } from './netGuard'
 import { cachedAvailability, fetchArticleViaSite, type FetchedArticle } from '../sync/endpoints'
+import { pinStoryBody } from './storyData'
 
 export type LinkFetchMode = 'site' | 'device'
 const MODE_KEY = 'esb-phone/link-fetch-mode'
@@ -62,7 +63,8 @@ export async function directFetchUrl(raw: string, opts: { timeoutMs?: number; al
     if (!typeAllowed(ct, opts.allowedTypes ?? ALLOWED_HTML_TYPES)) return { ok: false, code: 'bad_type', error: `That link is not a web page (${ct}).` }
     const buf = await readCapped(res, MAX_HTML_BYTES)
     if (!buf) return { ok: false, code: 'too_large', error: 'The page is larger than 5 MB.' }
-    const html = decodeHtml(buf, ct)
+    // sites that ship the story as data get their own story pinned as the article body (see storyData.ts)
+    const html = pinStoryBody(decodeHtml(buf, ct))
     return { ok: true, html, body: html, url: realUrl(res.url) || g.url.toString() }
   } catch (e) {
     const aborted = (e as Error)?.name === 'AbortError'

@@ -14,8 +14,8 @@ import { useOnline } from '../shell/core'
 import { cancelJob, canCancel, fetchLink, readClipboardText, readFile, translatePasted, useDesk } from './deskStore'
 import { JobProgress } from './JobProgress'
 import { homeMenu } from './Landing'
-import { FlowStrip } from './Pipeline'
-import { slideTo } from '../shell/slide'
+import { FlowTrack, StepSub } from './Pipeline'
+import { afterSlide, slideTo } from '../shell/slide'
 
 export function Intake() {
   const d = useDesk()
@@ -26,7 +26,8 @@ export function Intake() {
   const rawRef = useRef<HTMLTextAreaElement>(null)
   // The text box grows with what is in it (and can still be dragged taller).
   useEffect(() => { const t = rawRef.current; if (!t) return; t.style.height = 'auto'; t.style.height = `${t.scrollHeight}px` }, [d.raw, d.intakeTab])
-  useEffect(() => { if (d.focusUrlAt && d.intakeTab === 'link') requestAnimationFrame(() => urlRef.current?.focus()) }, [d.focusUrlAt, d.intakeTab])
+  // the keyboard opens only after the slide in has landed (a resize mid-slide makes the browser abandon the transition)
+  useEffect(() => { if (d.focusUrlAt && d.intakeTab === 'link') afterSlide(() => requestAnimationFrame(() => urlRef.current?.focus())) }, [d.focusUrlAt, d.intakeTab])
   const busy = d.busy === 'fetch' || d.busy === 'translate' || d.busy === 'doc'
   const pickDoc = async () => {
     const files = await platform().pickFiles({ accept: ['application/pdf', '.docx'] }).catch(() => [])
@@ -38,11 +39,10 @@ export function Intake() {
   return (
     <>
       <TopBar leading={<IconBtn icon="chevLeft" label="Back to stories" onClick={() => slideTo(-1, () => d.set({ view: 'home', error: null }))} />} title="Engine"
-        sub={main ? `AI: ${providerMeta(main.provider).name}` : 'Free machine translation (no AI key)'} overflow={homeMenu()} />
+        sub={<StepSub extra={main ? providerMeta(main.provider).name : 'Free translation'} />} under={<FlowTrack />} overflow={homeMenu()} />
       <div className="m-scroll">
         <div className="m-wrap me-intake">
           {!online && <Banner tone="warn">You are offline. Links and translation need the network.</Banner>}
-          <FlowStrip />
           {link ? (
             <>
               <section className="me-desk" aria-label="Start a story" data-provider={main?.provider}>

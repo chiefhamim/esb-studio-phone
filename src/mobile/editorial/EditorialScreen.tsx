@@ -12,6 +12,7 @@ import { installBannerLink } from '../../pc/editorial/bannerLink'
 import { useWirePoll } from '../../pc/editorial/wire'
 import { readSharedFile } from '../../native/shareIn'
 import { useDesk, newStory, readFile, readClipboardText } from './deskStore'
+import { isSliding } from '../shell/slide'
 import { usePublish } from './publish'
 import { Landing } from './Landing'
 import { Intake } from './Intake'
@@ -92,7 +93,10 @@ export default function EditorialScreen({ active }: ScreenProps) {
   })
 
   const seen = useRef(view)
-  const dir = seen.current === view ? '' : view === 'home' ? ' m-view-down' : ' m-view-up'
+  // one direction rule for the whole app: deeper into the flow (stories → Engine → story) slides in from the right, back slides in from the left
+  const DEPTH = { home: 0, intake: 1, story: 2 } as const
+  // a change made inside a page shift is already moving: no second animation (it used to replay once the shift ended)
+  const dir = seen.current === view || isSliding() ? '' : DEPTH[view] > DEPTH[seen.current] ? ' m-view-fwd' : ' m-view-back'
   useEffect(() => { seen.current = view }, [view])
   return (
     <div className="m-screen me-root">

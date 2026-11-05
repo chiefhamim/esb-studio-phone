@@ -43,8 +43,8 @@ import { RichReview } from './RichReview'
 import { parseParagraphWithFacts } from './factSpans'
 import { baseAssets, cmsPayload, linkedArticle, usePublish } from './publish'
 import { useCategory, useFacts, useLeadPhoto, useReadiness, useStoryNumbers } from './useStory'
-import { FlowStrip } from './Pipeline'
-import { slideTo } from '../shell/slide'
+import { FlowTrack, StepSub } from './Pipeline'
+import { slideTo, useSlideSettled } from '../shell/slide'
 
 // The five panes, grouped the way the work goes: write the story -> make its banner (category, photo, tags) -> check it (SEO, captions, previews) -> publish.
 const TABS: { id: Tab; label: string; icon: IconName }[] = [{ id: 'story', label: 'Story', icon: 'edit' }, { id: 'details', label: 'Banner', icon: 'image' }, { id: 'seo', label: 'SEO', icon: 'search' }, { id: 'social', label: 'Social', icon: 'send' }, { id: 'preview', label: 'Preview', icon: 'eye' }]
@@ -164,8 +164,10 @@ function DetailsTab() {
   const addTag = (raw: string) => { const t = raw.trim().replace(/^#/, ''); if (t && !tags.some((x) => x.toLowerCase() === t.toLowerCase())) setTags([...tags, t]); setTagIn('') }
   const base = useBase()
   // both published banners, side by side: the Facebook 4:5 and the Website 16:9 (tap one to edit it)
-  const fbImg = useBannerImage(base, 'fb45', 0.3)
-  const webImg = useBannerImage(base, 'web', 0.22)
+  // drawn once the slide into this step has finished (drawing during it cost the slide its frames)
+  const settled = useSlideSettled()
+  const fbImg = useBannerImage(settled ? base : null, 'fb45', 0.3)
+  const webImg = useBannerImage(settled ? base : null, 'web', 0.22)
   const editBanner = (f?: 'fb45' | 'web') => { if (f) useStore.getState().setFormat(f); useNav.getState().go('graphics') }
   return (
     <div className="me-stack">
@@ -227,7 +229,8 @@ function DetailsTab() {
       <section className="me-card" id="me-details-photo">
         <h3 className="me-h3">Featured image</h3>
         <p className="me-hint">The banner's photo slot: framing and tone here are the banner's own. Credit, alt text and caption go to the site.</p>
-        <FramingLock><PcHost className="me-fi"><FeaturedImage onToast={(m) => snack(m)} /></PcHost></FramingLock>
+        {/* below the fold on arrival: mounted once the slide in has finished (it encodes its photo on mount) */}
+        {settled ? <FramingLock><PcHost className="me-fi"><FeaturedImage onToast={(m) => snack(m)} /></PcHost></FramingLock> : <div className="me-fi-hold" aria-hidden />}
       </section>
       <section className="me-card">
         <h3 className="me-h3">Banner</h3>
@@ -385,9 +388,14 @@ function PreviewTab() {
 }
 
 // ---------------------------------------------------------------- side column (expanded) + readiness pill
-export function ReadyPill() {
+export function ReadyPill({ compact }: { compact?: boolean } = {}) {
   const { t } = useReadiness()
   const label = t.state === 'blocked' ? `${t.blockers} to fix` : t.state === 'review' ? `${t.warnings} to check` : 'Ready'
+  if (compact) return (
+    <button type="button" className={'me-readymini is-' + t.state} onClick={() => useUi.getState().openSheet('ed-ready')} aria-label={`${label}. Show the publishing checklist`}>
+      <Icon name={t.state === 'ready' ? 'check' : 'alert'} size={15} /><span>{t.state === 'blocked' ? t.blockers : t.state === 'review' ? t.warnings : ''}</span>
+    </button>
+  )
   return (
     <button type="button" className={'me-ready is-' + t.state} onClick={() => useUi.getState().openSheet('ed-ready')} aria-label={`${label}. Show the publishing checklist`}>
       <Icon name={t.state === 'ready' ? 'check' : 'alert'} size={18} /><span>{label}</span>
@@ -468,15 +476,15 @@ export function StoryEditor() {
       <div className="me-hide-writing">
         <TopBar leading={<IconBtn icon="chevLeft" label="Back to stories" onClick={() => slideTo(-1, () => d.set({ view: 'home', writing: false }))} />}
           title={STEP_TITLE[stepOf(d.tab)]}
-          sub={linked ? <span>Live on esbpowerline.com</span> : undefined}
+          sub={<StepSub extra={linked ? 'live' : undefined} />} under={<FlowTrack />}
           actions={<>
+            {CHECKS.includes(d.tab) && <ReadyPill compact />}
             {jobLive && <IconBtn icon="activity" label="Activity (a job is running)" badge="•" onClick={() => useUi.getState().openSheet('ed-activity')} />}
             {canCancel(d.busy) && <Button kind="text" onClick={cancelJob}>Cancel</Button>}
           </>}
           overflow={storyMenu()} />
-        <FlowStrip compact />
       </div>
-      {CHECKS.includes(d.tab) && <div className="me-substeps me-hide-writing"><Segmented<Tab> label="What to check" value={d.tab} onChange={(v) => { const o: Tab[] = ['seo', 'social', 'preview']; lastCheck.current = v; slideTo(o.indexOf(v) >= o.indexOf(d.tab) ? 1 : -1, () => d.set({ tab: v }), 'steps') }} options={[{ value: 'seo', label: 'SEO', icon: 'search' }, { value: 'social', label: 'Social', icon: 'send' }, { value: 'preview', label: 'Preview', icon: 'eye' }]} /><ReadyPill /></div>}
+      {CHECKS.includes(d.tab) && <div className="me-substeps me-hide-writing"><Segmented<Tab> label="What to check" value={d.tab} onChange={(v) => { const o: Tab[] = ['seo', 'social', 'preview']; lastCheck.current = v; slideTo(o.indexOf(v) >= o.indexOf(d.tab) ? 1 : -1, () => d.set({ tab: v }), 'flow') }} options={[{ value: 'seo', label: 'SEO', icon: 'search' }, { value: 'social', label: 'Social', icon: 'send' }, { value: 'preview', label: 'Preview', icon: 'eye' }]} /></div>}
       <div key={d.tab} className="m-scroll me-scroll" style={{ '--dir': paneDir } as React.CSSProperties}>
         <div className={'m-wrap' + (wide ? ' m-grid me-wide' : '')}>
           <div className={wide ? 'm-span-main' : undefined}>
@@ -494,14 +502,14 @@ export function StoryEditor() {
         const at = stepOf(d.tab)
         const publish = () => {
           if (!headline.trim()) { snack('Write a headline first, then publish.'); d.set({ tab: 'story', writing: false }); return }
-          useUi.getState().openSheet('ed-publish')
+          slideTo(1, () => useUi.getState().openSheet('ed-publish'), 'flow')
         }
-        const back = at === 'details' ? () => slideTo(-1, () => d.set({ tab: 'story' }), 'steps') : at === 'check' ? () => slideTo(-1, () => d.set({ tab: 'details' }), 'steps') : null
+        const back = at === 'details' ? () => slideTo(-1, () => d.set({ tab: 'story' }), 'flow') : at === 'check' ? () => slideTo(-1, () => d.set({ tab: 'details' }), 'flow') : null
         return (
           <footer className="m-actionbar me-stepbar">
             {back && <Button kind="text" icon="chevLeft" onClick={back}>Back</Button>}
-            {at === 'story' && <Button className="me-next" icon="chevRight" onClick={() => slideTo(1, () => d.set({ tab: 'details' }), 'steps')}>Next: Banner</Button>}
-            {at === 'details' && <Button className="me-next" icon="chevRight" onClick={() => slideTo(1, () => d.set({ tab: lastCheck.current }), 'steps')}>Next: Check</Button>}
+            {at === 'story' && <Button className="me-next" icon="chevRight" onClick={() => slideTo(1, () => d.set({ tab: 'details' }), 'flow')}>Next: Banner</Button>}
+            {at === 'details' && <Button className="me-next" icon="chevRight" onClick={() => slideTo(1, () => d.set({ tab: lastCheck.current }), 'flow')}>Next: Check</Button>}
             {at === 'check' && <Button icon="upload" onClick={publish}>{linked ? 'Update' : 'Publish'}{toCheck > 0 ? <span className={'me-stepbar-badge is-' + (ready.blockers > 0 ? 'bad' : 'warn')}>{toCheck}</span> : null}</Button>}
           </footer>
         )

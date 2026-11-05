@@ -115,7 +115,16 @@ export function watchKeyboard(): () => void {
   // the bottom already sits above the keyboard. Adding the keyboard's height on top of that threw the writing toolbar 245 px above
   // the top of the screen. --m-kb is therefore only what the keyboard STILL covers after the resize (0 on this phone).
   let rest = window.innerHeight
-  const onResize = () => { if (!root.classList.contains('kb-open')) rest = window.innerHeight }
+  const onResize = () => {
+    if (!root.classList.contains('kb-open')) { rest = window.innerHeight; return }
+    // safety net: the window is back to its full height, so the keyboard is gone even if Android never said so
+    if (window.innerHeight >= rest - 40) setTimeout(() => { if (window.innerHeight >= rest - 40) set(0, false) }, 250)
+  }
+  // safety net 2: focus left every text field and nothing took it: no keyboard (a missed keyboardWillHide used to leave
+  // every bottom bar floating 300 px up the screen)
+  const typing = () => { const el = document.activeElement as HTMLElement | null; return !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) }
+  const onFocusOut = () => setTimeout(() => { if (root.classList.contains('kb-open') && !typing()) set(0, false) }, 350)
+  document.addEventListener('focusout', onFocusOut)
   window.addEventListener('resize', onResize)
   const subs: Array<() => void> = []
   if (Capacitor.isNativePlatform()) {
@@ -132,7 +141,7 @@ export function watchKeyboard(): () => void {
     vv.addEventListener('resize', on)
     subs.push(() => vv.removeEventListener('resize', on))
   }
-  return () => { subs.forEach((f) => f()); window.removeEventListener('resize', onResize); set(0, false) }
+  return () => { subs.forEach((f) => f()); window.removeEventListener('resize', onResize); document.removeEventListener('focusout', onFocusOut); set(0, false) }
 }
 
 // ---------------------------------------------------------------- unsaved work

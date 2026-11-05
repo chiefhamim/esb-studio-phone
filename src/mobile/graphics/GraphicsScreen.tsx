@@ -36,7 +36,7 @@ import { renderAll } from './exportRun'
 import { ElementsBody, LayersBody } from './BannerPanels'
 import { ArrangeBar, CategorySheet, FormatStrip, PreviewDialog, ProjectsSheet, SizeSheet } from './parts'
 import { setDockTab, useBaseAssets, usePcPortals } from './hooks'
-import { FlowStrip } from '../editorial/Pipeline'
+import { FlowTrack, StepSub } from '../editorial/Pipeline'
 import { slideTo } from '../shell/slide'
 import { TouchStage } from './TouchStage'
 import { zoomBy, zoomCanvas } from './zoom'
@@ -333,7 +333,7 @@ export default function GraphicsScreen({ active }: ScreenProps) {
       <TopBar
         leading={size === 'compact' ? <IconBtn icon="chevLeft" label={backTo ? 'Back to the story' : 'Back to Home'} onClick={() => useNav.getState().back()} /> : undefined}
         title={fromStory ? 'Banner' : projectName ?? 'Untitled banner'}
-        sub={sub}
+        sub={fromStory ? <StepSub extra={sub} /> : sub} under={fromStory ? <FlowTrack /> : undefined}
         actions={<>
           <IconBtn icon="undo" label="Undo" disabled={!past} onClick={() => st().undo()} />
           <IconBtn icon="redo" label="Redo" disabled={!future} onClick={() => st().redo()} />
@@ -341,7 +341,6 @@ export default function GraphicsScreen({ active }: ScreenProps) {
           <IconBtn icon="more" label="More: File, Edit, Insert, Arrange, View" onClick={() => openSheet('gx-more')} />
         </>}
       />
-      {fromStory && <FlowStrip compact />}
       <FormatStrip />
 
       <div className="gx-body">
