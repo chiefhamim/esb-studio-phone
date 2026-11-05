@@ -3237,3 +3237,19 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 .ab2-tile > i { margin-bottom: 0 !important; }
 .ab2-tile > b { grid-column: 2; }
 .ab2-tile > small { grid-column: 1 / -1; }
+
+/* About hero: a Siri-style living glow. Four soft colour fields (pink, violet, blue, cyan) drift, turn and breathe
+   behind the card, blurred into one moving blend. Transform and opacity only, on the compositor; paused for reduced motion. */
+.ab2-hero { background: var(--surface-panel); }
+.ab2-glow { position: absolute; z-index: -1; inset: -30%; height: auto; background: none; filter: blur(34px) saturate(140%); opacity: .55; pointer-events: none; }
+:root[data-theme='dark'] .ab2-glow { opacity: .7; }
+.ab2-glow > i { position: absolute; width: 62%; aspect-ratio: 1; border-radius: 50%; will-change: transform; mix-blend-mode: normal; }
+.ab2-glow > i:nth-child(1) { left: 6%;  top: 14%; background: radial-gradient(circle, #ff3d9a 0%, rgba(255, 61, 154, 0) 68%); animation: siri-a 9s ease-in-out infinite alternate; }
+.ab2-glow > i:nth-child(2) { right: 4%; top: 6%;  background: radial-gradient(circle, #8b5cf6 0%, rgba(139, 92, 246, 0) 68%); animation: siri-b 11s ease-in-out infinite alternate; }
+.ab2-glow > i:nth-child(3) { left: 22%; bottom: 4%; background: radial-gradient(circle, #3b82f6 0%, rgba(59, 130, 246, 0) 68%); animation: siri-c 13s ease-in-out infinite alternate; }
+.ab2-glow > i:nth-child(4) { right: 14%; bottom: 12%; background: radial-gradient(circle, #22d3ee 0%, rgba(34, 211, 238, 0) 68%); animation: siri-d 10s ease-in-out infinite alternate; }
+@keyframes siri-a { 0% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(28%, 18%, 0) scale(1.25); } 100% { transform: translate3d(48%, -10%, 0) scale(.9); } }
+@keyframes siri-b { 0% { transform: translate3d(0, 0, 0) scale(1.1); } 50% { transform: translate3d(-34%, 26%, 0) scale(.85); } 100% { transform: translate3d(-12%, 40%, 0) scale(1.2); } }
+@keyframes siri-c { 0% { transform: translate3d(0, 0, 0) scale(.9); } 50% { transform: translate3d(30%, -30%, 0) scale(1.2); } 100% { transform: translate3d(-24%, -14%, 0) scale(1); } }
+@keyframes siri-d { 0% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(-40%, -18%, 0) scale(1.15); } 100% { transform: translate3d(10%, -36%, 0) scale(.85); } }
+@media (prefers-reduced-motion: reduce) { .ab2-glow > i { animation: none; } }

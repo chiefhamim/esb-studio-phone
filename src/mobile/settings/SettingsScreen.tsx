@@ -27,7 +27,7 @@ function AboutCard() {
   return (
     <div className="ab2">
       <section className="ab2-hero">
-        <span className="ab2-glow" aria-hidden />
+        <span className="ab2-glow" aria-hidden><i /><i /><i /><i /></span>
         <span className="ab2-mark"><img src="./brand/esb-avatar.png" alt="ESB Power Line" width={84} height={84} /></span>
         <h3 className="ab2-title">ESB <span>Ai Studio</span></h3>
         <p className="ab2-tag">Where stories are written, imagination is designed and reality is cut.</p>
