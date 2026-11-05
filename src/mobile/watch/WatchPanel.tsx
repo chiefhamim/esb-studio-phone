@@ -333,7 +333,7 @@ function SettingsSheet() {
         <Segmented label="Headlines from the last" value={String(prefs.maxAgeH)} onChange={(v) => { useRange.getState().clear(); setPrefs({ maxAgeH: Number(v) }) }}
           options={WINDOWS.map((h) => ({ value: String(h), label: h === 1 ? '1 hour' : `${h} hrs` }))} />
 
-        <h3 className="ew-h">Check by itself while Wire is open</h3>
+        <h3 className="ew-h">Check by itself while News is open</h3>
         <Segmented label="Check by itself" value={String(prefs.autoMin)} onChange={(v) => setPrefs({ autoMin: Number(v) })}
           options={[{ value: '0', label: 'Off' }, { value: '5', label: '5 min' }, { value: '10', label: '10 min' }, { value: '30', label: '30 min' }]} />
 

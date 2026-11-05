@@ -216,7 +216,7 @@ export function WireSourcesSheet() {
   return (
     <Sheet id="ed-wire-sources" title="Feed sources" initial="half">
       <div className="me-stack">
-        <p className="wr-help">Paste the RSS, Atom or news-sitemap address of a site you follow. New stories from it are listed in Wire, ready to start a story from.</p>
+        <p className="wr-help">Paste the RSS, Atom or news-sitemap address of a site you follow. New stories from it are listed in News, ready to start a story from.</p>
         <label className="m-field"><span className="m-field-label">Feed address (RSS, Atom or sitemap)</span><input type="url" inputMode="url" className="m-input" placeholder="https://site.com/feed.xml" value={url} onChange={(e) => { setUrl(e.target.value); setErr(null) }} spellCheck={false} /></label>
         <label className="m-field"><span className="m-field-label">Name (optional)</span><input type="text" className="m-input" placeholder="e.g. the site's name" value={name} onChange={(e) => setName(e.target.value)} /></label>
         {err && <Banner tone="error">{err}</Banner>}
@@ -249,7 +249,7 @@ function WireTab({ onUse, active }: { onUse: (url: string) => void; active: bool
   return (
     <div className="ew-tab">
       <div className="ew-source">
-        <Segmented label="Wire source" value={src} onChange={pick} options={[{ value: 'watch', label: 'EnergyWatch' }, { value: 'feeds', label: 'My feeds' }]} />
+        <Segmented label="News source" value={src} onChange={pick} options={[{ value: 'watch', label: 'EnergyWatch' }, { value: 'feeds', label: 'My feeds' }]} />
       </div>
       {src === 'watch' ? <WatchList onUse={onUse} active={active} /> : <WireList onUse={onUse} />}
     </div>
