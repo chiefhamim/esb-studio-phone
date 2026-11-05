@@ -3365,3 +3365,34 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 /* frost toned down: a soft haze, the page behind stays readable */
 :root { --frost: blur(4px) saturate(115%); --frost-tint: rgba(28, 22, 16, .22); --frost-light: blur(2px); --frost-light-tint: rgba(28, 22, 16, .08); }
 :root[data-theme='dark'] { --frost-tint: rgba(0, 0, 0, .42); --frost-light-tint: rgba(0, 0, 0, .22); }
+
+/* ===================================================================== profile picture (preset avatars) */
+.u-avatar { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: var(--fill); }
+.u-avatar.is-initial { background: var(--accent); color: var(--on-accent); font-weight: 700; font-family: var(--font-ui); line-height: 1; }
+img.u-avatar { box-shadow: inset 0 0 0 .5px var(--m-hair); }
+.hm-me-badge.u-avatar { width: 40px; height: 40px; }
+.ac-avatar-btn { position: relative; padding: 0; border: 0; overflow: visible; background: none !important; cursor: pointer; }
+.ac-avatar-btn > .u-avatar { font-size: 24px; }
+.ac-avatar-btn:active { transform: scale(.95); }
+.ac-avatar-edit { position: absolute; right: -2px; bottom: -2px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-panel); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0, 0, 0, .18), 0 0 0 .5px var(--m-hair); }
+.sa-avatar-btn { padding: 0; border: 0; overflow: hidden; background: none !important; cursor: pointer; }
+.sa-avatar-btn > .u-avatar { font-size: 18px; }
+
+.av { display: flex; flex-direction: column; gap: 16px; }
+.av-hero { display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 20px; background: var(--surface-panel); box-shadow: var(--drop-2); }
+.av-hero .av-big { flex: none; width: 72px; height: 72px; font-size: 30px; }
+.av-hero-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.av-hero-txt strong { font: 700 17px/1.3 var(--font-ui); }
+.av-hero-txt small { font: 500 13px/1.35 var(--font-ui); color: var(--text-secondary); }
+.av-sets { display: flex; gap: 8px; margin: 0 -16px; padding: 2px 16px; overflow-x: auto; scrollbar-width: none; }
+.av-sets::-webkit-scrollbar { display: none; }
+.av-sets .m-chip { flex: none; }
+.av-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 16px; border-radius: 20px; background: var(--surface-panel); box-shadow: var(--drop-2); }
+.av-cell { position: relative; aspect-ratio: 1; padding: 0; border: 0; border-radius: 50%; background: var(--fill); cursor: pointer; transition: transform .16s var(--m-ease); }
+.av-cell img { width: 100%; height: 100%; border-radius: 50%; display: block; object-fit: cover; }
+.av-cell:active { transform: scale(.93); }
+.av-cell.is-on { box-shadow: 0 0 0 3px var(--surface-panel), 0 0 0 5.5px var(--accent); }
+.av-cell.is-saving { opacity: .55; }
+.av-tick { position: absolute; right: -2px; bottom: -2px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--on-accent); box-shadow: 0 0 0 2px var(--surface-panel); }
+.av-credit { margin: -4px 4px 0; font: 500 12.5px/1.4 var(--font-ui); color: var(--text-secondary); }
+.av-remove { align-self: center; color: var(--danger) !important; }

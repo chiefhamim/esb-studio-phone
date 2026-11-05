@@ -1,0 +1,76 @@
+{
+ "version": 1,
+ "size": 256,
+ "sets": [
+  {
+   "id": "notionists",
+   "name": "Notionists",
+   "by": "Zoish",
+   "license": "CC0 1.0",
+   "count": 16
+  },
+  {
+   "id": "lorelei",
+   "name": "Lorelei",
+   "by": "Lisa Wischofsky",
+   "license": "CC0 1.0",
+   "count": 16
+  },
+  {
+   "id": "personas",
+   "name": "Personas",
+   "by": "Draftbit - draftbit.com",
+   "license": "CC BY 4.0",
+   "count": 16
+  },
+  {
+   "id": "micah",
+   "name": "Micah",
+   "by": "Micah Lanier",
+   "license": "CC BY 4.0",
+   "count": 16
+  },
+  {
+   "id": "open-peeps",
+   "name": "Open Peeps",
+   "by": "Pablo Stanley",
+   "license": "CC0 1.0",
+   "count": 16
+  },
+  {
+   "id": "adventurer",
+   "name": "Adventurer",
+   "by": "Lisa Wischofsky",
+   "license": "CC BY 4.0",
+   "count": 16
+  },
+  {
+   "id": "avataaars",
+   "name": "Avataaars",
+   "by": "Pablo Stanley",
+   "license": "Free for personal and commercial use",
+   "count": 16
+  },
+  {
+   "id": "thumbs",
+   "name": "Thumbs",
+   "by": "DiceBear",
+   "license": "CC0 1.0",
+   "count": 16
+  },
+  {
+   "id": "shapes",
+   "name": "Shapes",
+   "by": "DiceBear",
+   "license": "CC0 1.0",
+   "count": 16
+  },
+  {
+   "id": "glass",
+   "name": "Glass",
+   "by": "DiceBear",
+   "license": "CC0 1.0",
+   "count": 16
+  }
+ ]
+}

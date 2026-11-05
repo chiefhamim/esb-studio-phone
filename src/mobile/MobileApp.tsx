@@ -21,6 +21,7 @@ import { NavBar, UiHost, type NavItem } from './shell/ui'
 import { dirOf, isSliding, slideTo } from './shell/slide'
 import { UpdateDialog } from './shell/UpdateDialog'
 import AccountSheet from './shell/AccountSheet'
+import { AvatarSheet, useAvatarSync } from './shell/avatar'
 import { startMobileCopy } from './shell/mobileCopy'
 import { startSliderReset } from './shell/sliderReset'
 import { startTouchGuards } from './shell/touchGuards'
@@ -45,6 +46,7 @@ const RAIL: NavItem[] = [...NAV.filter((n) => !n.primary), { id: 'graphics', lab
 
 export default function MobileApp() {
   const size = useSizeClass()
+  useAvatarSync()
   const route = useNav((s) => s.route)
   const go = useNav((s) => s.go)
   const settingsOpen = useNav((s) => s.settingsOpen)
@@ -216,6 +218,7 @@ export default function MobileApp() {
       {!rail && <NavBar items={NAV} value={navValue} onChange={onNav} />}
       {settingsOpen && <SettingsScreen onClose={closeSettings} />}
       <AccountSheet />
+      <AvatarSheet />
       <UiHost />
       <LockScreen />
       <UpdateDialog />

@@ -1,5 +1,6 @@
 // Home: start work fast and get back to it. A compact hero (two primary starts + continue) that never pushes the
 // recent stories below the fold: at 411×891 at least four recent stories are visible.
+import { UserAvatar } from '../shell/avatar'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStoryQueue, storyTitle, STATUS_LABEL, type StoryItem } from '../../pc/editorial/storyQueue'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
@@ -131,7 +132,7 @@ export default function HomeScreen({ active }: ScreenProps) {
       <header className="hm-bar">
         <span className="hm-today">{today}</span>
         <button type="button" className="hm-me" aria-label={session ? `Account: ${session.name || session.email}` : 'Account'} onClick={openAccount}>
-          {session ? <span className="hm-me-badge">{name.slice(0, 1).toUpperCase()}</span> : <Icon name="user" size={22} />}
+          {session ? <UserAvatar name={name} className="hm-me-badge" /> : <Icon name="user" size={22} />}
         </button>
       </header>
       <div className="m-scroll hm-scroll">

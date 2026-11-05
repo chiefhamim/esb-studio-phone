@@ -1,6 +1,7 @@
 // Settings: everything the PC keeps in its AI settings dialog, site sign-in sheet and Facebook dialog, as one
 // Android settings page. All values go through the PC's own stores and save functions; secrets (keys, the site
 // session, the Page token) are routed to the Android Keystore by src/platform/storage.ts.
+import { UserAvatar, openAvatarPicker } from '../shell/avatar'
 import { useEffect, useState } from 'react'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import { AI_PROVIDERS, providerMeta, listModels, testAiKey, type AiModelInfo, type AiProviderId, type AiSettings } from '../../pc/editorial/aiProviders'
@@ -127,7 +128,7 @@ function SiteAccount() {
   return (
     <div className="sa">
       <div className="sa-me">
-        <span className="sa-avatar" aria-hidden>{(session.name || session.email).slice(0, 1).toUpperCase()}</span>
+        <button type="button" className="sa-avatar sa-avatar-btn" aria-label="Change profile picture" onClick={openAvatarPicker}><UserAvatar name={session.name || session.email} /></button>
         <span className="sa-me-t"><span className="sa-name"><b>{session.name || session.email}</b><RoleChip role={session.role} /></span><small>{session.email}</small></span>
       </div>
       <div className="sa-site">

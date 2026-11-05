@@ -10,6 +10,7 @@ import { useNav } from './nav'
 import { platform } from '../../platform/platform'
 import { useOnline, useUi } from './core'
 import { Icon, Segmented, Sheet, type IconName } from './ui'
+import { UserAvatar, openAvatarPicker } from './avatar'
 import './account.css'
 
 /** Change the theme smoothly: the slider finishes its glide first, then the new colours land in one frame with every
@@ -64,7 +65,9 @@ export default function AccountSheet() {
     <Sheet id="account" title="Account" initial="half">
       <div className="ac">
         <section className="ac-me">
-          <span className={`ac-avatar${session ? '' : ' is-empty'}`} aria-hidden>{session ? name.slice(0, 1).toUpperCase() : <Icon name="user" size={28} />}</span>
+          {session
+            ? <button type="button" className="ac-avatar ac-avatar-btn" aria-label="Change profile picture" onClick={go(openAvatarPicker)}><UserAvatar name={name} /><span className="ac-avatar-edit" aria-hidden><Icon name="edit" size={13} strokeWidth={2.4} /></span></button>
+            : <span className="ac-avatar is-empty" aria-hidden><Icon name="user" size={28} /></span>}
           <span className="ac-me-txt">
             <span className="ac-name"><strong>{name}</strong>{session?.role && <RoleChip role={session.role} />}</span>
             <small>{session ? session.email : 'esbpowerline.com editor account'}</small>
