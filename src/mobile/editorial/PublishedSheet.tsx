@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { create } from 'zustand'
 import type { LiveArticleSummary } from '../../pc/editorial/siteApi'
 import { platform } from '../../platform/platform'
-import { Button, Icon, Sheet } from '../shell/ui'
+import { Icon, Sheet } from '../shell/ui'
 import { snack, useUi } from '../shell/core'
 import { useNav } from '../shell/nav'
 import { CatName, catOf } from '../shell/cat'
@@ -56,8 +56,8 @@ export function PublishedSheet() {
     await editLive(art)
     if (toBanner && useDesk.getState().view === 'story') useNav.getState().go('graphics')
   }
-  const copy = () => { void navigator.clipboard?.writeText(art.link).then(() => snack('Link copied'), () => snack('Could not copy')) }
-  const share = () => { const n = navigator as Navigator & { share?: (d: ShareData) => Promise<void> }; if (n.share) void n.share({ title: art.title, url: art.link }).catch(() => undefined); else copy() }
+  const copyText = (t: string, said: string) => { void navigator.clipboard?.writeText(t).then(() => snack(said), () => snack('Could not copy')) }
+  const share = () => { const n = navigator as Navigator & { share?: (d: ShareData) => Promise<void> }; if (n.share) void n.share({ title: art.title, url: art.link }).catch(() => undefined); else copyText(art.link, 'Website link copied') }
 
   return (
     <Sheet id={SHEET} title="Published story" initial="full">
@@ -68,6 +68,7 @@ export function PublishedSheet() {
           <span className="pb-time">{rel && <span className="pb-ago">{rel}</span>}<span>{when}</span></span>
         </div>
 
+        {/* the two banners at their true shapes (16:9 and 4:5), the same height, side by side; tap one to open it */}
         <div className="pbs-pics">
           <Pic src={art.imageUrl} label="Website" onOpen={() => ext(art.link)} empty="No image" />
           <Pic src={fb?.ok ? fb.post.image : undefined} label="Facebook" busy={!fb} onOpen={fb?.ok ? () => ext(fb.post.url) : undefined}
@@ -75,24 +76,29 @@ export function PublishedSheet() {
         </div>
         {fb && !fb.ok && <p className="pbs-note">{fb.reason}</p>}
 
-        <div className="pbs-group" role="group" aria-label="See it">
-          <button type="button" className="pbs-act" onClick={() => ext(art.link)}><i><Icon name="globe" size={20} /></i><span><b>View on esbpowerline.com</b><small>{art.link.replace(/^https?:\/\//, '')}</small></span><Icon name="externalLink" size={16} /></button>
-          <button type="button" className="pbs-act" disabled={!fb?.ok} onClick={() => fb?.ok && ext(fb.post.url)}>
+        <div className="pbs-group" role="group" aria-label="Links">
+          <button type="button" className="pbs-act" onClick={() => copyText(art.link, 'Website link copied')}>
+            <i><Icon name="globe" size={20} /></i>
+            <span><b>Copy website link</b><small>{art.link.replace(/^https?:\/\/(www\.)?/, '')}</small></span>
+            <Icon name="copy" size={18} />
+          </button>
+          <button type="button" className="pbs-act" disabled={!fb?.ok} onClick={() => fb?.ok && copyText(fb.post.url, 'Facebook link copied')}>
             <i className="is-fb"><Icon name="link" size={20} /></i>
-            <span><b>Open the Facebook post</b><small>{!fb ? 'Looking on the Page' : fb.ok ? (fb.remembered ? 'Posted from this phone' : 'Found on the Page by its headline') : 'Not found'}</small></span>
-            <Icon name="externalLink" size={16} />
+            <span><b>Copy Facebook link</b><small>{!fb ? 'Looking on the Page' : fb.ok ? (fb.remembered ? 'Posted from this phone' : 'Found on the Page') : 'No Facebook post found'}</small></span>
+            <Icon name="copy" size={18} />
+          </button>
+          <button type="button" className="pbs-act" onClick={share}>
+            <i className="is-share"><Icon name="send" size={20} /></i>
+            <span><b>Share</b><small>Send the article to another app</small></span>
+            <Icon name="chevRight" size={18} />
           </button>
         </div>
 
         <div className="pbs-group" role="group" aria-label="Update it">
-          <button type="button" className="pbs-act" disabled={!!busy} onClick={() => void update(false)}><i className="is-edit"><Icon name="edit" size={20} /></i><span><b>Update the story</b><small>Text, SEO and captions; Publish updates this article</small></span><Icon name="chevRight" size={18} /></button>
-          <button type="button" className="pbs-act" disabled={!!busy} onClick={() => void update(true)}><i className="is-banner"><Icon name="layers" size={20} /></i><span><b>Update the banner</b><small>Opens the story straight in Banner</small></span><Icon name="chevRight" size={18} /></button>
+          <button type="button" className="pbs-act" disabled={!!busy} onClick={() => void update(false)}><i className="is-edit"><Icon name="edit" size={20} /></i><span><b>Update the story</b><small>Text, SEO and captions</small></span><Icon name="chevRight" size={18} /></button>
+          <button type="button" className="pbs-act" disabled={!!busy} onClick={() => void update(true)}><i className="is-banner"><Icon name="layers" size={20} /></i><span><b>Update the banner</b><small>Opens straight in Banner</small></span><Icon name="chevRight" size={18} /></button>
         </div>
-
-        <div className="pbs-row2">
-          <Button kind="tonal" icon="copy" onClick={copy}>Copy link</Button>
-          <Button kind="tonal" icon="send" onClick={share}>Share</Button>
-        </div>
+        <p className="pbs-note">Publish then updates this same article, never a second copy.</p>
       </div>
     </Sheet>
   )

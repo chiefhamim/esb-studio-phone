@@ -3199,3 +3199,16 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 .m-nav-item.is-primary .m-nav-label, .m-navbar .m-nav-item.is-primary .m-nav-label { color: inherit !important; font-weight: 500 !important; }
 .m-nav-item.is-primary.is-on .m-nav-label { color: var(--text-primary) !important; font-weight: 600 !important; }
 .m-navbar .m-nav-item.is-primary { color: var(--text-secondary) !important; }
+
+/* Published sheet: both banners whole. Columns sized so a 16:9 and a 4:5 image share one height (16/9 : 4/5 = 2.22 : 1) */
+.pbs-pics { grid-template-columns: minmax(0, 2.222fr) minmax(0, 1fr) !important; gap: 10px; align-items: start; }
+.pbs-pic-img { height: auto !important; border-radius: 14px; }
+.pbs-pic:first-child .pbs-pic-img { aspect-ratio: 16 / 9 !important; }
+.pbs-pic:last-child .pbs-pic-img { aspect-ratio: 4 / 5 !important; }
+.pbs-pic-img img { width: 100%; height: 100%; object-fit: cover; }
+/* no "…" in this sheet: every line wraps */
+.pbs-act small { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; overflow-wrap: anywhere; }
+.pbs-act > i.is-share { background: color-mix(in srgb, #16a34a 14%, transparent); color: #16a34a; }
+.pbs-group, .pbs-head { border-radius: 22px; }
+.pbs-group { background: var(--surface-panel) !important; box-shadow: var(--drop-2); }
+.pbs-note { margin: -2px 4px 0 !important; }
