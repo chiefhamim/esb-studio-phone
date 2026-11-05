@@ -2896,3 +2896,58 @@ html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-n
 :root[data-theme='dark'] .me-seo .seo-serp .seo-serp-desc b { color: #e8eaed !important; }
 :root[data-theme='dark'] .me-seo .seo-serp .seo-serp-site span, :root[data-theme='dark'] .me-seo .seo-serp .seo-serp-note, :root[data-theme='dark'] .me-seo .seo-serp .hint { color: #9aa0a6 !important; }
 :root[data-theme='dark'] .me-seo .seo-serp .seo-serp-fav { box-shadow: 0 0 0 1px rgba(255, 255, 255, .14); }
+
+/* ---- Home: Engine and Banner as frosted glass bubbles (macOS widget feel) ----
+   Each tile: a translucent tinted glass over a blurred backdrop, soft colour orbs drifting inside, a light rim, a
+   specular sheen on the top edge, and the icon in its own glass bubble. Only transform/opacity animate. */
+.hm-launch .hm-cell {
+  isolation: isolate; overflow: hidden; min-height: 150px; padding: 16px !important; border-radius: 28px !important;
+  -webkit-backdrop-filter: blur(28px) saturate(170%); backdrop-filter: blur(28px) saturate(170%);
+  border: 0 !important;
+}
+.hm-launch .hm-cell:nth-child(1) {
+  background: linear-gradient(160deg, rgba(46, 44, 60, .82) 0%, rgba(18, 17, 26, .9) 100%) !important;
+  --orb-a: rgba(139, 92, 246, .55); --orb-b: rgba(56, 189, 248, .32); --glow: rgba(124, 92, 246, .35);
+}
+.hm-launch .hm-cell:nth-child(2) {
+  background: linear-gradient(160deg, rgba(112, 96, 255, .86) 0%, rgba(67, 52, 214, .92) 100%) !important;
+  --orb-a: rgba(236, 72, 153, .5); --orb-b: rgba(129, 230, 255, .4); --glow: rgba(99, 82, 255, .45);
+}
+.hm-launch .hm-cell, .hm-launch .hm-cell:nth-child(1), .hm-launch .hm-cell:nth-child(2) {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .14),
+    inset 0 1px 0 rgba(255, 255, 255, .32),
+    inset 0 -24px 40px -20px rgba(0, 0, 0, .35),
+    0 1px 2px rgba(15, 12, 40, .16),
+    0 18px 36px -14px var(--glow) !important;
+}
+/* colour orbs: two soft lights, blurred, drifting slowly */
+.hm-launch .hm-cell::before {
+  content: '' !important; display: block !important; position: absolute; z-index: -1; inset: -40%; height: auto; width: auto; background:
+    radial-gradient(closest-side at 30% 70%, var(--orb-a), transparent 70%),
+    radial-gradient(closest-side at 78% 22%, var(--orb-b), transparent 70%);
+  filter: blur(18px); animation: hm-orbs 14s ease-in-out infinite alternate; pointer-events: none;
+}
+/* specular sheen on the top edge, like light on glass */
+.hm-launch .hm-cell::after {
+  content: '' !important; position: absolute; z-index: -1; inset: 0 0 auto 0 !important; right: 0 !important; bottom: auto !important;
+  width: auto !important; height: 55% !important; border-radius: 0 !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0)) !important; pointer-events: none;
+}
+@keyframes hm-orbs { to { transform: translate3d(8%, -6%, 0) rotate(18deg) scale(1.08); } }
+
+/* the icon: its own glass bubble */
+.hm-launch .hm-cell-ico {
+  width: 48px !important; height: 48px !important; border-radius: 50% !important; color: #fff !important;
+  background: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .5), rgba(255, 255, 255, .12) 42%, rgba(255, 255, 255, .06) 70%) !important;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28), inset 0 -6px 12px rgba(0, 0, 0, .14), 0 6px 14px -6px rgba(0, 0, 0, .45) !important;
+}
+.hm-launch .hm-cell-ico svg { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .25)); }
+/* chevron in a small glass dot */
+.hm-launch .hm-cell > svg:last-child { width: 30px; height: 30px; padding: 7px; border-radius: 50%; opacity: 1 !important;
+  background: rgba(255, 255, 255, .14); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18); }
+.hm-launch .hm-cell-name { margin-top: 22px !important; text-shadow: 0 1px 12px rgba(0, 0, 0, .18); }
+.hm-launch .hm-cell-note { color: rgba(255, 255, 255, .78) !important; }
+.hm-launch .hm-cell:active { transform: scale(.97); transition: transform .18s cubic-bezier(.2, .9, .3, 1.2); }
+@media (prefers-reduced-motion: reduce) { .hm-launch .hm-cell::before { animation: none; } }
