@@ -110,7 +110,7 @@ export default function AccountSheet() {
 
         <div className="ac-card ac-gap">
           <Tile icon="sliders" title="Settings" meta="Account, AI, Facebook, security, updates" onClick={go(() => nav.openSettings())} />
-          <Tile icon="info" title="About ESB AI Studio" meta={`Version ${__APP_VERSION__}`} onClick={go(() => nav.openSettings('about'))} />
+          <Tile icon="info" title="About ESB Ai Studio" meta={`Version ${__APP_VERSION__}`} onClick={go(() => nav.openSettings('about'))} />
         </div>
         <p className="ac-credit">
           <span className="ac-ver">v{__APP_VERSION__}</span>

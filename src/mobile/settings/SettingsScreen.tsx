@@ -28,8 +28,8 @@ function AboutCard() {
     <div className="ab2">
       <section className="ab2-hero">
         <span className="ab2-glow" aria-hidden />
-        <img className="ab2-mark" src="./brand/esb-avatar.png" alt="ESB Power Line" width={84} height={84} />
-        <h3 className="ab2-title">ESB AI <span>Studio</span></h3>
+        <span className="ab2-mark"><img src="./brand/esb-avatar.png" alt="ESB Power Line" width={84} height={84} /></span>
+        <h3 className="ab2-title">ESB <span>Ai Studio</span></h3>
         <p className="ab2-tag">Where stories are written, imagination is designed and reality is cut.</p>
         <span className="ab2-stripe" aria-hidden><i /><i /><i /></span>
         <span className="ab2-ver">Version {__APP_VERSION__}</span>
@@ -38,7 +38,7 @@ function AboutCard() {
       <section className="ab2-grid" aria-label="What it does">
         <div className="ab2-tile is-engine"><i><Icon name="power" size={20} /></i><b>Editorial</b><small>Bangla or English link in, newsroom English out</small></div>
         <div className="ab2-tile is-banner"><i><Icon name="layers" size={20} /></i><b>Banner</b><small>Facebook and web banners, on brand</small></div>
-        <div className="ab2-tile is-wire"><i><Icon name="inbox" size={20} /></i><b>News</b><small>EnergyWatch and your own feeds</small></div>
+        <div className="ab2-tile is-wire"><i><Icon name="inbox" size={20} /></i><b>News</b><small>EnergyWatch by <em className="ab2-yeasin">Yeasin Fiyaz</em></small></div>
         <div className="ab2-tile is-pub"><i><Icon name="globe" size={20} /></i><b>Publish</b><small>esbpowerline.com and Facebook</small></div>
       </section>
 
@@ -48,7 +48,6 @@ function AboutCard() {
         <button type="button" className="ab2-link" onClick={() => void platform().openExternal('https://facebook.com/chiefhamim')} aria-label="Hamim Ruwayfi on Facebook"><Icon name="externalLink" size={18} /></button>
       </section>
 
-      <p className="ab2-foot">Fonts, artwork and templates are bundled with the app · © ESB Power Line</p>
     </div>
   )
 }
@@ -75,6 +74,7 @@ function UpdateCheck() {
     <div className="ab-update">
       <span className="ab-update-t"><b>ESB Studio</b><small>Version {running || __APP_VERSION__}</small><small className={'ab-update-s is-' + state}>{meta}</small></span>
       <Button kind="tonal" icon="refresh" busy={state === 'checking'} onClick={() => void run()}>Check for updates</Button>
+      <p className="ab-update-foot">Fonts, artwork and templates are bundled with the app · © ESB Power Line</p>
     </div>
   )
 }
@@ -433,7 +433,7 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
         <Section title="About" id="set-about">
           <AboutCard />
           <UpdateCheck />
-          <Row title="Engine and editor" meta={`ESB AI Studio build ${manifest.commit.slice(0, 7)} · ${Object.keys(manifest.files).length} files`} />
+          <Row title="Engine and editor" meta={`ESB Ai Studio build ${manifest.commit.slice(0, 7)} · ${Object.keys(manifest.files).length} files`} />
         </Section>
       </div>
     </FullDialog>
