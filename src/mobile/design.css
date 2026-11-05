@@ -3275,3 +3275,14 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 .ab2-glow { opacity: .42; }
 :root[data-theme='dark'] .ab2-glow { opacity: .55; }
 .bp-which .bp-card .pcard-t { flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; white-space: nowrap; }
+
+/* Publish previews, web card: caption and the photo switch share the row evenly (no touching) */
+.bp-which .bp-card .pcard-h { display: flex !important; align-items: center !important; gap: 10px !important; }
+.bp-which .bp-card .pcard-t { flex: 1 1 auto; min-width: 0; gap: 8px !important; }
+.bp-which .bp-card .pcard-t::before { font-size: 15.5px !important; }
+.bp-which .bp-card .pcard-t::after { padding: 2px 7px !important; font-size: 12px !important; }
+.bp-which .bp-card .pcard-h > .btn { flex: none; margin-left: auto !important; min-height: 36px !important; height: 36px; padding: 0 12px !important; gap: 6px; border-radius: 11px !important; font: 600 13.5px/1 var(--font-ui) !important; }
+/* the caption row lines up with the banner under it (same left edge), the switch ends at its right edge */
+.bp-which .bp-card .pcard-h { padding: 0 !important; margin: 0 0 12px !important; }
+.bp-which .bp-card .pcard-h > .btn { padding: 0 11px !important; font-size: 13px !important; }
+.bp-which .bp-card .pcard-h > .btn svg { width: 15px; height: 15px; }
