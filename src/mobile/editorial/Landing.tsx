@@ -8,11 +8,10 @@ import { CatDot, CatName, catOf } from '../shell/cat'
 import { useStoryQueue, storyTitle, STATUS_LABEL, STORY_STATUSES } from '../../pc/editorial/storyQueue'
 import type { StoryItem, StoryStatus } from '../../pc/editorial/storyQueue'
 import { CATEGORIES } from '../../pc/core/tokens'
-import { fmtPublished } from '../../pc/editorial/fmtPublished'
 import { useWire, filterItems, relTime, sourceStatus, DEFAULT_INTERVAL } from '../../pc/editorial/wire'
 import type { LiveArticleSummary } from '../../pc/editorial/siteApi'
 import { getLinkFetchMode } from '../../platform/fetchGuarded'
-import { Banner, Button, Chip, Empty, ErrorState, IconBtn, Icon, MenuButton, Row, Sheet, Skeleton, TopBar } from '../shell/ui'
+import { Banner, Button, Chip, Empty, ErrorState, IconBtn, Icon, MenuButton, Row, Segmented, Sheet, Skeleton, TopBar } from '../shell/ui'
 import type { MenuItem } from '../shell/ui'
 import { confirmAsk, snack, useOnline, useUi } from '../shell/core'
 import { useNav } from '../shell/nav'
@@ -20,9 +19,16 @@ import { editLive, newStory, openStory, useDesk } from './deskStore'
 import type { HomeTab } from './deskStore'
 import { ago, hasStoryContent, hostOf } from './useStory'
 import { syncPublished } from './publishedLive'
+import { publishedParts } from './publishedDate'
+import { WatchList, WatchSettingsSheet } from '../watch/WatchPanel'
 
 export function StatusChip({ s }: { s: StoryStatus }) {
   return <span className={'me-status s-' + s}>{STATUS_LABEL[s]}</span>
+}
+
+function PubTime({ raw }: { raw?: string }) {
+  const { rel, when } = publishedParts(raw)
+  return <small className="pb-time">{rel && <span className="pb-ago">{rel}</span>}<span>{when}</span></small>
 }
 
 function Thumb({ src, cat }: { src?: string | null; cat?: string }) {
@@ -121,7 +127,7 @@ function PublishedList({ active }: { active: boolean }) {
               <span className="pb-txt">
                 <b className="pb-title" lang={/[ঀ-৿]/.test(a.title) ? 'bn' : undefined}>{a.title}</b>
                 <span className="pb-meta">{c ? <><CatDot cat={c} size={20} /><CatName cat={c} /></> : <span>{a.category}</span>}</span>
-                <small className="pb-time">{fmtPublished(a.publishedAt)}</small>
+                <PubTime raw={a.publishedAt} />
               </span>
               {busy === 'open' ? <span className="m-spin" aria-label="Opening" /> : <Icon name="chevRight" size={20} />}
             </button>
@@ -229,6 +235,21 @@ export function WireSourcesSheet() {
   )
 }
 
+type WireSource = 'watch' | 'feeds'
+const WIRE_SRC_KEY = 'esb-phone/wire/source'
+function WireTab({ onUse, active }: { onUse: (url: string) => void; active: boolean }) {
+  const [src, setSrc] = useState<WireSource>(() => (localStorage.getItem(WIRE_SRC_KEY) === 'feeds' ? 'feeds' : 'watch'))
+  const pick = (v: WireSource) => { setSrc(v); try { localStorage.setItem(WIRE_SRC_KEY, v) } catch { /* not kept */ } }
+  return (
+    <div className="ew-tab">
+      <div className="ew-source">
+        <Segmented label="Wire source" value={src} onChange={pick} options={[{ value: 'watch', label: 'EnergyWatch' }, { value: 'feeds', label: 'My feeds' }]} />
+      </div>
+      {src === 'watch' ? <WatchList onUse={onUse} active={active} /> : <WireList onUse={onUse} />}
+    </div>
+  )
+}
+
 const TAB_TITLE: Record<HomeTab, string> = { stories: 'Stories', published: 'Published', wire: 'Wire' }
 
 export function Landing({ active }: { active: boolean }) {
@@ -266,10 +287,11 @@ export function Landing({ active }: { active: boolean }) {
             </>
           )}
           {homeTab === 'published' && <PublishedList active={active && homeTab === 'published'} />}
-          {homeTab === 'wire' && <WireList onUse={(u) => { newStory('intake'); set({ intakeTab: 'link', url: u, focusUrlAt: Date.now() }) }} />}
+          {homeTab === 'wire' && <WireTab active={active} onUse={(u) => { newStory('intake'); set({ intakeTab: 'link', url: u, focusUrlAt: Date.now() }) }} />}
         </div>
       </div>
       <WireSourcesSheet />
+      <WatchSettingsSheet />
     </>
   )
 }

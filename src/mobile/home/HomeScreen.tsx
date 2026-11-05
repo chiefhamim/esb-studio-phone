@@ -10,7 +10,7 @@ import { useDesk } from '../editorial/deskStore'
 import { confirmAsk, snack, useOnline } from '../shell/core'
 import { Button, Empty, Icon, Menu, Row } from '../shell/ui'
 import { openAccount } from '../shell/AccountSheet'
-import { ProviderMark } from '../shell/marks'
+import { ProviderMark, brandColor } from '../shell/marks'
 import './home.css'
 
 function ago(t: number): string {
@@ -125,7 +125,7 @@ export default function HomeScreen({ active }: ScreenProps) {
             <p className="hm-tag">Where stories are written, imagination is designed and reality is cut</p>
             <div className="hm-chips">
               <button type="button" className={`hm-chip hm-chip-${siteState.dot === 'ok' ? 'ok' : 'bad'}`} onClick={openAccount}><span className={`m-dot m-dot-${siteState.dot}`} aria-hidden />{siteState.text}</button>
-              <button type="button" className={`hm-chip hm-chip-ai${aiOk ? ' is-ok' : ''}`} style={aiOk ? ({ '--pc': providerMeta(ai.provider).color } as React.CSSProperties) : undefined} onClick={() => nav.openSettings('ai')}>{aiOk ? <ProviderMark id={ai.provider} size={16} /> : <Icon name="sparkle" size={15} />}{ai.paused ? 'AI paused' : aiOk ? providerMeta(ai.provider).name : 'AI needs a key'}</button>
+              <button type="button" className={`hm-chip hm-chip-ai${aiOk ? ' is-ok' : ''}`} style={aiOk ? ({ '--pc': brandColor(ai.provider) } as React.CSSProperties) : undefined} onClick={() => nav.openSettings('ai')}>{aiOk ? <ProviderMark id={ai.provider} size={16} /> : <Icon name="sparkle" size={15} />}{ai.paused ? 'AI paused' : aiOk ? providerMeta(ai.provider).name : 'AI needs a key'}</button>
             </div>
           </section>
 

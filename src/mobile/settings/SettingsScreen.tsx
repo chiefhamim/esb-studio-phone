@@ -14,7 +14,7 @@ import { useNav } from '../shell/nav'
 import { snack, useOnline } from '../shell/core'
 import { checkForUpdate, getCurrentBundle } from '../../platform/ota'
 import { Banner, Button, Collapse, Dropdown, FullDialog, Icon, Row, Section, Segmented } from '../shell/ui'
-import { ProviderMark } from '../shell/marks'
+import { ProviderMark, brandColor } from '../shell/marks'
 import { FormatMark, RoleChip } from '../shell/cat'
 import { JOURNALISTIC_TRANSLATOR_PROMPT } from '../../pc/editorial/translator'
 import { platform } from '../../platform/platform'
@@ -205,7 +205,7 @@ function KeyField({ id, ai, onSave, inline }: { id: AiProviderId; ai: AiSettings
   if (inline) {
     return (
       <div className="st-key">
-        <div className="st-key-head" style={{ '--pc': meta.color } as React.CSSProperties}>
+        <div className="st-key-head" style={{ '--pc': brandColor(id) } as React.CSSProperties}>
           <i className="st-picon"><ProviderMark id={id} size={18} /></i>
           <span><b>{meta.name}<SavedMark on={!!ai.keys[id]} /></b><small>{ai.keys[id] ? 'Key saved on this phone' : 'No key yet'}</small></span>
         </div>
@@ -214,7 +214,7 @@ function KeyField({ id, ai, onSave, inline }: { id: AiProviderId; ai: AiSettings
     )
   }
   return (
-    <Collapse title={<>{meta.name}<SavedMark on={!!ai.keys[id]} /></>} lead={<i className="st-picon" style={{ '--pc': meta.color } as React.CSSProperties}><ProviderMark id={id} size={18} /></i>} sub={ai.keys[id] ? 'Key saved' : 'No key'}>
+    <Collapse title={<>{meta.name}<SavedMark on={!!ai.keys[id]} /></>} lead={<i className="st-picon" style={{ '--pc': brandColor(id) } as React.CSSProperties}><ProviderMark id={id} size={18} /></i>} sub={ai.keys[id] ? 'Key saved' : 'No key'}>
       {body}
     </Collapse>
   )
@@ -244,8 +244,8 @@ function AiSection() {
   const setPaused = useEditorialStore((s) => s.setAiPaused)
   const roleRow = (role: 'seo' | 'social', label: string) => (
     <Dropdown label={label} value={ai[role]} onChange={(v) => setAi({ ...ai, [role]: v as AiProviderId | '' })} options={[
-      { value: '', label: 'Same as the main provider', hint: providerMeta(ai.provider).name, lead: <span className="dd-mark" style={{ '--pc': providerMeta(ai.provider).color } as React.CSSProperties}><ProviderMark id={ai.provider} size={16} /></span> },
-      ...AI_PROVIDERS.map((p) => ({ value: p.id as AiProviderId | '', label: p.name, hint: ai.keys[p.id] ? 'Key saved' : 'No key yet', lead: <span className="dd-mark" style={{ '--pc': p.color } as React.CSSProperties}><ProviderMark id={p.id} size={16} /></span> })),
+      { value: '', label: 'Same as the main provider', hint: providerMeta(ai.provider).name, lead: <span className="dd-mark" style={{ '--pc': brandColor(ai.provider) } as React.CSSProperties}><ProviderMark id={ai.provider} size={16} /></span> },
+      ...AI_PROVIDERS.map((p) => ({ value: p.id as AiProviderId | '', label: p.name, hint: ai.keys[p.id] ? 'Key saved' : 'No key yet', lead: <span className="dd-mark" style={{ '--pc': brandColor(p.id) } as React.CSSProperties}><ProviderMark id={p.id} size={16} /></span> })),
     ]} />
   )
   return (
@@ -254,7 +254,7 @@ function AiSection() {
       <div className="m-field">
         <span className="st-h">Main provider · story and translation</span>
         <div className="st-prov" role="radiogroup" aria-label="Main provider">{AI_PROVIDERS.map((p) => (
-          <button key={p.id} type="button" role="radio" aria-checked={ai.provider === p.id} className={'st-prov-chip' + (ai.provider === p.id ? ' is-on' : '')} style={{ '--pc': p.color } as React.CSSProperties} onClick={() => setAi({ ...ai, provider: p.id })}>
+          <button key={p.id} type="button" role="radio" aria-checked={ai.provider === p.id} className={'st-prov-chip' + (ai.provider === p.id ? ' is-on' : '')} style={{ '--pc': brandColor(p.id) } as React.CSSProperties} onClick={() => setAi({ ...ai, provider: p.id })}>
             <i><ProviderMark id={p.id} size={18} /></i><span>{p.name}<SavedMark on={!!ai.keys[p.id]} /></span>{ai.provider === p.id && <Icon name="check" size={16} />}
           </button>
         ))}</div>
