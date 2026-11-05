@@ -2,8 +2,10 @@
 // phrase from the first to the last tapped word becomes the highlighted phrase (the banner highlights one phrase, the
 // same field as the PC's "Highlighted phrase"). Opened from the canvas tray (tap the headline) and from the Menu.
 import { useMemo } from 'react'
+import type { CSSProperties } from 'react'
 import { useStore } from '../../pc/store'
 import { suggestHighlight } from '../../pc/core/newsroom'
+import { CATEGORIES, darkAccent, getFormat } from '../../pc/core/tokens'
 import { Button, Icon, Sheet } from '../shell/ui'
 import { useUi } from '../shell/core'
 
@@ -25,11 +27,29 @@ export function phraseRange(words: string[], phrase: string): [number, number] |
   return null
 }
 
+const lum = (hex: string) => { const n = parseInt(hex.replace('#', '').slice(0, 6), 16); return (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255 }
+
+/** The colour the banner draws the highlighted phrase in (the PC Headline panel's rule): the phrase's own colour when one
+ *  is set, else the category accent (on a dark band) or the accent darkened (on a light band). */
+export function useHighlightColor(): string {
+  const categoryId = useStore((s) => s.doc.content.categoryId)
+  const hd = useStore((s) => s.doc.content.headDesign)
+  const format = useStore((s) => s.format)
+  const cat = CATEGORIES.find((x) => x.id === categoryId) ?? CATEGORIES[0]
+  if (hd?.hiPhraseColor) return hd.hiPhraseColor
+  const band = hd?.bgColor ?? (getFormat(format).family !== 'stack' ? cat.panel[0] : cat.band)
+  return lum(band) < 0.45 ? cat.accent : darkAccent(cat.accent)
+}
+
+/** CSS variables for a chip painted in the highlight colour, with readable text on it. */
+export const highlightVars = (c: string) => ({ '--hl': c, '--hl-ink': lum(c) > 0.62 ? '#1c1917' : '#ffffff' }) as CSSProperties
+
 export function HighlightSheet() {
   const headline = useStore((s) => s.doc.content.headline)
   const highlight = useStore((s) => s.doc.content.highlight)
   const onSocial = useStore((s) => s.doc.content.highlightOnSocial)
   const set = (patch: Record<string, unknown>) => useStore.getState().setContent(patch)
+  const color = useHighlightColor()
   const words = useMemo(() => headlineWords(headline), [headline])
   const range = phraseRange(words, highlight || '')
   const tap = (i: number) => {
@@ -45,7 +65,7 @@ export function HighlightSheet() {
   }
   return (
     <Sheet id={HIGHLIGHT_SHEET} title="Highlight" initial="half">
-      <div className="hl">
+      <div className="hl" style={highlightVars(color)}>
         <p className="hl-help">Tap the words to highlight. The phrase runs from the first to the last word you tap; tap an end again to shorten it.</p>
         {words.length ? (
           <div className="hl-words" role="group" aria-label="Headline words">

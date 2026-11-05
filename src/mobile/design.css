@@ -3080,12 +3080,12 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 .hl-word { min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: var(--fill); color: var(--text-primary);
   font: 650 17px/1.2 var(--font-ui); transition: background .15s, color .15s, transform .12s; }
 .hl-word:active { transform: scale(.95); }
-.hl-word.is-on { background: #fde047; color: #1c1917; border-radius: 4px; }
+.hl-word.is-on { background: var(--hl, #fde047); color: var(--hl-ink, #1c1917); border-radius: 4px; }
 .hl-word.is-on.is-start { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
 .hl-word.is-on.is-end { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
-:root[data-theme='dark'] .hl-word.is-on { background: #facc15; }
 .hl-now { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--fill); font: 500 14px/1.4 var(--font-ui); color: var(--text-secondary); }
-.hl-now > svg { flex: none; color: #ca8a04; }
+.hl-now > svg { flex: none; color: var(--hl, #ca8a04); }
+:root[data-theme='dark'] .hl-now > svg { filter: brightness(1.5); }
 .hl-now b { color: var(--text-primary); }
 .hl-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .hl-switch { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 20px; background: var(--surface-panel); box-shadow: var(--drop-2); }
@@ -3094,7 +3094,7 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 .hl-switch small { font: 400 12.5px/1.4 var(--font-ui); color: var(--text-secondary); }
 .hl-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; margin: 0 0 12px; padding: 10px 14px; border: 0; border-radius: 22px;
   background: var(--surface-panel); box-shadow: var(--drop-2); color: var(--text-primary); text-align: left; }
-.hl-row > i { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; background: #facc15; color: #1c1917; }
+.hl-row > i { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; background: var(--hl, #facc15); color: var(--hl-ink, #1c1917); }
 .hl-row > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .hl-row b { font: 650 15.5px/1.3 var(--font-ui); }
 .hl-row small { font: 400 12.5px/1.4 var(--font-ui); color: var(--text-secondary); }

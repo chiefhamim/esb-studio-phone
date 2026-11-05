@@ -14,7 +14,7 @@ import { humanBytes, loadSettings, saveSettings } from '../../pc/export'
 import type { ExportSettings } from '../../pc/export'
 import { openProject, saveProject } from '../../pc/project'
 import { normalizeDoc, useStore } from '../../pc/store'
-import { HighlightSheet, openHighlight } from './HighlightSheet'
+import { HighlightSheet, highlightVars, openHighlight, useHighlightColor } from './HighlightSheet'
 import { getCollage } from '../../pc/core/collage'
 import { FORMAT_IDS } from '../../pc/core/tokens'
 import { readSharedFile } from '../../native/shareIn'
@@ -404,6 +404,7 @@ export default function GraphicsScreen({ active }: ScreenProps) {
 }
 
 function Sheets() {
+  const hlColor = useHighlightColor()
   const images = useStore((s) => s.images.length)
   const selCount = useStore((s) => s.selectedIds.length)
   const st = useStore.getState
@@ -414,7 +415,7 @@ function Sheets() {
         <div onClickCapture={(e) => { const t = e.target as HTMLElement; const sheetFor = t.closest('.pnl[data-panel="Category"] > header') ? 'gx-category' : null; if (sheetFor) { e.stopPropagation(); e.preventDefault(); useUi.getState().openSheet(sheetFor) } }}
           onPointerDownCapture={(e) => { if ((e.target as HTMLElement).closest('button')?.textContent?.trim() === 'Use selection') e.preventDefault() /* keep the headline's text selection when the button is tapped */ }}>
           <LivePreview />
-          <button type="button" className="hl-row" onClick={openHighlight}><i><Icon name="highlight" size={20} /></i><span><b>Highlight</b><small>Tap the headline words to highlight</small></span><Icon name="chevRight" size={18} /></button>
+          <button type="button" className="hl-row" style={highlightVars(hlColor)} onClick={openHighlight}><i><Icon name="highlight" size={20} /></i><span><b>Highlight</b><small>Tap the headline words to highlight</small></span><Icon name="chevRight" size={18} /></button>
           <PcHost className="gx-panel"><StoryPanel /></PcHost>
         </div>
       </Sheet>
