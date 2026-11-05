@@ -311,7 +311,8 @@ export function Dropdown<T extends string>({ label, value, options, onChange }: 
             {options.map((o) => (
               <button key={o.value} type="button" role="option" aria-selected={o.value === value} className={'dd-opt' + (o.value === value ? ' is-on' : '')} onClick={() => { onChange(o.value); setOpen(false) }}>
                 <span className="dd-opt-c">{o.value === value && <Icon name="check" size={18} />}</span>
-                <span className="dd-opt-l">{o.lead && <span className="dd-lead" aria-hidden>{o.lead}</span>}{o.label}</span>
+                {o.lead && <span className="dd-lead dd-opt-i" aria-hidden>{o.lead}</span>}
+                <span className="dd-opt-l">{o.label}</span>
                 {o.hint && <span className="dd-opt-h">{o.hint}</span>}
               </button>
             ))}

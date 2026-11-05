@@ -3322,3 +3322,43 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 .lib-acts { display: grid; grid-template-columns: 1fr 1fr 44px; gap: 8px; align-items: center; }
 .lib-acts > .m-btn { min-height: 44px !important; min-width: 0; padding: 0 10px !important; border-radius: 12px !important; background: var(--fill) !important; color: var(--text-primary) !important; box-shadow: none !important; font: 600 14px/1.2 var(--font-ui) !important; }
 .lib-acts > .lib-del { width: 44px; height: 44px; border-radius: 12px; background: var(--danger-soft, var(--fill)); color: var(--danger); }
+
+/* Dropdown lists (model picker, etc.): rows keep their full height in the scrolling list (they were being squeezed,
+   so a hint spilled into the next row), the tick sits in a 20 px column right at the row's edge instead of 72 px in,
+   and the panel sits on the 16 px page gutters like the menus. */
+.dd-panel { left: 16px !important; right: 16px !important; padding: 8px !important; gap: 2px; }
+.dd-panel .dd-opt { flex: none; min-height: 48px; padding: 10px 12px !important; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; row-gap: 2px; }
+.dd-panel .dd-opt-c { color: var(--accent); }
+.dd-panel .dd-opt-l { font: 500 15px/1.3 var(--font-ui); }
+.dd-panel .dd-opt.is-on .dd-opt-l { font-weight: 650; }
+.dd-panel .dd-opt-h { color: var(--text-secondary) !important; }
+/* names start at the row's own padding; the tick of the chosen one sits at the right end, as in every other menu */
+.dd-panel .dd-opt { grid-template-columns: minmax(0, 1fr) 20px; grid-template-areas: "l c" "h c"; padding: 10px 14px !important; }
+.dd-panel .dd-opt:not(:has(.dd-opt-h)) { grid-template-areas: "l c"; }
+.dd-panel .dd-opt-c { grid-area: c; align-self: center; }
+.dd-panel .dd-opt-h { grid-area: h; padding-left: 0 !important; }
+.dd-panel .dd-opt:has(.dd-lead) .dd-opt-h { padding-left: 38px !important; }
+/* a row with a leading icon (provider pickers): the icon gets its own column, centred on the name and its note */
+.dd-panel .dd-opt:has(> .dd-opt-i) { grid-template-columns: 36px minmax(0, 1fr) 20px; grid-template-areas: "i l c" "i h c"; column-gap: 12px; }
+.dd-panel .dd-opt:has(> .dd-opt-i):not(:has(.dd-opt-h)) { grid-template-areas: "i l c"; }
+.dd-panel .dd-opt-i { grid-area: i; align-self: center; }
+.dd-panel .dd-opt:has(> .dd-opt-i) .dd-opt-h { padding-left: 0 !important; }
+
+/* ===================================================================== frosted backdrop behind every pop-up
+   Sheets, confirm dialogs, the update dialog, ⋯ menus and dropdown lists all sit over the same frosted glass: the page
+   behind softly blurred and slightly dimmed, so the pop-up floats. Menus use a lighter frost so you still see where
+   they came from. Only opacity fades in (blur is never animated, which keeps it smooth at 120 Hz). */
+:root { --frost: blur(18px) saturate(150%); --frost-tint: rgba(28, 22, 16, .26); --frost-light: blur(12px) saturate(140%); --frost-light-tint: rgba(28, 22, 16, .12); }
+:root[data-theme='dark'] { --frost-tint: rgba(0, 0, 0, .46); --frost-light-tint: rgba(0, 0, 0, .28); }
+.m-scrim, .gx-dropscrim {
+  background: var(--frost-tint) !important;
+  -webkit-backdrop-filter: var(--frost) !important; backdrop-filter: var(--frost) !important;
+}
+.m-menu-scrim {
+  background: var(--frost-light-tint);
+  -webkit-backdrop-filter: var(--frost-light); backdrop-filter: var(--frost-light);
+  animation: m-fade .18s var(--m-ease);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .m-scrim, .gx-dropscrim, .m-menu-scrim { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+}
