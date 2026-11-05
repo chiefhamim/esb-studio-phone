@@ -52,3 +52,16 @@ Goal: phone and PC share unfinished stories. Proposed (needs an owner-approved m
 - Facebook Graph from the WebView: CORS with the Bearer header unverified.
 - The 4 MB upload cap is Vercel's body limit; the phone does not resize pictures yet.
 - Revalidate and upload probes send an empty request that the routes reject with 400 after auth; they count toward the per-user rate limits (20 and 30 a minute), which is negligible.
+
+## Desktop change needed: profiles has no `status` column (2026-11-06)
+
+`src/pc/editorial/siteApi.ts` (vendored from the desktop app) signs in, then asks
+`profiles?select=role,status,full_name`. The site's `public.profiles` table has no `status` column
+(id, full_name, role, avatar_url, created_at, updated_at), so that request fails every time and the session
+falls back to the role and name in the auth metadata; the Suspended/Pending checks never run.
+The site's own `lib/auth.ts` retries without `status`. **Fix in the desktop repo:** do the same retry
+(`select=role,full_name` when the first request fails), then re-sync. Until then the phone corrects the
+session's role and name from the profile row in `src/mobile/shell/avatar.tsx` (`syncSessionFromProfile`).
+
+Also on 2026-11-06 (Supabase, applied): signed-in users may now update only `full_name`, `avatar_url` and
+`updated_at` on their own `profiles` row (they could previously change `role`); the anon key can update nothing.

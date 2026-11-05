@@ -3396,3 +3396,9 @@ img.u-avatar { box-shadow: inset 0 0 0 .5px var(--m-hair); }
 .av-tick { position: absolute; right: -2px; bottom: -2px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--on-accent); box-shadow: 0 0 0 2px var(--surface-panel); }
 .av-credit { margin: -4px 4px 0; font: 500 12.5px/1.4 var(--font-ui); color: var(--text-secondary); }
 .av-remove { align-self: center; color: var(--danger) !important; }
+
+/* Home: the content block sits centred in the space between the top bar and the nav bar (it was stuck to the top
+   with a large empty area under it). Auto margins centre it while it fits; when it is taller it scrolls from the top. */
+.hm-scroll { display: flex; flex-direction: column; }
+.hm-scroll > .hm { margin-top: auto !important; margin-bottom: auto !important; width: 100%; }
+.hm-scroll { padding-bottom: 28px !important; }

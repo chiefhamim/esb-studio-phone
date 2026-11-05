@@ -1,11 +1,11 @@
 // Profile picture: a preset avatar chosen on the phone and saved to the editor's esbpowerline.com profile
 // (Supabase public.profiles.avatar_url, which the site already shows as the account's picture). The presets are ten
-// DiceBear styles, 16 each, rendered to 256 px PNG (public/avatars/presets). The same files sit in the site's public
+// DiceBear styles plus two hand-composed sets (Islamic, Asian), 16 each, rendered to 256 px PNG (public/avatars/presets). The same files sit in the site's public
 // media bucket at media/avatars/presets/<set>/NN.png; that public URL is what gets saved, so the picture is the same
 // on the phone, the desktop app and the website. The phone shows its bundled copy of a preset (instant, offline).
 import { useEffect, useState } from 'react'
 import { create } from 'zustand'
-import { SUPABASE_ANON_KEY, SUPABASE_URL, ensureFreshSession, type StaffSession } from '../../pc/editorial/siteApi'
+import { CMS_ROLES, SUPABASE_ANON_KEY, SUPABASE_URL, ensureFreshSession, saveStaffSession, type StaffSession } from '../../pc/editorial/siteApi'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import { snack, useUi } from './core'
 import { Button, Chip, Icon, Sheet } from './ui'
@@ -14,6 +14,8 @@ export const AVATAR_REMOTE = `${SUPABASE_URL}/storage/v1/object/public/media/ava
 const LOCAL = './avatars/presets'
 export const AVATAR_SETS = [
   { id: 'notionists', name: 'Notionists', by: 'Zoish', license: 'CC0' },
+  { id: 'islamic', name: 'Islamic', by: 'Pablo Stanley (Avataaars, Open Peeps)', license: 'CC0 · free for commercial use' },
+  { id: 'asian', name: 'Asian', by: 'Pablo Stanley, Draftbit (Personas)', license: 'CC0 · CC BY 4.0' },
   { id: 'lorelei', name: 'Lorelei', by: 'Lisa Wischofsky', license: 'CC0' },
   { id: 'personas', name: 'Personas', by: 'Draftbit', license: 'CC BY 4.0' },
   { id: 'micah', name: 'Micah', by: 'Micah Lanier', license: 'CC BY 4.0' },
@@ -44,7 +46,7 @@ interface AvatarState {
 async function profileRequest(method: 'GET' | 'PATCH', body?: unknown): Promise<Response | null> {
   const s = await ensureFreshSession(useEditorialStore.getState().staffSession)
   if (!s?.token || !s.userId) return null
-  return fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(s.userId)}${method === 'GET' ? '&select=avatar_url' : ''}`, {
+  return fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(s.userId)}${method === 'GET' ? '&select=avatar_url,role,full_name' : ''}`, {
     method,
     headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${s.token}`, Accept: 'application/json', 'Content-Type': 'application/json', Prefer: 'return=representation' },
     body: body ? JSON.stringify(body) : undefined,
@@ -62,8 +64,9 @@ export const useAvatar = create<AvatarState>((set, get) => ({
     try {
       const res = await profileRequest('GET')
       if (!res?.ok) return
-      const row = ((await res.json()) as { avatar_url: string | null }[])[0]
+      const row = ((await res.json()) as { avatar_url: string | null; role?: string | null; full_name?: string | null }[])[0]
       if (!row || get().userId !== uid) return
+      syncSessionFromProfile(row)
       set({ url: row.avatar_url })
       if (row.avatar_url) localStorage.setItem(cacheKey(uid), row.avatar_url); else localStorage.removeItem(cacheKey(uid))
     } catch { /* offline: keep the cached picture */ }
@@ -87,6 +90,20 @@ export const useAvatar = create<AvatarState>((set, get) => ({
     }
   },
 }))
+
+/** The vendored sign-in (src/pc siteApi) asks profiles for a `status` column the site's table does not have, so that
+ *  request fails and the session falls back to the role and name in the auth metadata. This reads the profile row the
+ *  site actually uses and corrects the session's role and name from it (a newsroom role only; never a member role). */
+function syncSessionFromProfile(row: { role?: string | null; full_name?: string | null }) {
+  const s = useEditorialStore.getState().staffSession
+  if (!s) return
+  const role = typeof row.role === 'string' && CMS_ROLES.has(row.role.trim().toUpperCase()) ? row.role.trim().toUpperCase() : s.role
+  const name = row.full_name?.trim() || s.name
+  if (role === s.role && name === s.name) return
+  const next = { ...s, role, name }
+  saveStaffSession(next)
+  useEditorialStore.setState({ staffSession: next })
+}
 
 /** Keeps the picture in step with whoever is signed in (call once, high in the tree). */
 export function useAvatarSync() {
