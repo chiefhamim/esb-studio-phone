@@ -206,7 +206,7 @@ export function PublishReview() {
           <button type="button" role="radio" aria-checked={which === 'web'} className={'m-seg-item' + (which === 'web' ? ' is-on' : '')} onClick={() => setWhich('web')}><FormatMark id="web" size={18} /><span>Website <b>16:9</b></span></button>
           <button type="button" role="radio" aria-checked={which === 'fb'} className={'m-seg-item' + (which === 'fb' ? ' is-on' : '')} onClick={() => setWhich('fb')}><FormatMark id="fb45" size={18} /><span>Facebook <b>4:5</b></span></button>
         </div>
-        <div className="bp-which" data-which={which}>{!landed ? <div className="me-bp-hold" aria-hidden /> : <PcHost className="me-bp"><BannerPreviews base={base} heroMode={hero} onHeroMode={setHero} photoUrl={photo} caption={willFb || !fb ? draft.social.facebook : undefined} pageName={fb ? fb.pageName || fb.pageId : null} webExtra={<ImageOptions dest="web" base={base} />} fbExtra={<ImageOptions dest="fb" base={base} />} /></PcHost>}</div>
+        <div className="bp-which" data-which={which} data-hero={hero}>{!landed ? <div className="me-bp-hold" aria-hidden /> : <PcHost className="me-bp"><BannerPreviews base={base} heroMode={hero} onHeroMode={setHero} photoUrl={photo} caption={willFb || !fb ? draft.social.facebook : undefined} pageName={fb ? fb.pageName || fb.pageId : null} webExtra={<ImageOptions dest="web" base={base} />} fbExtra={<ImageOptions dest="fb" base={base} />} /></PcHost>}</div>
 
         <section className="me-card">
           <h3 className="me-h3">Keep a copy</h3>

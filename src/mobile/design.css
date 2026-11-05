@@ -3253,3 +3253,25 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 @keyframes siri-c { 0% { transform: translate3d(0, 0, 0) scale(.9); } 50% { transform: translate3d(30%, -30%, 0) scale(1.2); } 100% { transform: translate3d(-24%, -14%, 0) scale(1); } }
 @keyframes siri-d { 0% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(-40%, -18%, 0) scale(1.15); } 100% { transform: translate3d(10%, -36%, 0) scale(.85); } }
 @media (prefers-reduced-motion: reduce) { .ab2-glow > i { animation: none; } }
+
+/* Publish previews: one plain caption per banner (name and pixel size); the switch above already says which it is */
+.bp-which .bp-card .pcard-ic { display: none !important; }
+.bp-which .bp-card .pcard-t > * { display: none !important; }
+.bp-which .bp-card .pcard-t { display: flex; align-items: baseline; gap: 10px; }
+.bp-which .bp-card .pcard-t::before { font: 700 16px/1.3 var(--font-ui); color: var(--text-primary); }
+.bp-which .bp-card .pcard-t::after { padding: 2px 8px; border-radius: 7px; background: var(--fill); font: 600 12.5px/1.4 var(--font-ui); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.bp-which .bp-card:first-child .pcard-t::before { content: 'Web Banner'; }
+.bp-which[data-hero='photo'] .bp-card:first-child .pcard-t::before { content: 'Original Photo'; }
+.bp-which .bp-card:first-child .pcard-t::after { content: '1920 × 1080'; }
+.bp-which[data-hero='photo'] .bp-card:first-child .pcard-t::after { content: 'as uploaded'; }
+.bp-which .bp-card:nth-child(2) .pcard-t::before { content: 'Feed Banner'; }
+.bp-which .bp-card:nth-child(2) .pcard-t::after { content: '1080 × 1350'; }
+
+/* About glow: the colours of ESB's three hairlines (green, red, orange) */
+.ab2-glow > i:nth-child(1) { background: radial-gradient(circle, #16a34a 0%, rgba(22, 163, 74, 0) 68%) !important; }
+.ab2-glow > i:nth-child(2) { background: radial-gradient(circle, #dc2626 0%, rgba(220, 38, 38, 0) 68%) !important; }
+.ab2-glow > i:nth-child(3) { background: radial-gradient(circle, #f97316 0%, rgba(249, 115, 22, 0) 68%) !important; }
+.ab2-glow > i:nth-child(4) { background: radial-gradient(circle, #22c55e 0%, rgba(34, 197, 94, 0) 68%) !important; }
+.ab2-glow { opacity: .42; }
+:root[data-theme='dark'] .ab2-glow { opacity: .55; }
+.bp-which .bp-card .pcard-t { flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; white-space: nowrap; }
