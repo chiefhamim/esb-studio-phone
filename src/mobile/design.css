@@ -3214,3 +3214,10 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 .pbs-note { margin: -2px 4px 0 !important; }
 /* the headline uses the full width: no balanced wrapping (it evened the lines out and left space on the right) */
 .pbs-title { text-wrap: wrap !important; max-width: none !important; width: 100%; }
+
+/* Other providers: one card holding plain rows (the rows are not cards themselves), hairline between them */
+.m-settings .st-others { background: var(--fill) !important; box-shadow: none !important; border-radius: 20px !important; overflow: hidden; }
+.m-settings .st-others .m-collapse { background: transparent !important; box-shadow: none !important; border-radius: 0 !important; border: 0 !important; margin: 0 !important; padding: 0 14px !important; }
+.m-settings .st-others .m-collapse + .m-collapse { border-top: .5px solid var(--border-default) !important; }
+/* the same for any collapse that sits inside another card */
+.m-settings :is(.st-key, .m-section) .m-collapse .m-collapse { background: transparent !important; box-shadow: none !important; }

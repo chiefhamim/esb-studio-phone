@@ -423,8 +423,8 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
           <div className="m-stack">
             <Segmented label="Link fetching" value={mode} onChange={(m) => { setMode(m); setLinkFetchMode(m) }} options={[{ value: 'site', label: 'Through the site' }, { value: 'device', label: 'This phone' }]} />
             <p className="m-muted">{mode === 'site'
-              ? 'Pasted links are read by esbpowerline.com (staff route). Until the site update is deployed this says "not connected" and you paste the text instead. Feeds (Wire) need "This phone".'
-              : 'This phone reads the public page itself, after the same safety checks (public https addresses only). Feeds (Wire) work in this mode.'}</p>
+              ? 'Pasted links are read by esbpowerline.com (staff route). Until the site update is deployed this says "not connected" and you paste the text instead. Feeds (News) need "This phone".'
+              : 'This phone reads the public page itself, after the same safety checks (public https addresses only). Feeds (News) work in this mode.'}</p>
           </div>
         </Section>
         <Section title="Security" id="set-lock">
