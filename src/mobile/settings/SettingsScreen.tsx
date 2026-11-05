@@ -74,7 +74,7 @@ function UpdateCheck() {
     <div className="ab-update">
       <span className="ab-update-t"><b>ESB Studio</b><small>Version {running || __APP_VERSION__}</small><small className={'ab-update-s is-' + state}>{meta}</small></span>
       <Button kind="tonal" icon="refresh" busy={state === 'checking'} onClick={() => void run()}>Check for updates</Button>
-      <p className="ab-update-foot">Fonts, artwork and templates are bundled with the app · © ESB Power Line</p>
+      <p className="ab-update-foot"><span>ESB Ai Studio build {manifest.commit.slice(0, 7)} · {Object.keys(manifest.files).length} files</span><span>Fonts, artwork and templates are bundled with the app · © ESB Power Line</span></p>
     </div>
   )
 }
@@ -433,7 +433,6 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
         <Section title="About" id="set-about">
           <AboutCard />
           <UpdateCheck />
-          <Row title="Engine and editor" meta={`ESB Ai Studio build ${manifest.commit.slice(0, 7)} · ${Object.keys(manifest.files).length} files`} />
         </Section>
       </div>
     </FullDialog>

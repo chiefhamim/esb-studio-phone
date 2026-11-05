@@ -3229,3 +3229,11 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 :root[data-theme='dark'] .ab2-yeasin { color: #fb923c; }
 .ab-update-foot { margin: 4px 0 0; padding-top: 12px; border-top: .5px solid var(--border-default); text-align: center; font: 400 12px/1.5 var(--font-ui); color: var(--text-tertiary, var(--text-secondary)); }
 .ab-update { display: flex; flex-direction: column; gap: 12px; }
+.ab-update-foot { display: flex; flex-direction: column; gap: 3px; }
+.ab-update-foot > span:first-child { font-weight: 600; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+/* About tiles: the heading sits beside its icon, centred on it; the line under them uses the full width */
+.ab2-tile { display: grid !important; grid-template-columns: 38px minmax(0, 1fr); column-gap: 12px; row-gap: 10px; align-items: center; }
+.ab2-tile > i { margin-bottom: 0 !important; }
+.ab2-tile > b { grid-column: 2; }
+.ab2-tile > small { grid-column: 1 / -1; }
