@@ -316,7 +316,7 @@ export function Landing({ active }: { active: boolean }) {
       {opened.has('wire') && (
         <div {...pane('wire')}>
           <div className={'m-wrap me-home'}>
-            <WireTab active={active && homeTab === 'wire'} onUse={(u) => { newStory('intake'); set({ intakeTab: 'link', url: u, focusUrlAt: Date.now() }) }} />
+            <WireTab active={active && homeTab === 'wire'} onUse={(u) => { newStory('intake'); set({ intakeTab: 'link', url: u }) }} />
           </div>
         </div>
       )}
