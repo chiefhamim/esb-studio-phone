@@ -2818,3 +2818,21 @@ html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-n
 .pb-time { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; }
 .pb-ago { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 6px; background: var(--fill); color: var(--text-primary);
   font: 650 11.5px/1 var(--font-ui); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Stories / Published / Wire: live panes in one stage; a switch slides the real panes (transform + opacity only) */
+.me-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.me-stage > .me-pane { flex: 1; min-height: 0; }
+.me-stage > .me-pane-out-fwd, .me-stage > .me-pane-out-back { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.me-stage > .me-pane-in-fwd, .me-stage > .me-pane-in-back { position: relative; z-index: 1; }
+.me-pane-in-fwd { animation: me-in-r .36s cubic-bezier(.22, 1, .36, 1) both; }
+.me-pane-in-back { animation: me-in-l .36s cubic-bezier(.22, 1, .36, 1) both; }
+.me-pane-out-fwd { animation: me-out-l .36s cubic-bezier(.22, 1, .36, 1) both; }
+.me-pane-out-back { animation: me-out-r .36s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes me-in-r { from { transform: translate3d(100%, 0, 0); } }
+@keyframes me-in-l { from { transform: translate3d(-100%, 0, 0); } }
+@keyframes me-out-l { to { transform: translate3d(-28%, 0, 0); opacity: 0; } }
+@keyframes me-out-r { to { transform: translate3d(28%, 0, 0); opacity: 0; } }
+.me-stage > .me-pane-in-fwd, .me-stage > .me-pane-in-back { background: var(--surface-app); }
+@media (prefers-reduced-motion: reduce) { .me-pane-in-fwd, .me-pane-in-back, .me-pane-out-fwd, .me-pane-out-back { animation: none; } }
+/* each pane is its own compositor layer, painted once: the slide only moves finished layers */
+.me-stage > .me-pane { will-change: transform; transform: translateZ(0); }

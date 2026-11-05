@@ -109,6 +109,9 @@ export default function MobileApp() {
       if (id.startsWith('ed-')) { useDesk.getState().set({ homeTab: id.slice(3) as HomeTab, view: 'home', writing: false }); go('editorial') } else go(id as Route)
     }
     if (id === here) { run(); return } // same tab: its own action (Engine focuses the link field), no shift
+    // Stories, Published and Wire are panes of one page: they slide as live panes (Landing), not through a screenshot
+    // View Transition, which cost ~3 frames on every switch while it captured the screen
+    if (here.startsWith('ed-') && id.startsWith('ed-')) { run(); return }
     slideTo(dirOf(NAV.map((n) => n.id), here, id), run)
   }
   const detail = (route === 'editorial' && deskView !== 'home') || route === 'graphics'

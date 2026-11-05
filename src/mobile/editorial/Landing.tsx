@@ -19,6 +19,7 @@ import { editLive, newStory, openStory, useDesk } from './deskStore'
 import type { HomeTab } from './deskStore'
 import { ago, hasStoryContent, hostOf } from './useStory'
 import { syncPublished } from './publishedLive'
+import { afterSlide } from '../shell/slide'
 import { publishedParts } from './publishedDate'
 import { WatchList, WatchSettingsSheet } from '../watch/WatchPanel'
 
@@ -34,7 +35,7 @@ function PubTime({ raw }: { raw?: string }) {
 function Thumb({ src, cat }: { src?: string | null; cat?: string }) {
   const [bad, setBad] = useState(false)
   const c = CATEGORIES.find((x) => x.id === cat || x.name.toLowerCase() === (cat ?? '').toLowerCase())
-  if (src && !bad && /^https?:|^blob:|^data:/.test(src)) return <img className="me-thumb" src={src} alt="" loading="lazy" onError={() => setBad(true)} />
+  if (src && !bad && /^https?:|^blob:|^data:/.test(src)) return <img className="me-thumb" src={src} alt="" loading="lazy" decoding="async" onError={() => setBad(true)} />
   return <span className="me-thumb me-thumb-empty" style={c ? ({ '--thumb-c': c.accent } as React.CSSProperties) : undefined} aria-hidden><Icon name="newspaper" size={20} /></span>
 }
 
@@ -103,7 +104,7 @@ function PublishedList({ active }: { active: boolean }) {
   const load = async (said = false) => { setState('loading'); try { const r = await syncPublished(); if (said) snack(r.message, r.ok ? undefined : { tone: 'error' }) } finally { setState('done') } }
   // every visit refreshes quietly (at most every 20 s), so a story just published is there when you come back
   const lastLoad = useRef(0)
-  useEffect(() => { if (active && online && state !== 'loading' && Date.now() - lastLoad.current > 20_000) { lastLoad.current = Date.now(); void load() } }, [active, online]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (active && online && state !== 'loading' && Date.now() - lastLoad.current > 20_000) { lastLoad.current = Date.now(); afterSlide(() => { window.setTimeout(() => void load(), 120) }) } }, [active, online]) // eslint-disable-line react-hooks/exhaustive-deps
   const open = async (a: LiveArticleSummary) => {
     if (await confirmAsk({ title: 'Open this article for editing?', body: `"${a.title}" opens as a story on the desk, linked to the live article: Publish will update it, never add a second copy. The story on the desk now stays in your list.`, confirm: 'Open for editing' })) void editLive(a)
   }
@@ -263,17 +264,33 @@ export function Landing({ active }: { active: boolean }) {
   const site = useEditorialStore((s) => s.siteStatus)
   const onDesk = hasStoryContent({ source, draft })
   const TABS3 = ['stories', 'published', 'wire']
-  const lastTab = useRef(homeTab)
-  const tabDir = lastTab.current === homeTab ? '' : TABS3.indexOf(homeTab) > TABS3.indexOf(lastTab.current) ? ' m-tab-fwd' : ' m-tab-back'
-  useEffect(() => { lastTab.current = homeTab }, [homeTab])
+  // Each tab stays alive once opened (hidden when another is showing), with its own scroll position. Switching used to
+  // rebuild the tab from scratch, re-decoding every Published photo right as the page slide began: that was the lag.
+  const [opened, setOpened] = useState<Set<HomeTab>>(() => new Set([homeTab]))
+  if (!opened.has(homeTab)) setOpened(new Set([...opened, homeTab]))
+  // Switching tabs moves the real panes (no screenshots): the tab you leave slides out, the one you open slides in, in
+  // the direction of the tab bar. Only transform and opacity animate, on the compositor.
+  const [leaving, setLeaving] = useState<{ tab: HomeTab; dir: 'fwd' | 'back' } | null>(null)
+  const prevTab = useRef(homeTab)
+  if (prevTab.current !== homeTab) {
+    const dir = TABS3.indexOf(homeTab) > TABS3.indexOf(prevTab.current) ? 'fwd' : 'back'
+    setLeaving({ tab: prevTab.current, dir })
+    prevTab.current = homeTab
+  }
+  useEffect(() => { if (!leaving) return; const t = window.setTimeout(() => setLeaving(null), 380); return () => window.clearTimeout(t) }, [leaving])
+  const pane = (t: HomeTab) => {
+    const on = homeTab === t, out = leaving?.tab === t
+    const motion = leaving ? (on ? ` me-pane-in-${leaving.dir}` : out ? ` me-pane-out-${leaving.dir}` : '') : ''
+    return { className: 'm-scroll me-pane' + motion, style: on || out ? undefined : { display: 'none' }, 'aria-hidden': !on }
+  }
   return (
     <>
       <TopBar title={TAB_TITLE[homeTab]} sub={site.connected ? undefined : <><i className="me-dot" aria-hidden />esbpowerline.com not reachable</>}
         actions={<IconBtn icon="activity" label="Activity" onClick={() => useUi.getState().openSheet('ed-activity')} />} overflow={homeMenu()} />
-      <div className="m-scroll">
-        <div className={'m-wrap me-home' + tabDir} key={homeTab}>
-          {homeTab === 'stories' && (
-            <>
+      <div className="me-stage">
+      {opened.has('stories') && (
+        <div {...pane('stories')}>
+          <div className={'m-wrap me-home'}>
               {onDesk && storyCount > 1 && (
                 <section className="me-continue" aria-label="Continue editing">
                   <h2 className="me-h2">Continue editing</h2>
@@ -284,11 +301,23 @@ export function Landing({ active }: { active: boolean }) {
               <h2 className="me-h2">All stories</h2>
               <StoriesList key={activeId ?? 'none'} />
               <Button kind="tonal" icon="plus" onClick={() => newStory('story')}>Write a blank story</Button>
-            </>
-          )}
-          {homeTab === 'published' && <PublishedList active={active && homeTab === 'published'} />}
-          {homeTab === 'wire' && <WireTab active={active} onUse={(u) => { newStory('intake'); set({ intakeTab: 'link', url: u, focusUrlAt: Date.now() }) }} />}
+          </div>
         </div>
+      )}
+      {opened.has('published') && (
+        <div {...pane('published')}>
+          <div className={'m-wrap me-home'}>
+            <PublishedList active={active && homeTab === 'published'} />
+          </div>
+        </div>
+      )}
+      {opened.has('wire') && (
+        <div {...pane('wire')}>
+          <div className={'m-wrap me-home'}>
+            <WireTab active={active && homeTab === 'wire'} onUse={(u) => { newStory('intake'); set({ intakeTab: 'link', url: u, focusUrlAt: Date.now() }) }} />
+          </div>
+        </div>
+      )}
       </div>
       <WireSourcesSheet />
       <WatchSettingsSheet />
