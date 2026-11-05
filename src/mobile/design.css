@@ -3362,3 +3362,6 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
 @media (prefers-reduced-transparency: reduce) {
   .m-scrim, .gx-dropscrim, .m-menu-scrim { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
+/* frost toned down: a soft haze, the page behind stays readable */
+:root { --frost: blur(4px) saturate(115%); --frost-tint: rgba(28, 22, 16, .22); --frost-light: blur(2px); --frost-light-tint: rgba(28, 22, 16, .08); }
+:root[data-theme='dark'] { --frost-tint: rgba(0, 0, 0, .42); --frost-light-tint: rgba(0, 0, 0, .22); }
