@@ -3851,3 +3851,30 @@ html.kb-open .m-snackbars {
 @media (prefers-reduced-motion: reduce) { .hp-press, .hp-badge, .hp-tick svg { animation: none !important; transition: none !important; } }
 /* the page's own bottom padding is the only air above the button bar (the scroller added a second 24) */
 .m-fulldialog:has(> .m-actionbar) .m-fulldialog-body { padding-bottom: 0 !important; }
+
+/* Home tiles: the icon squares carry the same moving light as their cards (2026-11-06). The square's colour now lives
+   in a layer under it (::after, z -1) where two soft lights in the tile's family drift through it (Editorial violet and
+   sky over indigo, Banner amber and rose over orange); the square itself keeps only the passing sheen on top, and the
+   breathing glow (::before) stays behind both. background-position on a 46 px square: cheap. */
+.hm-launch .hm-cell:nth-child(1) { --ico-a: rgba(167, 139, 250, .95); --ico-b: rgba(56, 189, 248, .75); }
+.hm-launch .hm-cell:nth-child(2) { --ico-a: rgba(251, 191, 36, .95); --ico-b: rgba(244, 63, 94, .7); }
+.hm-launch .hm-cell .hm-cell-ico.hm-cell-ico {
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, .34) 50%, transparent 62%) !important;
+  background-size: 260% 100% !important; background-repeat: no-repeat !important;
+}
+.hm-launch .hm-cell .hm-cell-ico::after {
+  content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; pointer-events: none;
+  background:
+    radial-gradient(closest-side, var(--ico-a), transparent) ,
+    radial-gradient(closest-side, var(--ico-b), transparent),
+    var(--t);
+  background-size: 120% 120%, 110% 110%, auto; background-repeat: no-repeat;
+  animation: hm-ico-flow 7s ease-in-out infinite alternate;
+}
+.hm-launch .hm-cell:nth-child(2) .hm-cell-ico::after { animation-duration: 8s; animation-delay: -4s; }
+@keyframes hm-ico-flow {
+  0%   { background-position: -45% -50%, 140% 145%, 0 0; }
+  50%  { background-position: 120% -30%, -30% 120%, 0 0; }
+  100% { background-position: 110% 140%, -40% -45%, 0 0; }
+}
+@media (prefers-reduced-motion: reduce) { .hm-launch .hm-cell .hm-cell-ico::after { animation: none !important; } }

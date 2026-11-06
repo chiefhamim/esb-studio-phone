@@ -112,6 +112,8 @@ export default function MobileApp() {
       if (id === 'add') { useNav.getState().intendEditorial('paste-link'); return }
       if (id.startsWith('ed-')) { useDesk.getState().set({ homeTab: id.slice(3) as HomeTab, view: 'home', writing: false }); go('editorial') } else go(id as Route)
     }
+    // News tapped again while it is open: refresh it, as a pull-down would (the list scrolls back to the top first)
+    if (id === here && id === 'ed-wire') { window.dispatchEvent(new Event('esb:news-refresh')); return }
     if (id === here) { run(); return } // same tab: its own action (Engine focuses the link field), no shift
     // Stories, Published and Wire are panes of one page: they slide as live panes (Landing), not through a screenshot
     // View Transition, which cost ~3 frames on every switch while it captured the screen

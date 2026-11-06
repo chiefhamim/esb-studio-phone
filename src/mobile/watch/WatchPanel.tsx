@@ -1,5 +1,5 @@
 // Wire → EnergyWatch: the office news & official government press release watcher, run on the phone (see watchStore.ts).
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Icon, IconBtn, MenuButton, Row, Segmented, Sheet } from '../shell/ui'
 import type { MenuItem } from '../shell/ui'
 import { snack, useUi } from '../shell/core'
@@ -138,6 +138,22 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
     if (r.failed > r.checked / 2) snack(`Most portals did not answer (${r.failed} of ${r.checked}). Check the connection.`)
     else snack(r.added ? `${r.added} new ${r.added === 1 ? 'headline' : 'headlines'}` : 'No new headlines')
   }
+  // tapping the News tab again while it is open refreshes, like a pull-down: back to the top, then the same check
+  // the refresh button runs (ignored while a check or a range search is already running)
+  const refreshRef = useRef<() => void>(() => {})
+  useEffect(() => { refreshRef.current = () => {
+    if (range ? range.running : running) return
+    const sc = ptr.host.current?.closest('.m-scroll') as HTMLElement | null
+    sc?.scrollTo({ top: 0, behavior: 'smooth' })
+    try { navigator.vibrate?.(10) } catch { /* no haptics */ }
+    void (range ? useRange.getState().search(range.from, range.to) : check())
+  } })
+  useEffect(() => {
+    if (!active) return
+    const on = () => refreshRef.current()
+    window.addEventListener('esb:news-refresh', on)
+    return () => window.removeEventListener('esb:news-refresh', on)
+  }, [active])
   const use = (x: WatchItem) => {
     useWatch.getState().markRead(x.key)
     onUse(x.link)
