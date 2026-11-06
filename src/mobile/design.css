@@ -3585,3 +3585,6 @@ img.u-avatar { box-shadow: inset 0 0 0 .5px var(--m-hair); }
 /* rows inside a form card add no extra air of their own: the card's 12 rhythm is the only spacing; every button is 12 */
 .m-settings .m-section .m-stack > .m-row { padding-block: 0 !important; }
 .hold-danger { border-radius: var(--r-md) !important; }
+/* Other providers: ONE rounded group; the provider rows inside are plain (no fill, square corners), hairline between */
+.m-settings .m-section .st-others > .m-collapse { background: transparent !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 var(--shell-pad) !important; }
+.m-settings .m-section .st-others > .m-collapse + .m-collapse { border-top: .5px solid var(--border-default) !important; }
