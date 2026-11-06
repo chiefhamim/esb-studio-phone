@@ -3450,3 +3450,7 @@ img.u-avatar { box-shadow: inset 0 0 0 .5px var(--m-hair); }
    canvas and its dock, Editorial) were composited as separate layers on every frame. State and scroll stay (still mounted);
    the route slide makes both screens visible for its run (MobileApp lay()). */
 .m-screens > .m-screen.is-off { visibility: hidden; }
+
+/* Home "Recent stories": the Stories icon leads the heading in place of the red bar (the empty state has no icon of its own) */
+.hm-h.has-icon::before { content: none; }
+.hm-h.has-icon > svg { flex: none; color: var(--brand-red); }

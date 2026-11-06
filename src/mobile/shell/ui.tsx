@@ -246,8 +246,8 @@ export function Row({ title, meta, lead, trail, onClick, tall, ...rest }: { titl
     : <div className={`m-row${tall ? ' m-row-tall' : ''}`} {...rest}>{inner}</div>
 }
 
-export function Empty({ icon, title, body, action }: { icon: IconName; title: string; body?: ReactNode; action?: ReactNode }) {
-  return <div className="m-empty"><span className="m-empty-icon"><Icon name={icon} size={28} /></span><h3>{title}</h3>{body && <p>{body}</p>}{action}</div>
+export function Empty({ icon, title, body, action }: { icon?: IconName; title: string; body?: ReactNode; action?: ReactNode }) {
+  return <div className="m-empty">{icon && <span className="m-empty-icon"><Icon name={icon} size={28} /></span>}<h3>{title}</h3>{body && <p>{body}</p>}{action}</div>
 }
 
 export function ErrorState({ title, body, onRetry }: { title: string; body?: ReactNode; onRetry?: () => void }) {
