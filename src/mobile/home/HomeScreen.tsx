@@ -104,7 +104,9 @@ export default function HomeScreen({ active }: ScreenProps) {
   const checkConnection = useEditorialStore((s) => s.checkConnection)
   const online = useOnline()
   const nav = useNav()
-  const recent = useMemo(() => [...stories].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 4), [stories])
+  // with many stories the two workspace tiles fold into slim rows (icon beside the name) so more of the list shows
+  const many = stories.length > 3
+  const recent = useMemo(() => [...stories].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, many ? 12 : 4), [stories, many])
   const current = stories.find((s) => s.id === activeId) ?? null
   // the story in "Continue" is not listed again under Recent
   const others = current ? recent.filter((s) => s.id !== current.id) : recent
@@ -128,7 +130,7 @@ export default function HomeScreen({ active }: ScreenProps) {
           {session ? <UserAvatar name={name} className="hm-me-badge" /> : <Icon name="user" size={22} />}
         </button>
       </header>
-      {/* the top of Home (lockup, tagline, status chips, Editorial / Banner) stays put; the stories under the tiles scroll beneath it */}
+      {/* the top of Home (lockup, tagline, status chips, Editorial / Banner, the Recent stories heading) stays put; the stories scroll beneath it */}
       <div className="m-wrap hm-brand">
         <div className="hm-hero">
           <h1 className="hm-title" aria-label="ESB Power Line Ai Studio">
@@ -142,7 +144,7 @@ export default function HomeScreen({ active }: ScreenProps) {
             <button type="button" className={`hm-chip hm-chip-ai${aiOk ? ' is-ok' : ''}`} style={aiOk ? ({ '--pc': brandColor(ai.provider) } as React.CSSProperties) : undefined} onClick={() => nav.openSettings('ai')}>{aiOk ? <ProviderMark id={ai.provider} size={16} /> : <Icon name="sparkle" size={15} />}{ai.paused ? 'AI paused' : aiOk ? providerMeta(ai.provider).name : 'AI needs a key'}</button>
           </div>
         </div>
-        <nav className="hm-launch hm-glass" aria-label="Workspaces">
+        <nav className={'hm-launch hm-glass' + (many ? ' is-compact' : '')} aria-label="Workspaces">
           <button type="button" className="hm-cell" onClick={() => nav.intendEditorial('paste-link')}>
             <span className="hm-cell-ico"><Icon name="power" size={22} /></span>
             <span className="hm-cell-name">Editorial</span>
@@ -156,6 +158,10 @@ export default function HomeScreen({ active }: ScreenProps) {
             <Icon name="chevRight" size={20} />
           </button>
         </nav>
+        <header className="hm-sech hm-sech-fixed">
+          <h2 className="hm-h has-icon" id="home-recent"><Icon name="newspaper" size={15} />Recent stories</h2>
+          {stories.length > 0 && <button type="button" className="hm-link" onClick={toEditorial}>See all {stories.length}</button>}
+        </header>
       </div>
       <div className="m-scroll hm-scroll">
         <div className="m-wrap hm">
@@ -166,11 +172,7 @@ export default function HomeScreen({ active }: ScreenProps) {
             }
           }} />}
 
-          {(stories.length === 0 || others.length > 0) && <section className="hm-sec" aria-labelledby="home-recent">
-            <header className="hm-sech">
-              <h2 className="hm-h has-icon" id="home-recent"><Icon name="newspaper" size={15} />Recent stories</h2>
-              {stories.length > 0 && <button type="button" className="hm-link" onClick={toEditorial}>See all {stories.length}</button>}
-            </header>
+          {(stories.length === 0 || others.length > 0) && <section className="hm-sec hm-sec-list" aria-labelledby="home-recent">
             {stories.length === 0
               ? (
                 <Empty title="No stories yet" body="Paste a link from any Bengali or English news site and it becomes an English story, ready for review."
