@@ -3497,3 +3497,30 @@ img.u-avatar { box-shadow: inset 0 0 0 .5px var(--m-hair); }
 /* magnetic lists in Editorial (Stories, Published, News): shell/snap.ts, no CSS scroll-snap (it shortened flings) */
 /* no stories: nothing to scroll, so the empty state stays still (no drag, no bounce) */
 .hm-scroll.is-empty { overflow: hidden !important; overscroll-behavior: none; touch-action: none; }
+
+/* Full-screen dialogs with a bottom bar (Publish, Check…): the last card ends 28 px above the bar, never against it */
+.m-fulldialog:has(> .m-actionbar) .m-fulldialog-body > .m-wrap:last-child { padding-bottom: 28px !important; }
+
+/* Publishing steps: each row has air above and below, so a two-line step never touches its neighbours. The connector is
+   drawn per row (top half and bottom half to the dot's centre), so it stays continuous whatever a row's height. */
+.jp-step { min-height: 44px !important; padding-block: 7px; }
+.jp-label { line-height: 1.3 !important; }
+.jp-step + .jp-step::before { display: none !important; }
+.jp-step::before, .jp-step::after { content: ''; position: absolute; left: 11.25px; width: 1.5px; border-radius: 1px; background: color-mix(in srgb, var(--jp) 30%, transparent); z-index: 0; }
+.jp-step:not(:first-child)::before { display: block !important; top: 0; height: 50%; }
+.jp-step:not(:last-child)::after { top: 50%; bottom: 0; }
+.jp-step:first-child::before, .jp-step:last-child::after { display: none; }
+.jp-dot { position: relative; z-index: 1; }
+
+/* Published / updated: a sleek result card with the two destinations as equal buttons */
+.pb-done { display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: var(--rd, 22px); background: var(--surface-panel); box-shadow: var(--e1); }
+.pb-done-head { display: flex; align-items: center; gap: 12px; }
+.pb-done-head b { font: 700 19px/1.2 var(--font-ui); letter-spacing: -.01em; color: var(--text-primary); }
+.pb-done-ico { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: #16a34a; color: #fff; box-shadow: 0 4px 12px -4px rgba(22, 163, 74, .55); }
+.pb-done-msg { margin: 0; font: 500 13px/1.45 var(--font-ui); color: var(--text-secondary); }
+.pb-done-btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 10px; margin-top: 6px; }
+.pb-done-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 14px; border: 0; border-radius: 14px; background: color-mix(in srgb, var(--text-primary) 6%, transparent); color: var(--text-primary); font: 650 15px/1 var(--font-ui); cursor: pointer; transition: transform .14s cubic-bezier(.3, .7, .4, 1); }
+.pb-done-btn:active { transform: scale(.97); }
+.pb-done-btn > svg { flex: none; }
+.pb-done-btn.is-fb { background: rgba(24, 119, 242, .1); color: #1877f2; }
+:root[data-theme="dark"] .pb-done-btn.is-fb { background: rgba(24, 119, 242, .2); color: #6aa8ff; }

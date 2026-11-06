@@ -227,9 +227,25 @@ export function PublishReview() {
         {job && (
           <div ref={progressRef as React.RefObject<HTMLDivElement>}><JobPanel job={job} tone="publish" title={P.busy ? (linked ? 'Updating esbpowerline.com' : 'Publishing') : linked ? 'Update' : 'Publish'} /></div>
         )}
-        {P.result && (
-          <div ref={resultRef} className={'m-note ' + (P.result.ok ? 'm-note-success' : 'm-note-error')} role="status">
-            <Icon name={P.result.ok ? 'check' : 'alert'} size={18} />
+        {P.result?.ok && (
+          // success: one clean card, the outcome in a word, the detail in small type, then the two places it went
+          <section ref={resultRef as React.RefObject<HTMLElement>} className="pb-done" role="status">
+            <div className="pb-done-head">
+              <span className="pb-done-ico" aria-hidden><Icon name="check" size={20} strokeWidth={2.4} /></span>
+              <b>{P.result.status === 'DRAFT' ? 'Draft saved' : linked ? 'Article updated' : 'Published'}</b>
+            </div>
+            <p className="pb-done-msg">{P.result.msg}</p>
+            {(P.result.url || P.result.fbUrl) && (
+              <div className="pb-done-btns">
+                {P.result.url && <button type="button" className="pb-done-btn" onClick={() => void platform().openExternal(P.result!.url!)}><Icon name="globe" size={18} />Website</button>}
+                {P.result.fbUrl && <button type="button" className="pb-done-btn is-fb" onClick={() => void platform().openExternal(P.result!.fbUrl!)}><Icon name="brandFacebook" size={18} />Facebook</button>}
+              </div>
+            )}
+          </section>
+        )}
+        {P.result && !P.result.ok && (
+          <div ref={resultRef} className="m-note m-note-error" role="status">
+            <Icon name="alert" size={18} />
             <div className="m-note-text">
               <p>{P.result.msg}</p>
               <div className="me-err-actions">

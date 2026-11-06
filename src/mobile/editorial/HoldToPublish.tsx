@@ -12,6 +12,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Icon } from '../shell/ui'
+import { Haptics, ImpactStyle } from '@capacitor/haptics'
+
+// One crisp tap from the phone's haptic engine. The completion used navigator.vibrate([20, 50, 30]): a pattern, so it
+// buzzed twice with a gap and felt rough. A single native impact is one clean tick; vibrate is only the fallback.
+function tap(style: ImpactStyle, ms: number) {
+  Haptics.impact({ style }).catch(() => { try { navigator.vibrate?.(ms) } catch { /* no haptics */ } })
+}
 
 const HOLD_MS = 3000
 const GO_MS = 600
@@ -37,7 +44,7 @@ export function HoldToPublish({ label, sub, disabled, busy, busyLabel, onFire }:
   const complete = () => {
     fired.current = true
     raf.current = 0
-    navigator.vibrate?.([20, 50, 30])
+    tap(ImpactStyle.Medium, 24)
     // where the dial travels on the way out: from the middle of the screen (the dial sits just above centre, above its
     // label) down to the button's centre
     const r = btn.current?.getBoundingClientRect()
@@ -57,11 +64,11 @@ export function HoldToPublish({ label, sub, disabled, busy, busyLabel, onFire }:
     fired.current = false
     t0.current = performance.now()
     lastSec.current = 3
-    navigator.vibrate?.(14)
+    tap(ImpactStyle.Light, 12)
     const tick = (now: number) => {
       const v = Math.min(1, (now - t0.current) / HOLD_MS)
       const sec = Math.max(1, 3 - Math.floor((now - t0.current) / 1000))
-      if (sec !== lastSec.current) { lastSec.current = sec; navigator.vibrate?.(14) }
+      if (sec !== lastSec.current) { lastSec.current = sec; tap(ImpactStyle.Light, 12) }
       setP(v)
       if (v >= 1) { complete(); return }
       raf.current = requestAnimationFrame(tick)
