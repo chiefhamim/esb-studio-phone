@@ -82,7 +82,7 @@ function StoriesList() {
   const [f, setF] = useState<'all' | StoryStatus>('all')
   const counts = useMemo(() => Object.fromEntries(STORY_STATUSES.map((s) => [s, stories.filter((x) => x.status === s).length])) as Record<StoryStatus, number>, [stories])
   const shown = stories.filter((s) => (f === 'all' || s.status === f) && (!q.trim() || storyTitle(s.snapshot).toLowerCase().includes(q.trim().toLowerCase()) || hostOf(s.snapshot.source?.url).includes(q.trim().toLowerCase())))
-  if (!stories.length) return <Empty icon="layers" title="No stories yet" body="Start one from Editorial (a link, a file or pasted text). Every story is kept here with its draft." />
+  if (!stories.length) return <Empty icon="newspaper" title="No stories yet" body="Start one from Editorial (a link, a file or pasted text). Every story is kept here with its draft." />
   return (
     <>
       <label className="me-search"><Icon name="search" size={18} /><input type="search" className="m-input" placeholder="Search stories" aria-label="Search stories" value={q} onChange={(e) => setQ(e.target.value)} /></label>
