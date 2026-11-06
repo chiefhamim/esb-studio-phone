@@ -3500,3 +3500,5 @@ img.u-avatar { box-shadow: inset 0 0 0 .5px var(--m-hair); }
    the end so the last stop is a row edge too); the top of each pane is a stop, so a swipe back up returns to the search */
 .me-pane { scroll-snap-type: y mandatory; scroll-padding-top: 0; }
 .me-pane > .m-wrap, .me-pane .me-continue, .me-pane .me-list > .me-listrow, .me-pane .me-list > .pb-row { scroll-snap-align: start; }
+/* no stories: nothing to scroll, so the empty state stays still (no drag, no bounce) */
+.hm-scroll.is-empty { overflow: hidden !important; overscroll-behavior: none; touch-action: none; }

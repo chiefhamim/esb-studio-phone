@@ -220,7 +220,7 @@ export default function HomeScreen({ active }: ScreenProps) {
           </div>}
         </header>
       </div>
-      <div className="m-scroll hm-scroll" ref={scrollRef}>
+      <div className={'m-scroll hm-scroll' + (stories.length ? '' : ' is-empty')} ref={scrollRef}>
         <div className="m-wrap hm">
           {current && <ContinueCard title={phoneStoryTitle(current)} onOpen={() => nav.intendEditorial('open')} onRemove={async () => {
             if (storyLocked()) return
