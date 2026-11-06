@@ -146,6 +146,35 @@ export default function HomeScreen({ active }: ScreenProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   useSnapTail(scrollRef, '.hm-cont-wrap, .hm-sec-list .m-list > *', [stories.length, current?.id, many])
 
+  // No stories: nothing to scroll, but the empty state still answers a drag. It follows the finger with growing resistance
+  // (at most ~26 px) and springs back on release, so it feels alive without pretending there is more to see.
+  useEffect(() => {
+    const sc = scrollRef.current
+    const body = sc?.firstElementChild as HTMLElement | null
+    if (!sc || !body || stories.length || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    let y0: number | null = null
+    const set = (px: number, spring: boolean) => {
+      body.style.transition = spring ? 'transform .55s cubic-bezier(.3, 1.45, .55, 1)' : 'none'
+      body.style.transform = px ? `translate3d(0, ${px}px, 0)` : ''
+    }
+    const down = (e: TouchEvent) => { y0 = e.touches[0].clientY; set(0, false) }
+    const move = (e: TouchEvent) => {
+      if (y0 == null) return
+      const d = e.touches[0].clientY - y0
+      set(Math.sign(d) * 26 * (1 - Math.exp(-Math.abs(d) / 160)), false)
+    }
+    const up = () => { if (y0 == null) return; y0 = null; set(0, true) }
+    sc.addEventListener('touchstart', down, { passive: true })
+    sc.addEventListener('touchmove', move, { passive: true })
+    sc.addEventListener('touchend', up)
+    sc.addEventListener('touchcancel', up)
+    return () => {
+      sc.removeEventListener('touchstart', down); sc.removeEventListener('touchmove', move)
+      sc.removeEventListener('touchend', up); sc.removeEventListener('touchcancel', up)
+      body.style.transition = ''; body.style.transform = ''
+    }
+  }, [stories.length])
+
   const open = (id: string) => { if (id !== activeId && storyLocked()) return; useStoryQueue.getState().switchTo(id); nav.intendEditorial('open') }
   const name = session ? (session.name || session.email).split(/[\s@]/)[0] : ''
   const siteState = !online ? { dot: 'off', text: 'Offline' } : !session ? { dot: 'warn', text: 'Not signed in' } : site.connected ? { dot: 'ok', text: 'Site connected' } : site.sessionEnded ? { dot: 'warn', text: 'Sign in again' } : { dot: 'warn', text: 'Site unreachable' }
