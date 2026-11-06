@@ -128,14 +128,19 @@ export default function HomeScreen({ active }: ScreenProps) {
           {session ? <UserAvatar name={name} className="hm-me-badge" /> : <Icon name="user" size={22} />}
         </button>
       </header>
+      {/* the lockup stays put under the date bar; everything below it scrolls beneath it, never through it */}
+      <div className="m-wrap hm-brand">
+        <div className="hm-hero">
+          <h1 className="hm-title" aria-label="ESB Power Line Ai Studio">
+            <img className="hm-mark" src="./brand/esb-mark.png" alt="" draggable={false} />
+            <span className="hm-stick" aria-hidden />
+            <span className="hm-name"><span className="hm-ai">Ai</span> <span className="hm-studio">Studio</span></span>
+          </h1>
+        </div>
+      </div>
       <div className="m-scroll hm-scroll">
         <div className="m-wrap hm">
-          <section className="hm-hero" aria-label="ESB Power Line Ai Studio">
-            <h1 className="hm-title" aria-label="ESB Power Line Ai Studio">
-              <img className="hm-mark" src="./brand/esb-mark.png" alt="" draggable={false} />
-              <span className="hm-stick" aria-hidden />
-              <span className="hm-name"><span className="hm-ai">Ai</span> <span className="hm-studio">Studio</span></span>
-            </h1>
+          <section className="hm-hero hm-hero-rest" aria-label="About ESB Power Line Ai Studio">
             <p className="hm-tag">Where stories are written, imagination is designed and reality is cut</p>
             <div className="hm-chips">
               <button type="button" className={`hm-chip hm-chip-${siteState.dot === 'ok' ? 'ok' : 'bad'}`} onClick={openAccount}><span className={`m-dot m-dot-${siteState.dot}`} aria-hidden />{siteState.text}</button>
