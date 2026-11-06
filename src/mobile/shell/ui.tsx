@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Icon, type IconName } from './TablerIcon'
-import { dismissSnack, useBackLayer, useUi, type Snack } from './core'
+import { dismissSnack, snackMs, useBackLayer, useUi, type Snack } from './core'
 
 export { Icon, type IconName }
 
@@ -183,129 +183,29 @@ export function FullDialog({ open, title, onClose, primary, children, footer, un
   )
 }
 
-// ---------------------------------------------------------------- snackbars + confirm host (mounted once by the app)
-function SnackItem({ snack }: { snack: Snack }) {
-  const [offsetX, setOffsetX] = useState(0)
-  const [isDismissing, setIsDismissing] = useState(false)
-  const [isSwiping, setIsSwiping] = useState(false)
-  const pointerStart = useRef<{ x: number; y: number; time: number; active: boolean } | null>(null)
-
-  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('button')) return
-    pointerStart.current = { x: e.clientX, y: e.clientY, time: Date.now(), active: true }
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId)
-    } catch {}
-  }
-
-  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!pointerStart.current?.active) return
-    const dx = e.clientX - pointerStart.current.x
-    const dy = e.clientY - pointerStart.current.y
-
-    if (!isSwiping && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
-      pointerStart.current.active = false
-      setOffsetX(0)
-      return
-    }
-
-    if (!isSwiping && Math.abs(dx) > 4) {
-      setIsSwiping(true)
-    }
-
-    // Swipe left only; damp rightward movement
-    if (dx < 0) {
-      setOffsetX(dx)
-    } else {
-      setOffsetX(Math.min(dx * 0.15, 16))
-    }
-  }
-
-  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!pointerStart.current?.active) {
-      setIsSwiping(false)
-      return
-    }
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId)
-    } catch {}
-
-    const dx = e.clientX - pointerStart.current.x
-    const dt = Math.max(1, Date.now() - pointerStart.current.time)
-    const vx = dx / dt
-    pointerStart.current = null
-    setIsSwiping(false)
-
-    // Swiped left threshold: moved left >= 45px or quick flick (vx < -0.3 px/ms)
-    if (dx < -45 || (dx < -15 && vx < -0.3)) {
-      setIsDismissing(true)
-      setOffsetX(-Math.max(typeof window !== 'undefined' ? window.innerWidth : 360, 400))
-      setTimeout(() => dismissSnack(snack.id), 200)
-    } else {
-      setOffsetX(0)
-    }
-  }
-
-  const onPointerCancel = () => {
-    pointerStart.current = null
-    setIsSwiping(false)
-    setOffsetX(0)
-  }
-
-  const handleDismiss = () => {
-    setIsDismissing(true)
-    setOffsetX(-Math.max(typeof window !== 'undefined' ? window.innerWidth : 360, 400))
-    setTimeout(() => dismissSnack(snack.id), 200)
-  }
-
-  const style: React.CSSProperties = {
-    transform: `translate3d(${offsetX}px, 0, 0)`,
-    transition: isSwiping ? 'none' : 'transform 0.22s cubic-bezier(0.2, 0, 0, 1), opacity 0.22s ease-out',
-    opacity: isDismissing ? 0 : offsetX < 0 ? Math.max(0.1, 1 + offsetX / 250) : 1,
-    touchAction: 'pan-y',
-    userSelect: 'none',
-  }
-
+// ---------------------------------------------------------------- one snackbar: tone icon, message, action pill, dismiss
+// Drops in at the top of the screen; flick it up to put it away early.
+const SNACK_ICON: Record<NonNullable<Snack['tone']>, IconName> = { info: 'info', success: 'check', error: 'alert' }
+function SnackCard({ s }: { s: Snack }) {
+  const tone = s.tone ?? 'info'
+  const drag = useRef<{ y: number; id: number } | null>(null)
+  const [dy, setDy] = useState(0)
+  const down = (e: React.PointerEvent) => { if ((e.target as HTMLElement).closest('button')) return; drag.current = { y: e.clientY, id: e.pointerId }; e.currentTarget.setPointerCapture?.(e.pointerId) }
+  const move = (e: React.PointerEvent) => { if (drag.current?.id === e.pointerId) setDy(Math.min(0, e.clientY - drag.current.y)) }
+  const up = () => { if (!drag.current) return; drag.current = null; if (dy < -24) dismissSnack(s.id); setDy(0) }
   return (
-    <div
-      className={`m-snack m-snack-${snack.tone ?? 'info'}${isSwiping ? ' is-swiping' : ''}${isDismissing ? ' is-dismissing' : ''}`}
-      role={snack.tone === 'error' ? 'alert' : 'status'}
-      style={style}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerCancel}
-    >
-      <span className="m-snack-indicator" aria-hidden />
-      <span className="m-snack-text">{snack.text}</span>
-      {snack.action && (
-        <button
-          type="button"
-          className="m-snack-action"
-          onClick={(e) => {
-            e.stopPropagation()
-            snack.action!.run()
-            dismissSnack(snack.id)
-          }}
-        >
-          {snack.action.label}
-        </button>
-      )}
-      <button
-        type="button"
-        className="m-iconbtn m-snack-x"
-        aria-label="Dismiss"
-        onClick={(e) => {
-          e.stopPropagation()
-          handleDismiss()
-        }}
-      >
-        <Icon name="x" size={18} />
-      </button>
+    <div className={`m-snack m-snack-${tone}${s.leaving ? ' is-out' : ''}`} role={tone === 'error' ? 'alert' : 'status'}
+      style={{ '--snk-ms': `${snackMs(s)}ms`, ...(dy ? { transform: `translateY(${dy}px)`, opacity: Math.max(0.3, 1 + dy / 120), transition: 'none' } : null) } as React.CSSProperties}
+      onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+      <span className="m-snack-ico" aria-hidden><Icon name={s.icon ?? SNACK_ICON[tone]} size={20} strokeWidth={2.2} /></span>
+      <span className="m-snack-text">{s.text}</span>
+      {s.action && <button type="button" className="m-snack-action" onClick={() => { s.action!.run(); dismissSnack(s.id) }}>{s.action.label}</button>}
+      <button type="button" className="m-iconbtn m-snack-x" aria-label="Dismiss" onClick={() => dismissSnack(s.id)}><Icon name="x" size={18} /></button>
     </div>
   )
 }
 
+// ---------------------------------------------------------------- snackbars + confirm host (mounted once by the app)
 export function UiHost() {
   const snacks = useUi((s) => s.snacks)
   const confirm = useUi((s) => s.confirm)
@@ -314,9 +214,7 @@ export function UiHost() {
   return (
     <>
       <div className="m-snackbars" aria-live="polite">
-        {snacks.map((s) => (
-          <SnackItem key={s.id} snack={s} />
-        ))}
+        {snacks.map((s) => <SnackCard key={s.id} s={s} />)}
       </div>
       {confirm && createPortal(
         <div className="m-scrim m-scrim-center" onClick={() => done(false)}>

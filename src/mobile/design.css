@@ -3878,3 +3878,28 @@ html.kb-open .m-snackbars {
   100% { background-position: 110% 140%, -40% -45%, 0 0; }
 }
 @media (prefers-reduced-motion: reduce) { .hm-launch .hm-cell .hm-cell-ico::after { animation: none !important; } }
+
+/* ---------------------------------------------------------------- snackbars v2 (2026-11-06)
+   At the top of the screen, under the status bar, newest first. A theme-aware glass card: a tone icon in a tinted
+   circle (info = accent, success = green, error = red), the message at 15/600, the action as a tonal pill, a quiet ×,
+   and a hairline that runs down with the time left. Drops in from the top on a spring; leaves upwards; swipe up to
+   dismiss. */
+.m-snackbars { top: calc(var(--m-safe-top) + var(--sp-s)) !important; bottom: auto !important; left: calc(var(--sp-m) + var(--m-safe-left)); right: calc(var(--sp-m) + var(--m-safe-right)); flex-direction: column-reverse; gap: var(--sp-s); z-index: 3000; }
+html.kb-open .m-snackbars { bottom: auto !important; }
+.m-snack { --snk: var(--action); --snk-soft: color-mix(in srgb, var(--action) 13%, transparent); position: relative; overflow: hidden; max-width: 440px; min-height: 60px; gap: var(--sp-m); padding: var(--sp-s) var(--sp-xs) var(--sp-s) var(--sp-m); border-radius: var(--r-lg); color: var(--text-primary); background: color-mix(in srgb, var(--surface-panel) 92%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8); border: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent); box-shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 12px 32px -8px rgba(15, 23, 42, .24); animation: m-snack-in .5s cubic-bezier(.2, 1.3, .3, 1) backwards; touch-action: pan-x; transition: transform .2s var(--m-ease), opacity .2s var(--m-ease); }
+:root[data-theme='dark'] .m-snack { background: color-mix(in srgb, #26262c 94%, transparent); border-color: rgba(255, 255, 255, .09); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 16px 40px -10px rgba(0, 0, 0, .7); }
+:root[data-theme='dark'] .m-snack-info { --snk: color-mix(in srgb, var(--action) 55%, #fff); --snk-soft: color-mix(in srgb, var(--action) 26%, transparent); }
+.m-snack-success { --snk: var(--success); --snk-soft: var(--success-soft); }
+.m-snack-error { --snk: var(--danger); --snk-soft: var(--danger-soft); color: var(--text-primary); background: color-mix(in srgb, var(--danger) 6%, color-mix(in srgb, var(--surface-panel) 94%, transparent)); }
+:root[data-theme='dark'] .m-snack-error { background: color-mix(in srgb, var(--danger) 10%, color-mix(in srgb, #26262c 94%, transparent)); border-color: color-mix(in srgb, var(--danger) 28%, transparent); }
+.m-snack-ico { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--snk-soft); color: var(--snk); }
+.m-snack-text { flex: 1; min-width: 0; padding-block: 2px; font: 600 var(--fs-m)/1.35 var(--font-ui) !important; letter-spacing: -.005em; }
+.m-snack-action { flex: none; min-height: 36px; padding: 0 var(--sp-l); border-radius: 999px; background: var(--snk-soft); color: var(--snk); font: 700 var(--fs-s)/1 var(--font-ui); letter-spacing: .01em; text-decoration: none; }
+.m-snack-action:active { filter: brightness(.94); transform: scale(.97); }
+.m-snack .m-snack-x { flex: none; width: 40px; height: 40px; min-width: 40px; min-height: 40px; color: var(--text-tertiary); }
+.m-snack::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--snk); opacity: .45; transform-origin: left; animation: m-snack-time var(--snk-ms, 3500ms) linear both; }
+.m-snack.is-out { animation: m-snack-out .22s cubic-bezier(.4, 0, 1, 1) both; pointer-events: none; }
+@keyframes m-snack-in { from { transform: translateY(calc(-100% - 24px)) scale(.96); opacity: 0; } }
+@keyframes m-snack-out { to { transform: translateY(-70%) scale(.96); opacity: 0; } }
+@keyframes m-snack-time { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .m-snack, .m-snack.is-out { animation: none; } .m-snack::after { display: none; } }

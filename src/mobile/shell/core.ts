@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { create } from 'zustand'
 import { Capacitor } from '@capacitor/core'
 import { Keyboard } from '@capacitor/keyboard'
+import type { IconName } from './TablerIcon'
 
 // ---------------------------------------------------------------- size classes
 export type SizeClass = 'compact' | 'medium' | 'expanded'
@@ -55,7 +56,8 @@ export function useBackLayer(active: boolean, close: () => void, kind: Layer['ki
 }
 
 // ---------------------------------------------------------------- ui store: one sheet at a time, snackbars, confirm
-export interface Snack { id: number; text: string; action?: { label: string; run: () => void }; tone?: 'info' | 'error' | 'success'; ms?: number }
+// icon: the leading glyph (defaults by tone: info, check, alert). leaving: set while the card plays its exit, then removed.
+export interface Snack { id: number; text: string; action?: { label: string; run: () => void }; tone?: 'info' | 'error' | 'success'; ms?: number; icon?: IconName; leaving?: boolean }
 export interface ConfirmReq { title: string; body?: string; confirm: string; cancel?: string; danger?: boolean; resolve: (ok: boolean) => void }
 
 interface UiState {
@@ -78,9 +80,17 @@ export const useUi = create<UiState>((set, get) => ({
 export function snack(text: string, opts: Omit<Snack, 'id' | 'text'> = {}): void {
   const s: Snack = { id: ++snackSeq, text, ...opts }
   useUi.setState((st) => ({ snacks: [...st.snacks.slice(-2), s] }))
-  setTimeout(() => dismissSnack(s.id), s.ms ?? (s.action ? 5000 : 3000))
+  setTimeout(() => dismissSnack(s.id), snackMs(s))
 }
-export function dismissSnack(id: number) { useUi.setState((st) => ({ snacks: st.snacks.filter((x) => x.id !== id) })) }
+const SNACK_OUT_MS = 220
+export function dismissSnack(id: number) {
+  const s = useUi.getState().snacks.find((x) => x.id === id)
+  if (!s || s.leaving) return
+  // play the exit (slide up and fade) first, then drop it from the stack
+  useUi.setState((st) => ({ snacks: st.snacks.map((x) => (x.id === id ? { ...x, leaving: true } : x)) }))
+  setTimeout(() => useUi.setState((st) => ({ snacks: st.snacks.filter((x) => x.id !== id) })), SNACK_OUT_MS)
+}
+export const snackMs = (s: Snack) => s.ms ?? (s.action ? 6000 : 3500)
 
 /** An in-app confirmation (never a browser dialog, which would block the WebView). */
 export function confirmAsk(req: Omit<ConfirmReq, 'resolve'>): Promise<boolean> {

@@ -136,7 +136,7 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
     const r = await useWatch.getState().run()
     if (!r) return
     if (r.failed > r.checked / 2) snack(`Most portals did not answer (${r.failed} of ${r.checked}). Check the connection.`)
-    else snack(r.added ? `${r.added} new ${r.added === 1 ? 'headline' : 'headlines'}` : 'No new headlines')
+    else snack(r.added ? `${r.added} new ${r.added === 1 ? 'headline' : 'headlines'}` : 'No new headlines', { icon: 'newspaper' })
   }
   // tapping the News tab again while it is open refreshes, like a pull-down: back to the top, then the same check
   // the refresh button runs (ignored while a check or a range search is already running)
