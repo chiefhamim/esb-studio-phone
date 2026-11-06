@@ -82,6 +82,17 @@ export function isNewer(a: string, b: string): boolean {
   return false
 }
 
+// The highest release this install ever accepted. Without it, after a rollback to the built-in bundle a compromised
+// update host could replay an older (correctly signed, but vulnerable) release, since the check above only compares with
+// what is running now. Not a secret, so plain storage; it is cleared only with the app's data.
+const OTA_FLOOR_KEY = 'esb-phone/ota-floor'
+export function otaFloor(): string {
+  try { return localStorage.getItem(OTA_FLOOR_KEY) || '0.0.0' } catch { return '0.0.0' }
+}
+function raiseOtaFloor(v: string) {
+  try { if (isNewer(v, otaFloor())) localStorage.setItem(OTA_FLOOR_KEY, v) } catch { /* not kept */ }
+}
+
 /** Look for a newer release on our own update host. */
 export async function checkForUpdate(): Promise<AvailableUpdate | null> {
   if (!Capacitor.isNativePlatform() || import.meta.env.VITE_NO_OTA) return null // cable builds (VITE_NO_OTA=1) never offer the web bundle
@@ -94,7 +105,8 @@ export async function checkForUpdate(): Promise<AvailableUpdate | null> {
     // Never offer a release that is not newer than what is running or than the installed app itself.
     const native = (await App.getInfo().catch(() => null))?.version ?? '0.0.0'
     const running = /^\d/.test(cur.version) ? cur.version : native
-    if (!isNewer(m.version, native) || !isNewer(m.version, running)) return null
+    raiseOtaFloor(running)
+    if (!isNewer(m.version, native) || !isNewer(m.version, running) || !isNewer(m.version, otaFloor())) return null
     const needsApk = !!m.minNative && isNewer(m.minNative, native)
     const file = needsApk ? m.apk : m.bundle
     if (!file) return null
@@ -127,6 +139,7 @@ export async function downloadAndApplyUpdate(
       version: update.version,
       checksum: update.checksum,
     })
+    raiseOtaFloor(update.version)
     await CapacitorUpdater.set({ id: bundle.id })
     await CapacitorUpdater.reload()
   } finally {

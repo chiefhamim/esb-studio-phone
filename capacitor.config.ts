@@ -26,6 +26,12 @@ const config: CapacitorConfig = {
       autoUpdate: false,
       appReadyTimeout: 10000,
       responseTimeout: 20,
+      // Updates come only from our own signed host (src/platform/ota.ts). Empty URLs stop the plugin reporting device and
+      // version statistics to Capgo's servers (plugin.capgo.app/stats, on by default) and from calling its channel and
+      // update services at all.
+      statsUrl: '',
+      channelUrl: '',
+      updateUrl: '',
       appId: 'com.esbpowerline.studio.phone'
     }
   }

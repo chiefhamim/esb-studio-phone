@@ -2093,7 +2093,9 @@ p, li, small, .m-note-text, .me-desk-head p, .m-field-hint, .me-hint { text-wrap
 .me-strip.is-live button:active i { transform: scale(.86); transition: transform var(--press-in) !important; }
 
 /* ===================================================================== sheets and scrims: a frosted dim */
-.m-scrim { background: rgba(20, 14, 10, .30) !important; -webkit-backdrop-filter: blur(6px) saturate(120%) !important; backdrop-filter: blur(6px) saturate(120%) !important; }
+/* a plain dim, no blur: blurring the whole 1440 x 3120 screen behind a sheet cost a 33-58 ms first frame on every open (S25 Ultra,
+   2026-11-06); without it the worst frame is 17-25 ms. One UI dims behind its sheets the same way. */
+.m-scrim { background: rgba(20, 14, 10, .38) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .m-sheet { box-shadow: 0 -12px 48px rgba(20, 14, 10, .22) !important; }
 
 @media (prefers-reduced-motion: reduce) {

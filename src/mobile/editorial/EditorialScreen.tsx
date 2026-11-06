@@ -70,14 +70,33 @@ export default function EditorialScreen({ active }: ScreenProps) {
     else useDesk.setState({ view: hasStoryContent(useEditorialStore.getState()) ? 'story' : 'home' })
   }, [intent])
 
-  // the site status stays live while the desk is on screen (the PC re-checks every 20 s)
+  // The site status stays live while the desk is on screen. The PC re-checks every 20 s; on a phone each check downloads
+  // the site feed and wakes the radio (measured 2026-11-06: 3 requests every 20 s, about 540 an hour). Here: once a minute
+  // on Wi-Fi, every 3 minutes on mobile data or with Data Saver on, at once when the app comes back to the screen or the
+  // network returns, and never while it is in the background. A publish checks the sign-in itself either way.
   useEffect(() => {
     if (!active) return
-    const run = () => { if (document.visibilityState !== 'hidden') void checkConnection() }
+    type Conn = { type?: string; saveData?: boolean; addEventListener?: (t: string, f: () => void) => void; removeEventListener?: (t: string, f: () => void) => void }
+    const conn = (navigator as unknown as { connection?: Conn }).connection
+    const every = () => (conn?.saveData || conn?.type === 'cellular' ? 180_000 : 60_000)
+    let t = 0
+    const run = () => {
+      window.clearTimeout(t)
+      if (document.visibilityState === 'hidden') return
+      void checkConnection()
+      t = window.setTimeout(run, every())
+    }
     run()
-    const t = setInterval(run, 20000)
+    const onVisible = () => { if (document.visibilityState === 'visible') run() }
+    document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('online', run); window.addEventListener('offline', run)
-    return () => { clearInterval(t); window.removeEventListener('online', run); window.removeEventListener('offline', run) }
+    conn?.addEventListener?.('change', run)
+    return () => {
+      window.clearTimeout(t)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('online', run); window.removeEventListener('offline', run)
+      conn?.removeEventListener?.('change', run)
+    }
   }, [active, checkConnection])
 
   useBackLayer(active && view !== 'home', () => {
