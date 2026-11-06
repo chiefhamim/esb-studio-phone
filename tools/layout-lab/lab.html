@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ESB Studio · Layout Lab</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg: #0f0f12; --panel: #17171c; --line: #2a2a31; --ink: #ececf1; --dim: #9a9aa6; --acc: #6d5efc; --ok: #22c55e; --warn: #f59e0b; font: 13px/1.4 Inter, system-ui, sans-serif; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); height: 100vh; display: grid; grid-template-rows: 52px 1fr; overflow: hidden; }
+  header { display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  header h1 { font-size: 14px; margin: 0 12px 0 0; letter-spacing: -.01em; }
+  header h1 small { color: var(--dim); font-weight: 500; margin-left: 6px; }
+  button, select { font: inherit; color: var(--ink); background: #22222a; border: 1px solid var(--line); border-radius: 8px; height: 32px; padding: 0 11px; cursor: pointer; }
+  button:hover { border-color: #3c3c46; }
+  button.on { background: var(--acc); border-color: var(--acc); color: #fff; }
+  button.primary { background: var(--acc); border-color: var(--acc); color: #fff; font-weight: 600; }
+  kbd { font: 600 10px/1 inherit; padding: 2px 4px; border-radius: 4px; background: rgba(255,255,255,.1); margin-left: 5px; }
+  .grow { flex: 1; }
+  #status { color: var(--dim); font-size: 12px; max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  main { display: grid; grid-template-columns: 1fr 440px; min-height: 0; }
+  #stage { position: relative; display: grid; place-items: center; overflow: auto; background: radial-gradient(circle at 50% 30%, #1d1d24, #0c0c0f); }
+  #phone { position: relative; width: 412px; height: 915px; border-radius: 46px; background: #000; padding: 10px; box-shadow: 0 0 0 1px #2c2c33, 0 40px 80px -30px #000; transform-origin: center center; }
+  #phone iframe { width: 412px; height: 915px; border: 0; border-radius: 38px; background: #fff; display: block; margin: -10px; }
+  #zoom { position: absolute; left: 14px; bottom: 12px; display: flex; gap: 8px; align-items: center; color: var(--dim); }
+  aside { border-left: 1px solid var(--line); background: var(--panel); display: grid; grid-template-rows: auto 1fr auto; min-height: 0; }
+  .tabs { display: flex; gap: 4px; padding: 10px 12px 0; border-bottom: 1px solid var(--line); }
+  .tabs button { border: 0; background: none; border-radius: 8px 8px 0 0; color: var(--dim); }
+  .tabs button.on { color: var(--ink); background: #22222a; }
+  .pane { overflow: auto; padding: 14px; display: none; }
+  .pane.on { display: block; }
+  .hint { color: var(--dim); font-size: 12px; margin: 0 0 12px; }
+  .crumbs { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 10px; }
+  .crumbs button { height: 24px; padding: 0 7px; font-size: 11px; border-radius: 6px; }
+  .crumbs button.on { background: var(--acc); }
+  label.sel { display: block; color: var(--dim); font-size: 11px; margin-bottom: 4px; }
+  input.sel { width: 100%; font: 12px/1 ui-monospace, monospace; color: var(--ink); background: #101014; border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; }
+  .count { color: var(--dim); font-size: 11px; margin: 5px 0 14px; }
+  h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin: 16px 0 8px; }
+  .row { display: grid; grid-template-columns: 112px 1fr 86px; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .row span { color: var(--dim); font-size: 12px; }
+  .row code { font: 11px ui-monospace, monospace; color: #b9b9c6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row input { width: 100%; height: 28px; font: 12px ui-monospace, monospace; color: var(--ink); background: #101014; border: 1px solid var(--line); border-radius: 6px; padding: 0 7px; }
+  .row input.changed { border-color: var(--acc); background: #1b1830; }
+  .quad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .quad input { text-align: center; }
+  .space { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; color: var(--dim); margin-bottom: 4px; }
+  .space b { color: #e879f9; font-weight: 600; }
+  .tok-group { margin-bottom: 16px; }
+  .chg { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: start; padding: 8px 10px; background: #101014; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; font: 11.5px/1.45 ui-monospace, monospace; }
+  .chg button { height: 22px; padding: 0 7px; font-size: 11px; }
+  footer { border-top: 1px solid var(--line); padding: 10px 14px; display: flex; gap: 8px; align-items: center; }
+  .empty { color: var(--dim); padding: 30px 6px; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ESB Studio · Layout Lab <small>live edits on the real app</small></h1>
+  <button id="bInspect" title="Pick an element in the phone to edit it">Pick element<kbd>I</kbd></button>
+  <button id="bBp" title="Draw padding, gaps, corners and type sizes">Blueprint<kbd>B</kbd></button>
+  <button id="bDummy" title="Fill Home / Stories with 12 dummy stories (in this browser only)">Dummy stories</button>
+  <button id="bTheme">Dark</button>
+  <button id="bSafe" class="on" title="Simulate the S25 Ultra's status bar and gesture bar insets">Phone insets</button>
+  <span class="grow"></span>
+  <span id="status">Loading…</span>
+  <button id="bSave" class="primary">Save<kbd>Ctrl S</kbd></button>
+</header>
+<main>
+  <section id="stage">
+    <div id="phone"><iframe id="app" src="/app/index.html" title="ESB Studio"></iframe></div>
+    <div id="zoom">Zoom <input id="zoomR" type="range" min="50" max="140" value="100"> <span id="zoomV">100%</span></div>
+  </section>
+  <aside>
+    <div class="tabs"><button data-tab="el" class="on">Element</button><button data-tab="tok">Tokens</button><button data-tab="chg">Changes <span id="nChg">0</span></button></div>
+    <div>
+      <div class="pane on" id="p-el"><p class="empty">Press <b>Pick element</b> (or I) and tap anything in the phone.<br>Its padding, gaps, corners and type appear here; change a value and the app updates live.</p></div>
+      <div class="pane" id="p-tok"></div>
+      <div class="pane" id="p-chg"></div>
+    </div>
+    <footer><button id="bCopy">Copy CSS</button><button id="bUndo">Undo last</button><span class="grow"></span><button id="bReset">Reset all</button></footer>
+  </aside>
+</main>
+<script>
+// State: design-token overrides and per-selector rules. Everything is applied to the app frame as one <style> and
+// saved (POST /save) to tools/layout-lab/overrides.json + overrides.css, which Claude folds into src/mobile/design.css.
+const $ = (s) => document.querySelector(s)
+const frame = $('#app')
+const KEY = 'layout-lab/state/v1'
+let state = { tokens: {}, rules: [] }
+let history = []
+let bpLib = null, bpOn = false, inspect = false, picked = null, safe = true
+const UNITLESS = new Set(['font-weight', 'line-height', 'opacity', 'flex-grow', 'z-index'])
+const status = (t) => { $('#status').textContent = t }
+
+function win() { return frame.contentWindow }
+function doc() { return frame.contentDocument }
+
+// ---------- css out
+function cssText() {
+  const toks = Object.entries(state.tokens)
+  let css = toks.length ? `:root {\n${toks.map(([k, v]) => `  ${k}: ${v};`).join('\n')}\n}\n` : ''
+  const by = new Map()
+  for (const r of state.rules) { if (!by.has(r.sel)) by.set(r.sel, []); by.get(r.sel).push(r) }
+  for (const [sel, rs] of by) css += `${sel} {\n${rs.map((r) => `  ${r.prop}: ${r.value} !important;`).join('\n')}\n}\n`
+  return css
+}
+function apply() {
+  const d = doc(); if (!d?.head) return
+  let st = d.getElementById('lab-ov')
+  if (!st) { st = d.createElement('style'); st.id = 'lab-ov'; d.head.appendChild(st) }
+  st.textContent = (safe ? ':root { --safe-area-inset-top: 44px; --safe-area-inset-bottom: 15px; }\n' : '') + cssText()
+  // keep the Lab's own style last so it wins over styles the app adds later
+  if (st.nextSibling) d.head.appendChild(st)
+  $('#nChg').textContent = state.rules.length + Object.keys(state.tokens).length
+  localStorage.setItem(KEY, JSON.stringify(state))
+  if (bpOn) queueBp()
+  renderChanges()
+}
+function snapshot() { history.push(JSON.stringify(state)); if (history.length > 100) history.shift() }
+function setRule(sel, prop, value) {
+  snapshot()
+  state.rules = state.rules.filter((r) => !(r.sel === sel && r.prop === prop))
+  if (value !== '' && value != null) state.rules.push({ sel, prop, value })
+  apply()
+}
+function setToken(name, value) {
+  snapshot()
+  if (value === '' || value == null) delete state.tokens[name]; else state.tokens[name] = value
+  apply()
+}
+const norm = (prop, v) => { v = String(v).trim(); return /^-?\d+(\.\d+)?$/.test(v) && !UNITLESS.has(prop) ? v + 'px' : v }
+
+// ---------- blueprint (runs from this page against the frame: the app's CSP blocks eval inside it)
+let bpTimer = 0
+async function bp() {
+  if (!bpLib) bpLib = await (await fetch('/blueprint.js')).text()
+  const w = win(), d = doc()
+  const fake = {}
+  const make = new Function('window', 'document', 'getComputedStyle', 'innerWidth', 'innerHeight', 'devicePixelRatio', 'location', 'return (\n' + bpLib.trim().replace(/;\s*$/, '') + '\n)')
+  return make(fake, d, w.getComputedStyle.bind(w), w.innerWidth, w.innerHeight, w.devicePixelRatio, w.location)
+}
+async function drawBp() { const b = await bp(); b.clear(); doc().getElementById('__bp')?.remove(); if (bpOn) b.draw({ text: true }) }
+function queueBp() { clearTimeout(bpTimer); bpTimer = setTimeout(drawBp, 120) }
+
+// ---------- inspect
+let hover = null
+function box(el, id, color) {
+  const d = doc(); let b = d.getElementById(id)
+  if (!el) { b?.remove(); return }
+  if (!b) { b = d.createElement('div'); b.id = id; d.documentElement.appendChild(b) }
+  const r = el.getBoundingClientRect()
+  b.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;outline:2px solid ${color};outline-offset:-1px;background:${color}22;pointer-events:none;z-index:2147483646;border-radius:${win().getComputedStyle(el).borderTopLeftRadius}`
+}
+function onMove(e) { if (!inspect) return; hover = e.target; box(hover, '__labhover', '#6d5efc') }
+function onPick(e) {
+  if (!inspect) return
+  e.preventDefault(); e.stopPropagation()
+  if (e.type !== 'click') return
+  select(e.target)
+}
+async function select(el) {
+  picked = el
+  box(el, '__labpick', '#f43f5e')
+  const b = await bp()
+  renderEl(el, b.selectorOf(el))
+  tab('el')
+}
+function setInspect(on) {
+  inspect = on; $('#bInspect').classList.toggle('on', on)
+  if (!on) box(null, '__labhover')
+  status(on ? 'Tap an element in the phone (Esc to stop)' : 'Ready')
+}
+
+// ---------- element panel
+const PROPS = [
+  ['Spacing', [['padding', ['padding-top', 'padding-right', 'padding-bottom', 'padding-left']], ['margin', ['margin-top', 'margin-right', 'margin-bottom', 'margin-left']], ['gap', ['row-gap', 'column-gap']]]],
+  ['Size', [['width', ['width']], ['height', ['height']], ['min-height', ['min-height']]]],
+  ['Shape', [['corner radius', ['border-radius']]]],
+  ['Type', [['font-size', ['font-size']], ['line-height', ['line-height']], ['font-weight', ['font-weight']], ['letter-spacing', ['letter-spacing']]]],
+]
+function ruleVal(sel, prop) { return state.rules.find((r) => r.sel === sel && r.prop === prop)?.value }
+function renderEl(el, selDefault) {
+  const p = $('#p-el')
+  const cs = win().getComputedStyle(el)
+  const chain = []; let a = el
+  while (a && a !== doc().body && chain.length < 7) { chain.unshift(a); a = a.parentElement }
+  const sel = p.dataset.sel && p.dataset.for === String(chain.length) + el.className ? p.dataset.sel : selDefault
+  const count = (() => { try { return doc().querySelectorAll(sel).length } catch { return 0 } })()
+  // what the eye sees above/below: distance to the previous/next visible sibling
+  const r = el.getBoundingClientRect()
+  const sib = (dir) => { let s = el[dir]; while (s && !s.getBoundingClientRect().height) s = s[dir]; return s?.getBoundingClientRect() }
+  const prev = sib('previousElementSibling'), next = sib('nextElementSibling')
+  // stacked neighbours give the vertical space; side-by-side ones the horizontal gap (marked →)
+  const dist = (a, b) => b.top >= a.bottom - 0.5 ? Math.round(b.top - a.bottom) : b.left >= a.right - 0.5 ? '→ ' + Math.round(b.left - a.right) : 0
+  const above = prev ? dist(prev, r) : null, below = next ? dist(r, next) : null
+  let h = `<div class="crumbs">${chain.map((c, i) => `<button data-i="${i}" class="${c === el ? 'on' : ''}">${(c.classList[0] || c.tagName.toLowerCase())}</button>`).join('')}</div>`
+  h += `<label class="sel">Selector (every element it matches changes)</label><input class="sel" id="selIn" value="${sel.replace(/"/g, '&quot;')}">`
+  h += `<div class="count">${count} element${count === 1 ? '' : 's'} match · ${Math.round(r.width)} × ${Math.round(r.height)} px${el.textContent.trim() && !el.children.length ? ' · “' + el.textContent.trim().slice(0, 40).replace(/</g, '&lt;') + '”' : ''}</div>`
+  h += `<div class="space"><div>Space above: <b>${above ?? '—'}</b></div><div>Space below: <b>${below ?? '—'}</b></div></div>`
+  for (const [group, rows] of PROPS) {
+    h += `<h3>${group}</h3>`
+    for (const [label, props] of rows) {
+      if (props.length > 1) {
+        h += `<div class="row"><span>${label}</span><div class="quad" style="grid-column: span 2; grid-template-columns: repeat(${props.length}, 1fr)">${props.map((pr) => { const v = ruleVal(sel, pr); return `<input data-prop="${pr}" title="${pr}" class="${v ? 'changed' : ''}" placeholder="${parseFloat(cs.getPropertyValue(pr)) || 0}" value="${v ?? ''}">` }).join('')}</div></div>`
+      } else {
+        const pr = props[0], v = ruleVal(sel, pr)
+        h += `<div class="row"><span>${label}</span><code title="${cs.getPropertyValue(pr)}">${cs.getPropertyValue(pr)}</code><input data-prop="${pr}" class="${v ? 'changed' : ''}" placeholder="new" value="${v ?? ''}"></div>`
+      }
+    }
+  }
+  h += `<p class="hint" style="margin-top:14px">Numbers are px (line-height and weight are unitless). Empty a box to undo that value. Placeholders show the current value.</p>`
+  p.innerHTML = h
+  p.dataset.sel = sel; p.dataset.for = String(chain.length) + el.className
+  p.querySelectorAll('.crumbs button').forEach((b) => b.onclick = () => { p.dataset.sel = ''; select(chain[+b.dataset.i]) })
+  $('#selIn').onchange = (e) => { p.dataset.sel = e.target.value.trim(); renderEl(el, selDefault) }
+  p.querySelectorAll('input[data-prop]').forEach((inp) => {
+    inp.oninput = () => { setRule(p.dataset.sel, inp.dataset.prop, inp.value.trim() ? norm(inp.dataset.prop, inp.value) : ''); inp.classList.toggle('changed', !!inp.value.trim()); box(picked, '__labpick', '#f43f5e') }
+    inp.onkeydown = (e) => { // arrow keys nudge by 1 (shift: 4)
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
+      e.preventDefault()
+      const cur = parseFloat(inp.value || inp.placeholder) || 0
+      const step = (e.shiftKey ? 4 : 1) * (e.key === 'ArrowUp' ? 1 : -1)
+      const unitless = UNITLESS.has(inp.dataset.prop) && inp.dataset.prop === 'line-height' ? 0.05 : null
+      inp.value = unitless ? +(cur + (e.key === 'ArrowUp' ? 0.05 : -0.05)).toFixed(2) : cur + step
+      inp.oninput()
+    }
+  })
+}
+
+// ---------- tokens
+function renderTokens() {
+  const d = doc(); const names = new Set()
+  for (const sh of d.styleSheets) { let rules; try { rules = sh.cssRules } catch { continue }
+    for (const r of rules) if (r.selectorText && /(^|,)\s*:root\s*(,|$)/.test(r.selectorText)) for (const pr of r.style) if (pr.startsWith('--')) names.add(pr) }
+  const rcs = win().getComputedStyle(d.documentElement)
+  const groups = { 'Layout and spacing': /^--(m-(margin|gutter|cols|max|rail|touch|topbar|navbar|actionbar|row|kb|safe)|g\d|s-\d|space)/, 'Corners': /^--(m-r-|r[a-z]?$|rd|rh|rc|r-\d|radius)/, 'Type': /^--(m-t-|font|fs|lh|track)/, 'Elevation': /^--(e\d|drop|m-card-(shadow|raise)|shadow)/, 'Motion': /^--(m-(dur|ease|spring))/ }
+  let h = '<p class="hint">The app\'s shared values. A change here moves everything that uses it. Most screens also have their own values — use Pick element for those.</p>'
+  for (const [g, re] of Object.entries(groups)) {
+    const list = [...names].filter((n) => re.test(n)).sort()
+    if (!list.length) continue
+    h += `<div class="tok-group"><h3>${g}</h3>` + list.map((n) => { const v = state.tokens[n]; return `<div class="row"><span title="${n}">${n.replace(/^--/, '')}</span><code title="${rcs.getPropertyValue(n).trim()}">${rcs.getPropertyValue(n).trim() || '—'}</code><input data-tok="${n}" class="${v ? 'changed' : ''}" placeholder="new" value="${(v ?? '').replace(/"/g, '&quot;')}"></div>` }).join('') + '</div>'
+  }
+  $('#p-tok').innerHTML = h
+  $('#p-tok').querySelectorAll('input[data-tok]').forEach((inp) => inp.onchange = () => { setToken(inp.dataset.tok, inp.value.trim() ? norm('', inp.value) : ''); renderTokens() })
+}
+
+// ---------- changes
+function renderChanges() {
+  const list = [...Object.entries(state.tokens).map(([k, v]) => ({ kind: 'tok', sel: ':root', prop: k, value: v })), ...state.rules.map((r) => ({ kind: 'rule', ...r }))]
+  $('#p-chg').innerHTML = list.length ? list.map((c, i) => `<div class="chg"><div>${c.sel.replace(/</g, '&lt;')}<br><b>${c.prop}</b>: ${c.value}</div><button data-i="${i}">Remove</button></div>`).join('') : '<p class="empty">No changes yet.</p>'
+  $('#p-chg').querySelectorAll('button').forEach((b) => b.onclick = () => { const c = list[+b.dataset.i]; if (c.kind === 'tok') setToken(c.prop, ''); else setRule(c.sel, c.prop, '') })
+}
+function tab(t) { document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t)); document.querySelectorAll('.pane').forEach((p) => p.classList.toggle('on', p.id === 'p-' + t)); if (t === 'tok') renderTokens() }
+
+// ---------- save / load
+async function save() {
+  const body = JSON.stringify({ savedAt: new Date().toISOString(), tokens: state.tokens, rules: state.rules, css: cssText() })
+  try { const r = await fetch('/save', { method: 'POST', body }); if (!r.ok) throw new Error(await r.text()); status(`Saved ${new Date().toLocaleTimeString()} — tell Claude "apply the Layout Lab"`) }
+  catch (e) { status('Save failed: ' + e.message) }
+}
+async function load() {
+  try { const r = await fetch('/overrides.json', { cache: 'no-store' }); if (r.ok) { const d = await r.json(); state = { tokens: d.tokens || {}, rules: d.rules || [] }; return } } catch { /* first run */ }
+  try { state = JSON.parse(localStorage.getItem(KEY)) || state } catch { /* none */ }
+}
+
+// ---------- wiring
+frame.addEventListener('load', () => {
+  const d = doc()
+  d.addEventListener('mousemove', onMove, true)
+  for (const t of ['click', 'pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart']) d.addEventListener(t, onPick, true)
+  d.addEventListener('scroll', () => { if (bpOn) queueBp(); if (picked) box(picked, '__labpick', '#f43f5e') }, true)
+  d.addEventListener('keydown', key)
+  // the app re-renders: keep the overrides last, and the blueprint fresh
+  new MutationObserver(() => { if (bpOn) queueBp() }).observe(d.body, { childList: true, subtree: true })
+  apply(); status('Ready')
+})
+function key(e) {
+  if (e.target.tagName === 'INPUT' && !e.ctrlKey) return
+  if (e.key === 'i' || e.key === 'I') setInspect(!inspect)
+  else if (e.key === 'b' || e.key === 'B') { bpOn = !bpOn; $('#bBp').classList.toggle('on', bpOn); drawBp() }
+  else if (e.key === 'Escape') setInspect(false)
+  else if (e.key === 's' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); save() }
+  else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); undo() }
+}
+function undo() { const s = history.pop(); if (s) { state = JSON.parse(s); apply(); if (picked) select(picked) } }
+document.addEventListener('keydown', key)
+$('#bInspect').onclick = () => setInspect(!inspect)
+$('#bBp').onclick = () => { bpOn = !bpOn; $('#bBp').classList.toggle('on', bpOn); drawBp() }
+$('#bSave').onclick = save
+$('#bUndo').onclick = undo
+$('#bReset').onclick = () => { if (confirm('Remove every change?')) { snapshot(); state = { tokens: {}, rules: [] }; apply(); if (picked) select(picked) } }
+$('#bCopy').onclick = async () => { await navigator.clipboard.writeText(cssText()); status('CSS copied') }
+$('#bSafe').onclick = () => { safe = !safe; $('#bSafe').classList.toggle('on', safe); apply() }
+$('#bTheme').onclick = () => { const r = doc().documentElement; const dark = r.dataset.theme !== 'dark'; r.dataset.theme = dark ? 'dark' : 'light'; $('#bTheme').textContent = dark ? 'Light' : 'Dark'; if (bpOn) queueBp() }
+$('#bDummy').onclick = async () => {
+  const now = Date.now()
+  const T = ['Rooppur unit sync', 'Grid frequency drill on the eastern link', 'LNG cargo schedule', 'Rooftop solar tariff', 'Transmission line upgrade', 'Gas field output', 'Power import from the regional grid', 'Coal stock at Payra', 'Wind mapping in the coastal belt', 'Fuel oil price review', 'Substation commissioning', 'Load shedding schedule']
+  const st = ['draft', 'review', 'approved', 'draft', 'published', 'review', 'draft', 'approved', 'draft', 'review', 'published', 'draft']
+  const stories = T.map((h, i) => ({ id: 'dummy-' + (i + 1), status: st[i], createdAt: now - (i + 1) * 36e5, updatedAt: now - (i + 1) * 36e5, snapshot: { source: null, draft: { headline: `TEST ${i + 1} — ${h} (dummy story)`, deck: '', body: '' }, checklist: {}, deskAuto: false, translationProvider: 'free', modelUsed: null } }))
+  win().localStorage.setItem('esb-banner-studio/editorial/queue/v1', JSON.stringify({ stories, activeId: null }))
+  status('Adding dummy stories…'); await new Promise((r) => setTimeout(r, 1500)); win().location.reload()
+}
+document.querySelectorAll('.tabs button').forEach((b) => b.onclick = () => tab(b.dataset.tab))
+function fit() { const z = +$('#zoomR').value / 100; $('#phone').style.transform = `scale(${z})`; $('#zoomV').textContent = Math.round(z * 100) + '%' }
+$('#zoomR').oninput = fit
+{ const avail = innerHeight - 52 - 40; $('#zoomR').value = Math.min(100, Math.floor(avail / 935 * 100)); fit() }
+load().then(() => { renderChanges(); $('#nChg').textContent = state.rules.length + Object.keys(state.tokens).length })
+</script>
+</body>
+</html>

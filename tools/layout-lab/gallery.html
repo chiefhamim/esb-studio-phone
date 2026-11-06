@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ESB Studio · Layout Blueprint</title>
+<style>
+  :root { --bg: #0f0f12; --panel: #17171c; --line: #2a2a31; --ink: #ececf1; --dim: #9a9aa6; --acc: #6d5efc; font: 13px/1.45 Inter, system-ui, sans-serif; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); }
+  header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 12px 20px; background: rgba(23,23,28,.94); border-bottom: 1px solid var(--line); backdrop-filter: blur(8px); }
+  header h1 { font-size: 15px; margin: 0; }
+  header a { color: #c4bcff; }
+  button { font: inherit; color: var(--ink); background: #22222a; border: 1px solid var(--line); border-radius: 8px; height: 30px; padding: 0 11px; cursor: pointer; }
+  button.on { background: var(--acc); border-color: var(--acc); color: #fff; }
+  .grow { flex: 1; }
+  section.sum { padding: 18px 20px 6px; }
+  .sum h2 { font-size: 13px; margin: 0 0 4px; }
+  .sum p { color: var(--dim); margin: 0 0 12px; }
+  .vals { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+  .val { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .val h3 { margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip { font: 600 11.5px/1 ui-monospace, monospace; padding: 5px 7px; border-radius: 6px; background: #22222a; }
+  .chip i { font-style: normal; color: var(--dim); font-weight: 500; margin-left: 4px; }
+  .chip.odd { background: #3b1d1d; color: #fca5a5; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; padding: 18px 20px 40px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; cursor: zoom-in; }
+  .card img { display: block; width: 100%; aspect-ratio: 1440 / 3120; object-fit: cover; object-position: top; background: #000; }
+  .card div { padding: 9px 11px; }
+  .card b { display: block; font-size: 12.5px; }
+  .card small { color: var(--dim); }
+  #view { position: fixed; inset: 0; z-index: 10; background: rgba(8,8,10,.94); display: none; grid-template-columns: auto 1fr; gap: 20px; padding: 20px; }
+  #view.on { display: grid; }
+  #view .shot { height: calc(100vh - 40px); position: relative; }
+  #view .shot img { height: 100%; border-radius: 16px; display: block; }
+  #view .side { overflow: auto; min-width: 0; }
+  #view .side h2 { margin: 0 0 4px; font-size: 18px; }
+  #view .side .how { color: var(--dim); margin: 0 0 12px; }
+  table { width: 100%; border-collapse: collapse; font: 11.5px/1.4 ui-monospace, monospace; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--dim); font-weight: 600; position: sticky; top: 0; background: #121216; }
+  td.sel { color: #c4bcff; max-width: 260px; word-break: break-all; }
+  tr:hover td { background: #1b1b22; }
+  .tools { display: flex; gap: 8px; margin: 0 0 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ESB Studio · Layout Blueprint</h1>
+  <span style="color:var(--dim)" id="count"></span>
+  <span class="grow"></span>
+  <button id="bOver" class="on">Redlines</button>
+  <a href="/">Open the Layout Lab →</a>
+</header>
+<section class="sum">
+  <h2>Values in use across every screen</h2>
+  <p>How many times each value appears. A clean layout uses a few steps (e.g. 4 · 8 · 12 · 16 · 24); values marked red are off the 4 px grid.</p>
+  <div class="vals" id="vals"></div>
+</section>
+<div class="grid" id="grid"></div>
+<div id="view"><div class="shot"><img id="vImg" alt=""></div><div class="side" id="vSide"></div></div>
+<script>
+const $ = (s) => document.querySelector(s)
+let over = true, screens = []
+const nice = (n) => typeof n === "number" ? (n >= 999 ? "pill" : Number.isInteger(n) ? n : n.toFixed(1)) : n
+async function main() {
+  let index = []
+  try { index = await (await fetch('/phone/index.json', { cache: 'no-store' })).json() } catch { /* none yet */ }
+  const names = await (await fetch('/phone-list')).json()
+  const order = index.map((x) => x.name).filter((n) => names.includes(n))
+  for (const n of names) if (!order.includes(n)) order.push(n)
+  screens = await Promise.all(order.map(async (name) => ({ name, meta: index.find((x) => x.name === name) || {}, data: await (await fetch('/phone/' + name + '.json')).json().catch(() => ({ items: [] })) })))
+  $('#count').textContent = screens.length + ' screens'
+  summary(); grid()
+}
+function summary() {
+  const buckets = { 'Padding': new Map(), 'Gaps between items': new Map(), 'Corner radius': new Map(), 'Text size / line height': new Map() }
+  const bump = (m, k, s) => { if (!m.has(k)) m.set(k, { n: 0, s: new Set() }); const e = m.get(k); e.n++; e.s.add(s) }
+  for (const sc of screens) for (const it of sc.data.items || []) {
+    for (const v of Object.values(it.pad || {})) if (v >= 2) bump(buckets['Padding'], v, sc.name)
+    for (const v of it.spacing || []) if (v >= 1 && v <= 80) bump(buckets['Gaps between items'], v, sc.name)
+    if (it.radius >= 2) bump(buckets['Corner radius'], it.radius, sc.name)
+    if (it.font) bump(buckets['Text size / line height'], it.font.split(' ')[0], sc.name)
+  }
+  $('#vals').innerHTML = Object.entries(buckets).map(([k, m]) => {
+    const list = [...m.entries()].sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]))
+    return `<div class="val"><h3>${k} · ${list.length} different</h3><div class="chips">${list.map(([v, e]) => `<span class="chip ${k !== 'Text size / line height' && parseFloat(v) % 4 && k !== 'Corner radius' ? 'odd' : ''}" title="${[...e.s].join(', ')}">${nice(v)}<i>×${e.n}</i></span>`).join('')}</div></div>`
+  }).join('')
+}
+function grid() {
+  $('#grid').innerHTML = screens.map((s, i) => `<div class="card" data-i="${i}"><img loading="lazy" src="/phone/${s.name}${over ? '' : '-clean'}.png" alt=""><div><b>${s.meta.title || s.name}</b><small>${s.name}</small></div></div>`).join('')
+  $('#grid').querySelectorAll('.card').forEach((c) => c.onclick = () => open(+c.dataset.i))
+}
+function open(i) {
+  const s = screens[i]
+  $('#vImg').src = `/phone/${s.name}${over ? '' : '-clean'}.png`
+  const items = (s.data.items || []).filter((it) => !it.font)
+  const texts = (s.data.items || []).filter((it) => it.font)
+  $('#vSide').innerHTML = `<div class="tools"><button id="vPrev">← Prev</button><button id="vNext">Next →</button><button id="vClose">Close (Esc)</button></div>
+    <h2>${s.meta.title || s.name}</h2><p class="how">${s.name}${s.meta.how ? ' · ' + s.meta.how : ''}</p>
+    <h3 style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em">Containers (${items.length})</h3>
+    <table><tr><th>Selector</th><th>Size</th><th>Padding t r b l</th><th>Radius</th><th>Gap</th><th>Spacing between children</th></tr>
+    ${items.map((it) => `<tr><td class="sel">${it.sel}</td><td>${it.w}×${it.h}</td><td>${[it.pad.t, it.pad.r, it.pad.b, it.pad.l].map(nice).join(' ')}</td><td>${nice(it.radius)}</td><td>${nice(it.gap)}</td><td>${(it.spacing || []).join(', ')}</td></tr>`).join('')}</table>
+    <h3 style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-top:18px">Text (${texts.length})</h3>
+    <table><tr><th>Text</th><th>Size/line weight</th><th>Selector</th></tr>${texts.map((it) => `<tr><td>${(it.text || '').replace(/</g, '&lt;')}</td><td>${it.font}</td><td class="sel">${it.sel}</td></tr>`).join('')}</table>`
+  $('#view').classList.add('on'); $('#view').dataset.i = i
+  $('#vPrev').onclick = () => open((i - 1 + screens.length) % screens.length)
+  $('#vNext').onclick = () => open((i + 1) % screens.length)
+  $('#vClose').onclick = () => $('#view').classList.remove('on')
+}
+document.addEventListener('keydown', (e) => {
+  if (!$('#view').classList.contains('on')) return
+  const i = +$('#view').dataset.i
+  if (e.key === 'Escape') $('#view').classList.remove('on')
+  if (e.key === 'ArrowRight') open((i + 1) % screens.length)
+  if (e.key === 'ArrowLeft') open((i - 1 + screens.length) % screens.length)
+})
+$('#bOver').onclick = () => { over = !over; $('#bOver').classList.toggle('on', over); grid(); if ($('#view').classList.contains('on')) open(+$('#view').dataset.i) }
+main()
+</script>
+</body>
+</html>
