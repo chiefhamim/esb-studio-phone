@@ -3,9 +3,9 @@
 // cancels. Only a full hold sends the story live. This replaces "tap twice": a deliberate act that a stray touch cannot do.
 //
 // The hand-off when the hold completes is one continuous gesture, not a cut (2026-11-06):
-//   go   (0–720 ms)   the full ring turns green, the dial pops, a check springs in, the label becomes "Publishing…",
+//   go   (0–600 ms)   the full ring turns green, the dial pops, a check springs in, the label becomes "Publishing…",
 //                     then the ring opens into a spinning arc: the work has started
-//   out  (720–1100)   the dial shrinks down into the button while the backdrop fades; the button takes the hand-off
+//   out  (600–980)    the dial shrinks down into the button while the backdrop fades; the button takes the hand-off
 //                     with a small press and shows its own spinner
 // Every step is a transform/opacity animation, so it runs on the compositor and stays smooth while the publish keeps the
 // page busy. The work itself starts one painted frame after the hold completes.
@@ -14,7 +14,7 @@ import { createPortal } from 'react-dom'
 import { Icon } from '../shell/ui'
 
 const HOLD_MS = 3000
-const GO_MS = 720
+const GO_MS = 600
 const OUT_MS = 380
 const R = 54
 const C = 2 * Math.PI * R
