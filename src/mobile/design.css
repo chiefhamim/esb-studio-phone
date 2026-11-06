@@ -3457,10 +3457,9 @@ img.u-avatar { box-shadow: inset 0 0 0 .5px var(--m-hair); }
 .hm-h.has-icon::before { content: none; }
 .hm-h.has-icon > svg { flex: none; color: var(--brand-red); }
 
-/* Home: the ESB Power Line | Ai Studio lockup is fixed under the date bar (outside the scroller), so a swipe never cuts its top.
-   The tagline, chips and tiles scroll and fade out just under it. */
-.hm-brand { flex: none; position: relative; z-index: 1; padding-top: 20px; padding-bottom: 2px; }
+/* Home: the top of the page (lockup, tagline, status chips, Editorial / Banner tiles) is fixed under the date bar, outside
+   the scroller. Only what is under the tiles (Continue, Recent stories) scrolls, and it fades out at the tiles' bottom edge. */
+.hm-brand { flex: none; position: relative; z-index: 1; padding-top: 20px; padding-bottom: 4px; }
 .hm-brand .hm-hero { padding: 0 !important; }
-.hm-hero.hm-hero-rest { padding-top: 0 !important; }
-.hm-scroll { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12px); mask-image: linear-gradient(to bottom, transparent 0, #000 12px); }
-.hm-hero-rest .hm-tag { margin-top: 10px; }
+.hm-scroll { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px); mask-image: linear-gradient(to bottom, transparent 0, #000 14px); }
+.hm-scroll > .hm { padding-top: 0; }

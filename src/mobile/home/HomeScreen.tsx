@@ -128,7 +128,7 @@ export default function HomeScreen({ active }: ScreenProps) {
           {session ? <UserAvatar name={name} className="hm-me-badge" /> : <Icon name="user" size={22} />}
         </button>
       </header>
-      {/* the lockup stays put under the date bar; everything below it scrolls beneath it, never through it */}
+      {/* the top of Home (lockup, tagline, status chips, Editorial / Banner) stays put; the stories under the tiles scroll beneath it */}
       <div className="m-wrap hm-brand">
         <div className="hm-hero">
           <h1 className="hm-title" aria-label="ESB Power Line Ai Studio">
@@ -136,33 +136,29 @@ export default function HomeScreen({ active }: ScreenProps) {
             <span className="hm-stick" aria-hidden />
             <span className="hm-name"><span className="hm-ai">Ai</span> <span className="hm-studio">Studio</span></span>
           </h1>
+          <p className="hm-tag">Where stories are written, imagination is designed and reality is cut</p>
+          <div className="hm-chips">
+            <button type="button" className={`hm-chip hm-chip-${siteState.dot === 'ok' ? 'ok' : 'bad'}`} onClick={openAccount}><span className={`m-dot m-dot-${siteState.dot}`} aria-hidden />{siteState.text}</button>
+            <button type="button" className={`hm-chip hm-chip-ai${aiOk ? ' is-ok' : ''}`} style={aiOk ? ({ '--pc': brandColor(ai.provider) } as React.CSSProperties) : undefined} onClick={() => nav.openSettings('ai')}>{aiOk ? <ProviderMark id={ai.provider} size={16} /> : <Icon name="sparkle" size={15} />}{ai.paused ? 'AI paused' : aiOk ? providerMeta(ai.provider).name : 'AI needs a key'}</button>
+          </div>
         </div>
+        <nav className="hm-launch hm-glass" aria-label="Workspaces">
+          <button type="button" className="hm-cell" onClick={() => nav.intendEditorial('paste-link')}>
+            <span className="hm-cell-ico"><Icon name="power" size={22} /></span>
+            <span className="hm-cell-name">Editorial</span>
+            <span className="hm-cell-note">Paste a link, get English</span>
+            <Icon name="chevRight" size={20} />
+          </button>
+          <button type="button" className="hm-cell" onClick={() => nav.go('graphics')}>
+            <span className="hm-cell-ico"><Icon name="layers" size={22} /></span>
+            <span className="hm-cell-name">Banner</span>
+            <span className="hm-cell-note">Design in Graphics</span>
+            <Icon name="chevRight" size={20} />
+          </button>
+        </nav>
       </div>
       <div className="m-scroll hm-scroll">
         <div className="m-wrap hm">
-          <section className="hm-hero hm-hero-rest" aria-label="About ESB Power Line Ai Studio">
-            <p className="hm-tag">Where stories are written, imagination is designed and reality is cut</p>
-            <div className="hm-chips">
-              <button type="button" className={`hm-chip hm-chip-${siteState.dot === 'ok' ? 'ok' : 'bad'}`} onClick={openAccount}><span className={`m-dot m-dot-${siteState.dot}`} aria-hidden />{siteState.text}</button>
-              <button type="button" className={`hm-chip hm-chip-ai${aiOk ? ' is-ok' : ''}`} style={aiOk ? ({ '--pc': brandColor(ai.provider) } as React.CSSProperties) : undefined} onClick={() => nav.openSettings('ai')}>{aiOk ? <ProviderMark id={ai.provider} size={16} /> : <Icon name="sparkle" size={15} />}{ai.paused ? 'AI paused' : aiOk ? providerMeta(ai.provider).name : 'AI needs a key'}</button>
-            </div>
-          </section>
-
-          <nav className="hm-launch hm-glass" aria-label="Workspaces">
-            <button type="button" className="hm-cell" onClick={() => nav.intendEditorial('paste-link')}>
-              <span className="hm-cell-ico"><Icon name="power" size={22} /></span>
-              <span className="hm-cell-name">Editorial</span>
-              <span className="hm-cell-note">Paste a link, get English</span>
-              <Icon name="chevRight" size={20} />
-            </button>
-            <button type="button" className="hm-cell" onClick={() => nav.go('graphics')}>
-              <span className="hm-cell-ico"><Icon name="layers" size={22} /></span>
-              <span className="hm-cell-name">Banner</span>
-              <span className="hm-cell-note">Design in Graphics</span>
-              <Icon name="chevRight" size={20} />
-            </button>
-          </nav>
-
           {current && <ContinueCard title={phoneStoryTitle(current)} onOpen={() => nav.intendEditorial('open')} onRemove={async () => {
             if (storyLocked()) return
             if (await confirmAsk({ title: 'Remove this story?', body: `"${phoneStoryTitle(current)}" and its draft are deleted from this phone. An article already on esbpowerline.com is not touched.`, confirm: 'Remove', danger: true })) {
