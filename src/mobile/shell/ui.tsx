@@ -183,8 +183,9 @@ export function FullDialog({ open, title, onClose, primary, children, footer, un
   )
 }
 
-// ---------------------------------------------------------------- one snackbar: tone icon, message, action pill, dismiss
-// Drops in at the top of the screen; flick it up to put it away early.
+// ---------------------------------------------------------------- one snackbar: a capsule at the top of the screen
+// Tone glyph, message, optional action. Only a snack with an action has a close button, ringed by the time left.
+// A plain snack goes on a tap; any snack goes on a flick upwards.
 const SNACK_ICON: Record<NonNullable<Snack['tone']>, IconName> = { info: 'info', success: 'check', error: 'alert' }
 function SnackCard({ s }: { s: Snack }) {
   const tone = s.tone ?? 'info'
@@ -192,15 +193,26 @@ function SnackCard({ s }: { s: Snack }) {
   const [dy, setDy] = useState(0)
   const down = (e: React.PointerEvent) => { if ((e.target as HTMLElement).closest('button')) return; drag.current = { y: e.clientY, id: e.pointerId }; e.currentTarget.setPointerCapture?.(e.pointerId) }
   const move = (e: React.PointerEvent) => { if (drag.current?.id === e.pointerId) setDy(Math.min(0, e.clientY - drag.current.y)) }
-  const up = () => { if (!drag.current) return; drag.current = null; if (dy < -24) dismissSnack(s.id); setDy(0) }
+  const up = (e: React.PointerEvent) => {
+    if (!drag.current) return
+    const moved = Math.abs(e.clientY - drag.current.y)
+    drag.current = null
+    if (dy < -24 || (!s.action && moved < 6 && e.type === 'pointerup')) dismissSnack(s.id)
+    setDy(0)
+  }
   return (
-    <div className={`m-snack m-snack-${tone}${s.leaving ? ' is-out' : ''}`} role={tone === 'error' ? 'alert' : 'status'}
+    <div className={`m-snack m-snack-${tone}${s.action ? ' has-action' : ''}${s.leaving ? ' is-out' : ''}`} role={tone === 'error' ? 'alert' : 'status'}
       style={{ '--snk-ms': `${snackMs(s)}ms`, ...(dy ? { transform: `translateY(${dy}px)`, opacity: Math.max(0.3, 1 + dy / 120), transition: 'none' } : null) } as React.CSSProperties}
       onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
-      <span className="m-snack-ico" aria-hidden><Icon name={s.icon ?? SNACK_ICON[tone]} size={20} strokeWidth={2.2} /></span>
+      <span className="m-snack-ico" aria-hidden><Icon name={s.icon ?? SNACK_ICON[tone]} size={20} strokeWidth={2} /></span>
       <span className="m-snack-text">{s.text}</span>
-      {s.action && <button type="button" className="m-snack-action" onClick={() => { s.action!.run(); dismissSnack(s.id) }}>{s.action.label}</button>}
-      <button type="button" className="m-iconbtn m-snack-x" aria-label="Dismiss" onClick={() => dismissSnack(s.id)}><Icon name="x" size={18} /></button>
+      {s.action && <>
+        <button type="button" className="m-snack-action" onClick={() => { s.action!.run(); dismissSnack(s.id) }}>{s.action.label}</button>
+        <button type="button" className="m-iconbtn m-snack-x" aria-label="Dismiss" onClick={() => dismissSnack(s.id)}>
+          <svg className="m-snack-ring" viewBox="0 0 32 32" aria-hidden><circle cx="16" cy="16" r="15" /></svg>
+          <Icon name="x" size={16} />
+        </button>
+      </>}
     </div>
   )
 }

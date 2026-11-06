@@ -2368,12 +2368,7 @@ section > .me-h2 + .me-stack > .me-readysum:first-child { margin-top: 0 !importa
 /* the zoom bar's white raised style is for its SECONDARY buttons only (it had turned Check story white on white) */
 .gx-tools > .m-btn.m-btn-filled:not(:disabled) { background: var(--accent) !important; color: var(--on-accent) !important; box-shadow: 0 1px 2px rgba(0, 0, 0, .14), 0 8px 18px -10px color-mix(in srgb, var(--accent) 70%, transparent) !important; }
 
-/* ===================================================================== Graphics Menu: one grouped list, every icon on the same quiet tile */
-.m-sheet .gx-panel > .pnl { margin: 0 !important; border-radius: 0 !important; clip-path: inset(0 -30px); }
-.m-sheet .gx-panel > .pnl + .pnl { margin-top: -12px !important; border-top: .5px solid var(--border-default) !important; }
-.m-sheet .gx-panel > .pnl:first-of-type { border-radius: var(--r-lg) var(--r-lg) 0 0 !important; clip-path: inset(-30px -30px 0 -30px); }
-.m-sheet .gx-panel > .pnl:last-of-type { border-radius: 0 0 var(--r-lg) var(--r-lg) !important; clip-path: inset(0 -30px -30px -30px); }
-.m-sheet .gx-panel > .pnl:only-of-type { border-radius: var(--r-lg) !important; clip-path: none; }
+/* ===================================================================== Graphics Menu: every icon on the same quiet tile (the grouped card itself: 'Banner Menu list' at the end) */
 .m-sheet .gx-panel > .pnl > header { min-height: 60px !important; }
 .m-sheet .gx-panel > .pnl > header > svg:not(.pnl-chev):not([class*='chev']) {
   flex: none; box-sizing: content-box; width: 18px !important; height: 18px !important; padding: var(--sp-s); border-radius: var(--r-md);
@@ -3879,27 +3874,67 @@ html.kb-open .m-snackbars {
 }
 @media (prefers-reduced-motion: reduce) { .hm-launch .hm-cell .hm-cell-ico::after { animation: none !important; } }
 
-/* ---------------------------------------------------------------- snackbars v2 (2026-11-06)
-   At the top of the screen, under the status bar, newest first. A theme-aware glass card: a tone icon in a tinted
-   circle (info = accent, success = green, error = red), the message at 15/600, the action as a tonal pill, a quiet ×,
-   and a hairline that runs down with the time left. Drops in from the top on a spring; leaves upwards; swipe up to
-   dismiss. */
-.m-snackbars { top: calc(var(--m-safe-top) + var(--sp-s)) !important; bottom: auto !important; left: calc(var(--sp-m) + var(--m-safe-left)); right: calc(var(--sp-m) + var(--m-safe-right)); flex-direction: column-reverse; gap: var(--sp-s); z-index: 3000; }
+/* ---------------------------------------------------------------- snackbars v3 (2026-11-06)
+   A compact solid capsule centred at the top, under the status bar, newest first, as wide as its message. A plain
+   tone glyph (no tinted disc), the message at 15/500, the action as a coloured text button. Only a snack with an
+   action has a close button, and only there a thin ring around the x shows the time left. Plain snacks go away by
+   themselves, on a tap, or on a flick upwards. */
+.m-snackbars { top: calc(var(--m-safe-top) + var(--sp-s)) !important; bottom: auto !important; left: calc(var(--sp-m) + var(--m-safe-left)); right: calc(var(--sp-m) + var(--m-safe-right)); flex-direction: column-reverse; align-items: center; gap: var(--sp-s); z-index: 3000; }
 html.kb-open .m-snackbars { bottom: auto !important; }
-.m-snack { --snk: var(--action); --snk-soft: color-mix(in srgb, var(--action) 13%, transparent); position: relative; overflow: hidden; max-width: 440px; min-height: 60px; gap: var(--sp-m); padding: var(--sp-s) var(--sp-xs) var(--sp-s) var(--sp-m); border-radius: var(--r-lg); color: var(--text-primary); background: color-mix(in srgb, var(--surface-panel) 92%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8); border: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent); box-shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 12px 32px -8px rgba(15, 23, 42, .24); animation: m-snack-in .5s cubic-bezier(.2, 1.3, .3, 1) backwards; touch-action: pan-x; transition: transform .2s var(--m-ease), opacity .2s var(--m-ease); }
-:root[data-theme='dark'] .m-snack { background: color-mix(in srgb, #26262c 94%, transparent); border-color: rgba(255, 255, 255, .09); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 16px 40px -10px rgba(0, 0, 0, .7); }
-:root[data-theme='dark'] .m-snack-info { --snk: color-mix(in srgb, var(--action) 55%, #fff); --snk-soft: color-mix(in srgb, var(--action) 26%, transparent); }
-.m-snack-success { --snk: var(--success); --snk-soft: var(--success-soft); }
-.m-snack-error { --snk: var(--danger); --snk-soft: var(--danger-soft); color: var(--text-primary); background: color-mix(in srgb, var(--danger) 6%, color-mix(in srgb, var(--surface-panel) 94%, transparent)); }
-:root[data-theme='dark'] .m-snack-error { background: color-mix(in srgb, var(--danger) 10%, color-mix(in srgb, #26262c 94%, transparent)); border-color: color-mix(in srgb, var(--danger) 28%, transparent); }
-.m-snack-ico { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--snk-soft); color: var(--snk); }
-.m-snack-text { flex: 1; min-width: 0; padding-block: 2px; font: 600 var(--fs-m)/1.35 var(--font-ui) !important; letter-spacing: -.005em; }
-.m-snack-action { flex: none; min-height: 36px; padding: 0 var(--sp-l); border-radius: 999px; background: var(--snk-soft); color: var(--snk); font: 700 var(--fs-s)/1 var(--font-ui); letter-spacing: .01em; text-decoration: none; }
-.m-snack-action:active { filter: brightness(.94); transform: scale(.97); }
-.m-snack .m-snack-x { flex: none; width: 40px; height: 40px; min-width: 40px; min-height: 40px; color: var(--text-tertiary); }
-.m-snack::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--snk); opacity: .45; transform-origin: left; animation: m-snack-time var(--snk-ms, 3500ms) linear both; }
-.m-snack.is-out { animation: m-snack-out .22s cubic-bezier(.4, 0, 1, 1) both; pointer-events: none; }
-@keyframes m-snack-in { from { transform: translateY(calc(-100% - 24px)) scale(.96); opacity: 0; } }
-@keyframes m-snack-out { to { transform: translateY(-70%) scale(.96); opacity: 0; } }
-@keyframes m-snack-time { to { transform: scaleX(0); } }
-@media (prefers-reduced-motion: reduce) { .m-snack, .m-snack.is-out { animation: none; } .m-snack::after { display: none; } }
+.m-snack { --snk: var(--text-secondary); position: relative; width: auto; max-width: min(440px, 100%); min-height: 48px; gap: 10px; padding: 6px 18px 6px 16px; border-radius: 24px; border: 0; color: var(--text-primary); background: var(--surface-panel); box-shadow: 0 0 0 .5px rgba(15, 23, 42, .08), 0 2px 6px rgba(15, 23, 42, .06), 0 10px 28px -8px rgba(15, 23, 42, .22); animation: m-snack-in .46s cubic-bezier(.2, 1.25, .35, 1) backwards; touch-action: pan-x; transition: transform .2s var(--m-ease), opacity .2s var(--m-ease); }
+.m-snack.has-action { padding-right: 4px; }
+:root[data-theme='dark'] .m-snack { background: #26262b; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .1), 0 12px 32px -8px rgba(0, 0, 0, .65); }
+.m-snack-success { --snk: var(--success); }
+.m-snack-error { --snk: var(--danger); color: var(--text-primary); background: var(--surface-panel); }
+:root[data-theme='dark'] .m-snack-error { background: #26262b; }
+.m-snack-ico { flex: none; display: grid; place-items: center; color: var(--snk); }
+.m-snack-text { flex: 0 1 auto; min-width: 0; padding-block: 4px; font: 500 var(--fs-m)/1.35 var(--font-ui) !important; letter-spacing: -.005em; }
+.m-snack-action { flex: none; min-height: 36px; margin-left: 2px; padding: 0 10px; border-radius: 18px; background: none; color: var(--action); font: 650 var(--fs-m)/1 var(--font-ui); text-decoration: none; }
+:root[data-theme='dark'] .m-snack-action { color: color-mix(in srgb, var(--action) 50%, #fff); }
+.m-snack-action:active { background: var(--fill); }
+.m-snack .m-snack-x { position: relative; flex: none; width: 40px; height: 40px; min-width: 40px; min-height: 40px; color: var(--text-tertiary); }
+.m-snack-ring { position: absolute; inset: 4px; width: 32px; height: 32px; transform: rotate(-90deg); pointer-events: none; }
+.m-snack-ring circle { fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-dasharray: 94.25; opacity: .55; animation: m-snack-ring var(--snk-ms, 6000ms) linear both; }
+.m-snack.is-out { animation: m-snack-out .2s cubic-bezier(.4, 0, 1, 1) both; pointer-events: none; }
+@keyframes m-snack-in { from { transform: translateY(calc(-100% - 20px)) scale(.92); opacity: 0; } }
+@keyframes m-snack-out { to { transform: translateY(-60%) scale(.94); opacity: 0; } }
+@keyframes m-snack-ring { to { stroke-dashoffset: 94.25; } }
+@media (prefers-reduced-motion: reduce) { .m-snack, .m-snack.is-out { animation: none; } .m-snack-ring { display: none; } }
+
+/* ---------------------------------------------------------------- Banner Menu list + its dropdowns (2026-11-06)
+   The rows (Category, Date, Headline design, …) are ONE grouped card: square inner edges, round outer corners on the
+   first and last row only, one shadow for the whole group (each row's shadow is clipped at its top/bottom edge so no
+   seams show), hairline dividers inset past the icon tile. Headers carry no corners or shadows of their own (the
+   Category header used to keep a 20px radius and a shadow line, which showed as round bottom corners). An opened
+   row's controls ease in; the chevron turns on a spring. */
+:root .m-sheet .gx-panel > .pnl.pnl { position: relative; margin-top: 0 !important; border: 0 !important; border-radius: 0 !important; background: var(--surface-panel); box-shadow: var(--drop-2); clip-path: inset(0 -32px); }
+:root[data-theme='dark'] .m-sheet .gx-panel > .pnl.pnl { background: var(--m-card-bg); }
+:root .m-sheet .gx-panel > .pnl.pnl:first-of-type { border-radius: var(--r-lg) var(--r-lg) 0 0 !important; clip-path: inset(-32px -32px 0); }
+:root .m-sheet .gx-panel > .pnl.pnl:last-of-type { border-radius: 0 0 var(--r-lg) var(--r-lg) !important; clip-path: inset(0 -32px -32px); }
+:root .m-sheet .gx-panel > .pnl.pnl:only-of-type { border-radius: var(--r-lg) !important; clip-path: none; }
+:root .m-sheet .gx-panel > .pnl.pnl { margin-bottom: 0 !important; }
+:root .m-sheet .gx-panel > .pnl.pnl + .pnl { margin-top: -12px !important; } /* the panel host is a flex column with a 12px gap */
+:root .m-sheet .gx-panel > .pnl.pnl + .pnl::before { content: ''; position: absolute; z-index: 1; top: 0; left: 72px; right: 0; height: .5px; background: var(--m-hair); pointer-events: none; }
+.gx-panel .pnl > header, .gx-panel .pnl.open > header, .gx-panel .pnl[data-panel='Category'] > header, .gx-panel .pnl[data-panel='Category'].open > header { border-radius: 0 !important; box-shadow: none !important; background: transparent !important; transition: background-color .15s ease; }
+.gx-panel .pnl > header:active { background: var(--fill) !important; }
+.gx-panel .pnl-chev { transition: transform .4s cubic-bezier(.2, 1.3, .3, 1); }
+.gx-panel .pnl.open:not([data-panel='Category']) > :not(header) { animation: gx-pnl-in .3s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes gx-pnl-in { from { opacity: 0; transform: translateY(-8px); } }
+
+/* Dropdowns opened from the Menu (font, case, alignment, …): a tidy action sheet that slides up fast. No
+   `transition: all` (it animated every layout change and made the panel feel sticky); the chosen option is a quiet
+   fill with a check on the right, not a lavender slab; options are 56px tall with the hint under the name. */
+.popover.menu.gx-portal { transition: none !important; left: var(--sp-s) !important; right: var(--sp-s) !important; bottom: calc(var(--sp-s) + var(--m-safe-bottom)) !important; padding: 6px !important; border-radius: 26px !important; animation: gx-dd-up .34s cubic-bezier(.16, 1, .3, 1) both !important; }
+:root[data-theme='dark'] .popover.menu.gx-portal { background: #1c1c20; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .5), 0 0 0 .5px rgba(255, 255, 255, .08), 0 -8px 40px rgba(0, 0, 0, .4) !important; }
+@keyframes gx-dd-up { from { transform: translateY(calc(100% + 24px)); } }
+.popover.menu.gx-portal .menu-item { display: grid !important; grid-template-columns: 1fr auto !important; align-items: center; column-gap: var(--sp-m); min-height: 56px; padding: 10px 16px !important; border-radius: 20px !important; background: transparent !important; color: var(--text-primary) !important; text-align: left; }
+.popover.menu.gx-portal .menu-item > .mi-check { grid-column: 2; grid-row: 1 / span 2; color: var(--action) !important; }
+:root[data-theme='dark'] .popover.menu.gx-portal .menu-item > .mi-check { color: color-mix(in srgb, var(--action) 50%, #fff) !important; }
+.popover.menu.gx-portal .menu-item > .mi-check svg { width: 20px; height: 20px; stroke-width: 2.4; color: inherit !important; stroke: currentColor !important; }
+.popover.menu.gx-portal .menu-item > .mi-label { grid-column: 1; grid-row: 1; font: 600 var(--fs-l)/1.25 var(--font-ui); color: var(--text-primary) !important; }
+.popover.menu.gx-portal .menu-item > .mi-hint { grid-column: 1; grid-row: 2; margin-top: 2px; font: 500 var(--fs-s)/1.3 var(--font-ui); color: var(--text-secondary) !important; }
+.popover.menu.gx-portal .menu-item.current { background: var(--fill) !important; }
+.popover.menu.gx-portal .menu-item:active { background: var(--fill-hover) !important; transform: scale(.985); transition: transform .1s ease; }
+@media (prefers-reduced-motion: reduce) { .gx-panel .pnl.open > :not(header), .popover.menu.gx-portal { animation: none !important; } }
+/* the category / size dropdown at the top of the Banner editor: no `transition: all`, a quicker drop from its button */
+.gx-droppanel { transition: none !important; transform-origin: top center; animation: gx-drop-in .26s cubic-bezier(.16, 1, .3, 1) both !important; }

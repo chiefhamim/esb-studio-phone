@@ -145,6 +145,23 @@ export default function GraphicsScreen({ active }: ScreenProps) {
     return useStore.subscribe((s, p) => { if (s.doc !== p.doc) fix(s.doc) })
   }, [])
 
+  // ---------------------------------------------------------------- font menus show each font in its own face
+  // A dropdown option whose name is a loaded font family ("Inter", "Oswald", "Hind Siliguri (বাংলা)") is drawn in that
+  // font, so the choice can be judged before it is made. Other menus are untouched: their labels are not font names.
+  useEffect(() => {
+    const families = () => new Set([...document.fonts].map((f) => f.family.replace(/["']/g, '')))
+    const dress = (root: ParentNode) => {
+      const fams = families()
+      root.querySelectorAll<HTMLElement>('.gx-portal .mi-label').forEach((el) => {
+        const name = (el.textContent ?? '').replace(/\s*\(.*\)\s*$/, '').trim()
+        if (fams.has(name)) el.style.setProperty('font-family', `"${name}", var(--font-ui)`, 'important')
+      })
+    }
+    const mo = new MutationObserver((recs) => { if (recs.some((r) => r.addedNodes.length)) dress(document) })
+    mo.observe(document.body, { childList: true })
+    return () => mo.disconnect()
+  }, [])
+
   // ---------------------------------------------------------------- category colour for PC chrome (as the PC App sets it)
   useEffect(() => {
     if (!active) return
@@ -403,6 +420,23 @@ export default function GraphicsScreen({ active }: ScreenProps) {
   )
 }
 
+// A Menu row was tapped. Once React has opened it: close any other open row (one open at a time), glide the row
+// to the top of the sheet, so its controls are in view instead of opening below the fold. (The sheet stays at half
+// height on purpose: the live preview above it shows each change.)
+function focusMenuRow(hdr: HTMLElement) {
+  const pnl = hdr.parentElement
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (!pnl?.classList.contains('open')) return
+    pnl.parentElement?.querySelectorAll<HTMLElement>(':scope > .pnl.open:not([data-panel="Category"]) > header').forEach((h) => { if (h !== hdr) h.click() })
+    window.setTimeout(() => {
+      const body = hdr.closest<HTMLElement>('.m-sheet-body')
+      if (!body) return
+      const top = hdr.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 8
+      body.scrollTo({ top, behavior: 'smooth' })
+    }, 60)
+  }))
+}
+
 function Sheets() {
   const hlColor = useHighlightColor()
   const images = useStore((s) => s.images.length)
@@ -412,7 +446,7 @@ function Sheets() {
     <>
       <Sheet id="gx-story" title="Menu" wide>
         {/* the PC's Category row opens the phone's category sheet (numbered dots) instead of its own cramped grid */}
-        <div onClickCapture={(e) => { const t = e.target as HTMLElement; const sheetFor = t.closest('.pnl[data-panel="Category"] > header') ? 'gx-category' : null; if (sheetFor) { e.stopPropagation(); e.preventDefault(); useUi.getState().openSheet(sheetFor) } }}
+        <div onClickCapture={(e) => { const t = e.target as HTMLElement; const sheetFor = t.closest('.pnl[data-panel="Category"] > header') ? 'gx-category' : null; if (sheetFor) { e.stopPropagation(); e.preventDefault(); useUi.getState().openSheet(sheetFor); return } const hdr = t.closest<HTMLElement>('.gx-panel .pnl > header'); if (hdr) focusMenuRow(hdr) }}
           onPointerDownCapture={(e) => { if ((e.target as HTMLElement).closest('button')?.textContent?.trim() === 'Use selection') e.preventDefault() /* keep the headline's text selection when the button is tapped */ }}>
           <LivePreview />
           <button type="button" className="hl-row" style={highlightVars(hlColor)} onClick={openHighlight}><i><Icon name="highlight" size={20} /></i><span><b>Highlight</b><small>Tap the headline words to highlight</small></span><Icon name="chevRight" size={18} /></button>

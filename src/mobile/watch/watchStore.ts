@@ -452,6 +452,7 @@ interface WatchState {
   hide: (key: string) => void
   /** Remove/hide a story from News right after it is published or updated. */
   cleanPublishedStory: (url?: string | null, title?: string | null) => void
+  unhide: (key: string) => void
   markSeen: () => void
   markRead: (key: string) => void
   markAllRead: () => void
@@ -473,15 +474,6 @@ export const useWatch = create<WatchState>((set, get) => {
       set({ prefs })
     },
     resetPrefs: () => { save(PREFS_KEY, DEFAULT_PREFS); set({ prefs: DEFAULT_PREFS }) },
-    hide: (key) => {
-      const s = get()
-      set({
-        hidden: [...s.hidden, key].slice(-2000),
-        items: s.items.filter((x) => x.key !== key),
-        newKeys: s.newKeys.filter((k) => k !== key),
-      })
-      persist()
-    },
     cleanPublishedStory: (url, title) => {
       const s = get()
       const cleanU = url ? unwrapFeedRedirectUrl(url.trim()).replace(/\/+$/, '').toLowerCase() : ''
@@ -502,6 +494,8 @@ export const useWatch = create<WatchState>((set, get) => {
       })
       persist()
     },
+    hide: (key) => { set({ hidden: [...get().hidden, key].slice(-2000) }); persist() },
+    unhide: (key) => { set({ hidden: get().hidden.filter((k) => k !== key) }); persist() },
     markRead: (key) => { set({ newKeys: get().newKeys.filter((k) => k !== key) }); persist() },
     markAllRead: () => { set({ newKeys: [] }); persist() },
     markSeen: () => { const top = get().items.reduce((m, x) => Math.max(m, x.foundAt), 0); if (top > get().seenAt) { set({ seenAt: top }); persist() } },

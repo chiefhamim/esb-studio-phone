@@ -163,7 +163,7 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
     { label: 'Open in the browser', icon: 'externalLink', onClick: () => void platform().openExternal(x.link) },
     { label: 'Copy link', icon: 'copy', onClick: () => { void navigator.clipboard?.writeText(x.link).then(() => snack('Link copied'), () => snack('Could not copy')) } },
     ...(isNew.has(x.key) ? [{ label: 'Mark as read', icon: 'check' as const, onClick: () => useWatch.getState().markRead(x.key) }] : []),
-    { label: 'Hide', icon: 'eyeOff', onClick: () => useWatch.getState().hide(x.key) },
+    { label: 'Hide', icon: 'eyeOff', onClick: () => { useWatch.getState().hide(x.key); snack('Headline hidden', { icon: 'eyeOff', action: { label: 'Undo', run: () => useWatch.getState().unhide(x.key) } }) } },
   ]
   const cats: ('all' | WatchCat)[] = ['all', ...(['energy', 'leadership', 'press'] as WatchCat[]).filter((c) => prefs.show[c] !== false)]
   const inCat = (c: 'all' | WatchCat) => catCounts[c]
