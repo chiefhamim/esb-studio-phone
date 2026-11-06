@@ -175,6 +175,13 @@ export function PublishReview() {
   const blocked = P.busy || !draft.headline.trim() || !online
   const last = P.last[storyId]
   const willFb = fbOn && !!fb
+  // what the hold-to-publish card ticks off: exactly what this publish will send, nothing more
+  const pressItems = [
+    { label: 'The story', sub: draft.headline.trim() || 'Untitled story' },
+    { label: 'Banner', sub: willFb ? 'Website 16:9 · Facebook 4:5' : 'Website 16:9' },
+    { label: 'esbpowerline.com', sub: linked ? 'Updates the live article' : 'A new article' },
+    ...(willFb && fb ? [{ label: 'Facebook Page', sub: (fb.pageName || fb.pageId) + (fbLink ? ' · link as first comment' : '') }] : []),
+  ]
 
   return (
     <FullDialog open={open} title={linked ? 'Update article' : 'Publish'} onClose={close} back sub={<StepSub />} under={<FlowTrack />}
@@ -182,7 +189,7 @@ export function PublishReview() {
       footer={
         P.result?.ok && P.result.status === 'PUBLISHED' && !P.busy
           ? <Button wide kind="filled" icon="home" onClick={doneHome}>Home</Button>
-          : <HoldToPublish label={verb} sub={willFb ? 'Website and Facebook' : 'esbpowerline.com'} disabled={blocked} busy={P.busy} busyLabel={linked ? 'Updating' : 'Publishing'}
+          : <HoldToPublish label={verb} sub={willFb ? 'Website and Facebook' : 'esbpowerline.com'} items={pressItems} disabled={blocked} busy={P.busy} busyLabel={linked ? 'Updating' : 'Publishing'}
               onFire={() => void runPublish({ status: 'PUBLISHED', heroMode: hero, fbOn: fbOn && !!fb, fbLink })} />
       }>
       <div className="m-wrap me-stack me-pad">
@@ -235,7 +242,7 @@ export function PublishReview() {
         </section>
 
         {job && (
-          <div ref={progressRef as React.RefObject<HTMLDivElement>}><JobPanel job={job} tone="publish" title={P.busy ? (linked ? 'Updating esbpowerline.com' : 'Publishing') : linked ? 'Update' : 'Publish'} /></div>
+          <div ref={progressRef as React.RefObject<HTMLDivElement>} className="pb-progress"><JobPanel job={job} tone="publish" title={P.busy ? (linked ? 'Updating esbpowerline.com' : 'Publishing') : linked ? 'Update' : 'Publish'} /></div>
         )}
         {P.result?.ok && (
           // success: one clean card, the outcome in a word, the detail in small type, then the two places it went

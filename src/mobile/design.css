@@ -3762,8 +3762,7 @@ input[type='range']::-webkit-slider-thumb {
   scroll-margin-bottom: var(--sp-2xl) !important;
 }
 
-/* ====================================================================================================
- * Snackbars / Popups: Display at top of screen (below status bar) with smooth drop-in animation
+/* ============================================================================================= * Snackbars / Popups: Display at top of screen (below status bar) with smooth drop-in animation
  * ==================================================================================================== */
 .m-snackbars,
 html.kb-open .m-snackbars {
@@ -3804,3 +3803,51 @@ html.kb-open .m-snackbars {
 
 
 
+=======
+ * Publish: the progress and the result never sit on the button (2026-11-06). The page scrolls the running checklist
+ * into view with block:'end', which lined its bottom up with the button's top edge; now it stops a section gap short.
+ * ==================================================================================================== */
+.m-fulldialog-body .m-wrap > :is(.pb-progress, .pb-done, .m-note, section, div) { scroll-margin-bottom: var(--section-gap); scroll-margin-top: var(--shell-gap); }
+.m-fulldialog:has(> .m-actionbar) .m-fulldialog-body > .m-wrap:last-child { padding-bottom: var(--section-gap) !important; }
+
+/* ====================================================================================================
+ * Hold to publish, v2: "Going to press". A card rises in the middle; the ESB masthead stripe fills with the hold and
+ * what will go live ticks off row by row. On completion the badge turns into a green check, the title becomes
+ * "Publishing…", and the card drops into the button (the travel rules above).
+ * ==================================================================================================== */
+.hp-v2 { gap: 0; }
+.hp-v2::before { background: rgba(14, 12, 20, .42) !important; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.hp-press {
+  width: min(344px, calc(100vw - 48px)); overflow: hidden; border-radius: var(--r-lg); background: var(--surface-panel); color: var(--text-primary);
+  box-shadow: 0 0 0 .5px rgba(0, 0, 0, .06), 0 28px 64px -20px rgba(0, 0, 0, .6);
+  animation: hp-press-in .34s cubic-bezier(.2, .9, .3, 1.12) both;
+}
+@keyframes hp-press-in { from { opacity: 0; transform: translate3d(0, 28px, 0) scale(.94); } }
+.hp-rule { position: relative; height: 5px; background: var(--fill); }
+.hp-rule i { position: absolute; inset: 0; background: linear-gradient(90deg, #16a34a 0 33.34%, #dc2626 33.34% 66.67%, #f97316 66.67% 100%);
+  clip-path: inset(0 calc((1 - var(--hold, 0)) * 100%) 0 0); }
+.hp-head { display: flex; align-items: center; gap: var(--sp-m); padding: var(--shell-pad) var(--shell-pad) var(--sp-m); }
+.hp-badge { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
+  background: color-mix(in srgb, #dc2626 12%, transparent); color: #dc2626; font: 800 var(--fs-l)/1 var(--font-ui); font-variant-numeric: tabular-nums; }
+.hp-badge.is-go { background: #16a34a; color: #fff; animation: hp-badge-go .42s cubic-bezier(.25, 1.35, .5, 1); }
+@keyframes hp-badge-go { 0% { transform: scale(.5); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.hp-head-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hp-head-t b { font: 700 var(--fs-xl)/1.15 var(--font-head); letter-spacing: -.01em; }
+.hp-head-t small { font: 500 var(--fs-s)/1.3 var(--font-ui); color: var(--text-secondary); }
+.hp-list { list-style: none; margin: 0; padding: 0 var(--shell-pad) var(--sp-m); display: flex; flex-direction: column; }
+.hp-list li { display: flex; align-items: center; gap: var(--sp-m); padding: var(--sp-s) 0; opacity: .42; transition: opacity .22s ease; }
+.hp-list li + li { border-top: .5px solid var(--border-default); }
+.hp-list li.is-done { opacity: 1; }
+.hp-tick { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--border-default); color: transparent; transition: background .2s ease, box-shadow .2s ease, color .2s ease; }
+.hp-tick svg { transform: scale(.4); transition: transform .32s cubic-bezier(.25, 1.5, .5, 1); }
+.hp-list li.is-done .hp-tick { background: #16a34a; box-shadow: none; color: #fff; }
+.hp-list li.is-done .hp-tick svg { transform: scale(1); }
+.hp-it { display: flex; flex-direction: column; min-width: 0; }
+.hp-it b { font: 600 var(--fs-m)/1.3 var(--font-ui); }
+.hp-it small { font: 500 var(--fs-s)/1.3 var(--font-ui); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hp-overlay.hp-v2:is(.is-go, .is-out) .hp-press { animation: hp-pop .34s cubic-bezier(.25, 1.2, .5, 1); }
+.hp-overlay.hp-v2:is(.is-go, .is-out) .hp-rule i { clip-path: inset(0 0 0 0); }
+@media (prefers-reduced-motion: reduce) { .hp-press, .hp-badge, .hp-tick svg { animation: none !important; transition: none !important; } }
+/* the page's own bottom padding is the only air above the button bar (the scroller added a second 24) */
+.m-fulldialog:has(> .m-actionbar) .m-fulldialog-body { padding-bottom: 0 !important; }
