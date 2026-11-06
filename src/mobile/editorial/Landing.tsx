@@ -1,6 +1,7 @@
 // The Editorial landing: start a story (link, text/file, blank), continue the one on the desk, and the three lists the
 // PC desk keeps — the story queue (Draft / Needs check / Approved / Published), the articles live on esbpowerline.com
 // (open one to update it, never a duplicate) and the Wire inbox of followed feeds.
+import { useSnapTail } from '../shell/snap'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { StepTrack } from './Pipeline'
 import { useEditorialStore } from '../../pc/editorial/editorialStore'
@@ -288,10 +289,17 @@ export function Landing({ active }: { active: boolean }) {
     prevTab.current = homeTab
   }
   useEffect(() => { if (!leaving) return; const t = window.setTimeout(() => setLeaving(null), 380); return () => window.clearTimeout(t) }, [leaving])
+  // magnetic lists (shell/snap.ts): each pane settles with a whole row at its top edge, never half of one
+  const storiesRef = useRef<HTMLDivElement>(null), publishedRef = useRef<HTMLDivElement>(null), wireRef = useRef<HTMLDivElement>(null)
+  const PANE_REF = { stories: storiesRef, published: publishedRef, wire: wireRef } as const
+  const SNAP_ROWS = ':scope > .m-wrap, .me-continue, .me-list > .me-listrow, .me-list > .pb-row'
+  useSnapTail(storiesRef, SNAP_ROWS, [homeTab])
+  useSnapTail(publishedRef, SNAP_ROWS, [homeTab])
+  useSnapTail(wireRef, SNAP_ROWS, [homeTab])
   const pane = (t: HomeTab) => {
     const on = homeTab === t, out = leaving?.tab === t
     const motion = leaving ? (on ? ` me-pane-in-${leaving.dir}` : out ? ` me-pane-out-${leaving.dir}` : '') : ''
-    return { className: 'm-scroll me-pane' + motion, style: on || out ? undefined : { display: 'none' }, 'aria-hidden': !on }
+    return { ref: PANE_REF[t as keyof typeof PANE_REF], className: 'm-scroll me-pane' + motion, style: on || out ? undefined : { display: 'none' }, 'aria-hidden': !on }
   }
   return (
     <>

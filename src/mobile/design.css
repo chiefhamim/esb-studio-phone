@@ -3458,14 +3458,13 @@ img.u-avatar { box-shadow: inset 0 0 0 .5px var(--m-hair); }
 .hm-h.has-icon > svg { flex: none; color: var(--brand-red); }
 
 /* Home: the top of the page (lockup, tagline, status chips, Editorial / Banner tiles) is fixed under the date bar, outside
-   the scroller. Only what is under the tiles (Continue, Recent stories) scrolls, and it fades out at the tiles' bottom edge. */
+   the scroller. Only the stories scroll, cut cleanly under the Recent stories heading (no fade: the owner did not want one). */
 .hm-brand { flex: none; position: relative; z-index: 1; padding-top: 20px; padding-bottom: 4px; }
 .hm-brand .hm-hero { padding: 0 !important; }
-.hm-scroll { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px); mask-image: linear-gradient(to bottom, transparent 0, #000 14px); }
 .hm-scroll > .hm { padding-top: 0; }
 /* the Recent stories heading belongs to the fixed top; the list starts just under it */
-.hm-sech.hm-sech-fixed { margin: 24px 0 0 !important; height: 20px; }
-.hm-scroll > .hm { padding-top: 12px !important; }
+.hm-sech.hm-sech-fixed { margin: 24px 0 0 !important; height: 20px; box-sizing: content-box; padding-bottom: 12px; }
+.hm-scroll > .hm { padding-top: 0 !important; }
 .hm-scroll > .hm > .hm-cont-wrap:first-child { margin-top: 0 !important; }
 .hm-sec.hm-sec-list { margin-top: 12px !important; }
 .hm-scroll > .hm > .hm-sec-list:first-child { margin-top: 0 !important; }
@@ -3478,3 +3477,26 @@ img.u-avatar { box-shadow: inset 0 0 0 .5px var(--m-hair); }
 .hm-launch.is-compact .hm-cell-name { grid-area: name !important; align-self: end; margin-top: 0 !important; font-size: 17px !important; line-height: 1.15 !important; }
 .hm-launch.is-compact .hm-cell-note { grid-area: note !important; align-self: start; font-size: 11.5px !important; line-height: 1.3 !important; }
 .hm-launch.is-compact .hm-cell > svg:last-child { display: none !important; }
+/* magnetic list: a swipe always settles with a whole story flush under the Recent stories heading, never half of one */
+.hm-scroll { scroll-snap-type: y mandatory; scroll-padding-top: 0; }
+.hm-scroll > .hm > .hm-cont-wrap, .hm-sec-list .m-list > * { scroll-snap-align: start; scroll-snap-stop: normal; }
+
+/* Home greeting (top left): "Good morning, Name", and under it the day and date led by a small, quiet line glyph of the time of
+   day (sunrise, sun, sunset, moon) in a muted tint: it should be noticed, never looked at */
+.hm-greet { display: flex; align-items: center; min-width: 0; }
+.hm-greet-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.hm-greet-txt strong { font: 700 19px/1.2 var(--font-ui); letter-spacing: -.012em; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hm-greet-txt .hm-today { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; line-height: 1.2; }
+.hm-greet-txt .hm-today > svg { flex: none; color: var(--g-ink); opacity: .9; }
+.hm-today.is-morning { --g-ink: #c98a4a; }
+.hm-today.is-afternoon { --g-ink: #c9a23f; }
+.hm-today.is-evening { --g-ink: #c47a66; }
+.hm-today.is-night { --g-ink: #8487c9; }
+/* Recent stories heading: Clear all (quiet) beside See all */
+.hm-sech-acts { display: inline-flex; align-items: center; gap: 18px; }
+.hm-link.hm-link-quiet { color: var(--text-secondary); font-weight: 600; }
+.hm-link.hm-link-quiet:active { color: #dc2626; }
+/* magnetic lists in Editorial: Stories, Published and News settle with a whole row at the top edge (shell/snap.ts sizes
+   the end so the last stop is a row edge too); the top of each pane is a stop, so a swipe back up returns to the search */
+.me-pane { scroll-snap-type: y mandatory; scroll-padding-top: 0; }
+.me-pane > .m-wrap, .me-pane .me-continue, .me-pane .me-list > .me-listrow, .me-pane .me-list > .pb-row { scroll-snap-align: start; }
