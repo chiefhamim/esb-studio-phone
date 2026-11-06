@@ -17,8 +17,6 @@ export function useSnapTail(ref: RefObject<HTMLElement | null>, itemSelector: st
       return [0, ...[...sc.querySelectorAll<HTMLElement>(itemSelector)].map((el) => el.getBoundingClientRect().top - origin)]
     }
 
-    // Only the content and the window are watched, never the scroller's own box: changing its padding resizes that box
-    // and would loop.
     const fit = () => {
       if (sc.offsetParent === null) return // a hidden pane: its content resizes from 0 when it shows, which runs this again
       sc.style.removeProperty('padding-bottom')
@@ -52,6 +50,9 @@ export function useSnapTail(ref: RefObject<HTMLElement | null>, itemSelector: st
     fit()
     const ro = new ResizeObserver(fit)
     for (const c of sc.children) ro.observe(c)
+    // the scroller's outer box too (a pane that slides in or a bar that changes height): its border box does not change
+    // when fit() sets the padding, so this cannot loop
+    ro.observe(sc, { box: 'border-box' })
     window.addEventListener('resize', fit)
     sc.addEventListener('touchstart', down, { passive: true })
     sc.addEventListener('touchend', up, { passive: true })
