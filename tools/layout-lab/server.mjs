@@ -46,6 +46,20 @@ createServer(async (req, res) => {
     const names = (await readdir(PHONE).catch(() => [])).filter((f) => f.endsWith('.json') && f !== 'index.json').map((f) => f.slice(0, -5))
     res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify(names))
   }
+  if (p === '/compare') return send(res, join(here, 'compare.html'))
+  if (p === '/pairs') {
+    const { readdir } = await import('node:fs/promises')
+    const BASE = join(PHONE, '..')
+    const list = async (d) => (await readdir(join(BASE, d)).catch(() => [])).filter((f) => f.endsWith('.json') && f !== 'index.json').map((f) => f.slice(0, -5))
+    const [b, a] = await Promise.all([list('before'), list('after')])
+    let index = []
+    try { index = JSON.parse(await readFile(join(PHONE, 'index.json'), 'utf8')) } catch { /* none */ }
+    const order = index.map((x) => x.name)
+    const both = a.filter((n) => b.includes(n)).sort((x, y) => ((order.indexOf(x) + 1) || 999) - ((order.indexOf(y) + 1) || 999))
+    res.writeHead(200, { 'content-type': 'application/json' })
+    return res.end(JSON.stringify(both.map((n) => ({ name: n, title: index.find((x) => x.name === n)?.title || n }))))
+  }
+  if (p.startsWith('/before/') || p.startsWith('/after/')) { const base = join(PHONE, '..'); const f = inside(base, p.slice(1)); return f ? send(res, f) : (res.writeHead(403), res.end()) }
   if (p === '/' || p === '/lab') return send(res, join(here, 'lab.html'))
   if (p === '/gallery') return send(res, join(here, 'gallery.html'))
   if (p === '/blueprint.js' || p === '/overrides.json') return send(res, join(here, p.slice(1)))

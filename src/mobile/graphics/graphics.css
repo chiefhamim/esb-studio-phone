@@ -62,7 +62,7 @@ html.kb-open .gx-dock, html.kb-open .gx-tools { display: none; }
 }
 
 /* ---------------------------------------------------------------- sheets with PC panels */
-.gx-help { font-size: 14px; }
+.gx-help { font-size: var(--fs-m); }
 .gx-sheet-count { font: var(--m-t-caption); color: var(--text-secondary); padding-inline: var(--s-4); }
 .gx-photo-actions { flex-wrap: wrap; }
 .gx-photo-actions .m-btn { flex: 1 1 140px; }
@@ -120,7 +120,7 @@ html.kb-open .gx-dock, html.kb-open .gx-tools { display: none; }
 .gx-ex-files, .gx-ex-results { display: flex; flex-direction: column; }
 .gx-ex-file, .gx-ex-result { display: flex; align-items: center; gap: var(--s-4); }
 .gx-ex-file > span, .gx-ex-rtext { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.gx-ex-file b, .gx-ex-rtext b { font: var(--m-t-body-strong); font-size: 14px; overflow-wrap: anywhere; }
+.gx-ex-file b, .gx-ex-rtext b { font: var(--m-t-body-strong); font-size: var(--fs-m); overflow-wrap: anywhere; }
 .gx-ex-file small, .gx-ex-rtext small { font: var(--m-t-caption); color: var(--text-secondary); overflow-wrap: anywhere; }
 .gx-ex-result .m-btn-text { padding-inline: var(--s-4); min-width: var(--m-touch); }
 .gx-ex-state { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--fill); }
@@ -160,7 +160,7 @@ html.kb-open .gx-dock, html.kb-open .gx-tools { display: none; }
 /* PC switches keep their shape (pcHost.css gives every PC button a 40 px min-height); the hit area grows instead */
 .pc-host.pc-touch.gx-panel .tgl { min-height: 0; position: relative; flex: none; }
 .pc-host.pc-touch.gx-panel .tgl::before { content: ''; position: absolute; inset: -14px -10px; }
-.pc-host.pc-touch .slot-choose-btn { height: 48px; min-height: 48px; min-width: 48px; padding-inline: 20px; }
+.pc-host.pc-touch .slot-choose-btn { height: 48px; min-height: 48px; min-width: 48px; padding-inline: var(--sp-xl); }
 
 /* Short windows (phone landscape, split screen): the banner gets the height. The dock becomes a vertical column on
    the right, the "No photo yet" row folds away (Photos in the dock does the same), the top bar drops its second line. */

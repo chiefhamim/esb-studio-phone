@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ESB Studio · Before / After</title>
+<style>
+  :root { --bg: #0f0f12; --panel: #17171c; --line: #2a2a31; --ink: #ececf1; --dim: #9a9aa6; --acc: #6d5efc; font: 13px/1.45 Inter, system-ui, sans-serif; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); }
+  header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 12px 20px; background: rgba(23,23,28,.94); border-bottom: 1px solid var(--line); backdrop-filter: blur(8px); }
+  header h1 { font-size: 15px; margin: 0; }
+  header a { color: #c4bcff; }
+  .grow { flex: 1; }
+  button { font: inherit; color: var(--ink); background: #22222a; border: 1px solid var(--line); border-radius: 8px; height: 30px; padding: 0 11px; cursor: pointer; }
+  button.on { background: var(--acc); border-color: var(--acc); color: #fff; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 18px 20px 4px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .stat h3 { margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+  .stat b { font-size: 22px; }
+  .stat .from { color: #fca5a5; text-decoration: line-through; margin-right: 8px; font-size: 16px; }
+  .stat .to { color: #86efac; }
+  .stat .vals { margin-top: 6px; font: 11.5px/1.5 ui-monospace, monospace; color: var(--dim); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px 20px; border-bottom: 1px solid var(--line); max-width: 1100px; margin: 0 auto; }
+  .row h2 { grid-column: 1 / -1; margin: 0; font-size: 14px; }
+  .row h2 small { color: var(--dim); font-weight: 400; margin-left: 6px; }
+  figure { margin: 0; }
+  figure img { width: 100%; display: block; border-radius: 14px; border: 1px solid var(--line); background: #000; }
+  figcaption { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+  figure.after figcaption { color: #86efac; }
+  .flip .row { grid-template-columns: minmax(0, 520px); justify-content: center; }
+  .flip figure.before { display: none; }
+  .flip figure.after img { cursor: pointer; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ESB Studio · Before / After the scale</h1>
+  <span id="count" style="color:var(--dim)"></span>
+  <span class="grow"></span>
+  <button id="bRed">Redlines</button>
+  <button id="bFlip" title="One screen at a time: press and hold a screenshot to see the before">Flip mode</button>
+  <a href="/gallery">Blueprint library</a> · <a href="/">Layout Lab</a>
+</header>
+<div class="stats" id="stats"></div>
+<div id="rows"></div>
+<script>
+const $ = (s) => document.querySelector(s)
+let red = false, pairs = []
+const kinds = {
+  'Padding values': (it) => Object.values(it.pad || {}).filter((v) => v >= 2),
+  'Gap values': (it) => (it.spacing || []).filter((v) => v >= 1 && v <= 60),
+  'Corner radii': (it) => (it.radius >= 2 && it.radius < 999 ? [it.radius] : []),
+  'Text sizes': (it) => (it.font ? [parseFloat(it.font)] : []),
+}
+async function main() {
+  pairs = await (await fetch('/pairs')).json()
+  $('#count').textContent = pairs.length + ' screens compared'
+  const sets = { before: {}, after: {} }
+  for (const k in kinds) { sets.before[k] = new Map(); sets.after[k] = new Map() }
+  await Promise.all(pairs.flatMap((p) => ['before', 'after'].map(async (side) => {
+    const d = await (await fetch(`/${side}/${p.name}.json`)).json().catch(() => ({ items: [] }))
+    for (const it of d.items) for (const [k, fn] of Object.entries(kinds)) for (const v of fn(it)) sets[side][k].set(v, (sets[side][k].get(v) || 0) + 1)
+  })))
+  $('#stats').innerHTML = Object.keys(kinds).map((k) => {
+    const a = [...sets.after[k]].filter(([, n]) => n >= 3).sort((x, y) => x[0] - y[0]).map(([v]) => v)
+    return `<div class="stat"><h3>${k}</h3><b><span class="from">${sets.before[k].size}</span><span class="to">${sets.after[k].size}</span></b> different
+      <div class="vals">now: ${a.join(' · ')}</div></div>`
+  }).join('')
+  rows()
+}
+function rows() {
+  const sfx = red ? '' : '-clean'
+  $('#rows').innerHTML = pairs.map((p) => `<section class="row"><h2>${p.title}<small>${p.name}</small></h2>
+    <figure class="before"><figcaption>Before</figcaption><img loading="lazy" src="/before/${p.name}${sfx}.png"></figure>
+    <figure class="after"><figcaption>After</figcaption><img loading="lazy" src="/after/${p.name}${sfx}.png" data-b="/before/${p.name}${sfx}.png" data-a="/after/${p.name}${sfx}.png"></figure></section>`).join('')
+  document.querySelectorAll('figure.after img').forEach((img) => {
+    const show = (b) => { if (document.body.classList.contains('flip')) { img.src = b ? img.dataset.b : img.dataset.a; img.previousElementSibling; img.parentElement.querySelector('figcaption').textContent = b ? 'Before' : 'After' } }
+    img.addEventListener('pointerdown', () => show(true)); img.addEventListener('pointerup', () => show(false)); img.addEventListener('pointerleave', () => show(false))
+  })
+}
+$('#bRed').onclick = () => { red = !red; $('#bRed').classList.toggle('on', red); rows() }
+$('#bFlip').onclick = () => { document.body.classList.toggle('flip'); $('#bFlip').classList.toggle('on') }
+main()
+</script>
+</body>
+</html>
