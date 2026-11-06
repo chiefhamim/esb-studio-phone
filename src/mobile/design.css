@@ -3478,7 +3478,7 @@ img.u-avatar { box-shadow: inset 0 0 0 .5px var(--m-hair); }
 .hm-launch.is-compact .hm-cell-note { grid-area: note !important; align-self: start; font-size: 11.5px !important; line-height: 1.3 !important; }
 .hm-launch.is-compact .hm-cell > svg:last-child { display: none !important; }
 /* magnetic list: a swipe always settles with a whole story flush under the Recent stories heading, never half of one */
-.hm-scroll { scroll-snap-type: y mandatory; scroll-padding-top: 0; }
+.hm-scroll { scroll-snap-type: y proximity; scroll-padding-top: 0; }
 .hm-scroll > .hm > .hm-cont-wrap, .hm-sec-list .m-list > * { scroll-snap-align: start; scroll-snap-stop: normal; }
 
 /* Home greeting (top left): "Good morning, Name", and under it the day and date led by a small, quiet line glyph of the time of
@@ -3498,7 +3498,7 @@ img.u-avatar { box-shadow: inset 0 0 0 .5px var(--m-hair); }
 .hm-link.hm-link-quiet:active { color: #dc2626; }
 /* magnetic lists in Editorial: Stories, Published and News settle with a whole row at the top edge (shell/snap.ts sizes
    the end so the last stop is a row edge too); the top of each pane is a stop, so a swipe back up returns to the search */
-.me-pane { scroll-snap-type: y mandatory; scroll-padding-top: 0; }
+.me-pane { scroll-snap-type: y proximity; scroll-padding-top: 0; }
 .me-pane > .m-wrap, .me-pane .me-continue, .me-pane .me-list > .me-listrow, .me-pane .me-list > .pb-row { scroll-snap-align: start; }
 /* no stories: nothing to scroll, so the empty state stays still (no drag, no bounce) */
 .hm-scroll.is-empty { overflow: hidden !important; overscroll-behavior: none; touch-action: none; }

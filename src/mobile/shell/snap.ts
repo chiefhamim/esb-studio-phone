@@ -1,4 +1,4 @@
-// Magnetic lists: a scroller with `scroll-snap-type: y mandatory` (design.css, "magnetic lists") settles with a whole row
+// Magnetic lists: a scroller with `scroll-snap-type: y proximity` (mandatory clamped fast flings to a row or two) (design.css, "magnetic lists") settles with a whole row
 // at its top edge. Its far end is rarely a row edge, so the last stop could still show a sliver of the row above.
 // useSnapTail stretches the scroller's bottom padding just enough that the end of the scroll IS a row edge.
 // It sets padding on the scroller itself (no extra DOM node inside React's children).
