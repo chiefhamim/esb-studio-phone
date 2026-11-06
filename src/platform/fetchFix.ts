@@ -9,7 +9,19 @@
 //    PC as well as the phone). thinkingLevel "low" answered the same request in ~1 s. A request that sets no thinking
 //    config gets "low", which suits translation and structured jobs; one that sets its own is left alone.
 //
+// 3. AI calls bypass the native stack (traced on the S25 Ultra, 2026-11-06). The same 11 KB Gemini translation request
+//    that the WebView's own fetch answered in 13.7 s hung in CapacitorHttp for 240 s, then failed with "unexpected end
+//    of stream". The desk's 150 s timeout then fired, the Flash fallback hit the same wall (or a 503), and the story
+//    dropped to the free machine draft. That is the "AI cannot translate" report. The native stack also cannot stream,
+//    which Claude replies need. The AI companies all allow browser calls (CORS), so their requests go through the
+//    WebView's fetch, which Capacitor keeps as window.CapacitorWebFetch. Everything else stays native (sites without
+//    CORS, the link fetcher).
+//
 // The desktop modules (src/pc) stay untouched: this wraps window.fetch once, at boot.
+
+const AI_HOSTS = /^https:\/\/(generativelanguage\.googleapis\.com|api\.anthropic\.com|api\.openai\.com|openrouter\.ai)\//
+/** True for an AI-company request: it goes through the WebView's fetch, not CapacitorHttp. */
+export const isAiRequest = (url: string) => AI_HOSTS.test(url)
 
 const GEMINI_GEN = /^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/models\/(gemini-[3-9][^:/]*):generateContent/
 
@@ -36,10 +48,13 @@ let installed = false
 export function installFetchFix() {
   if (installed || typeof window === 'undefined') return
   installed = true
-  const base = window.fetch.bind(window)
+  const native = window.fetch.bind(window)
+  const webFetch = (window as unknown as { CapacitorWebFetch?: typeof fetch }).CapacitorWebFetch
+  const web = typeof webFetch === 'function' ? webFetch.bind(window) : null
   window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
     const req = withThinkingLevel(url, init)
+    const base = web && isAiRequest(url) ? web : native
     const signal = req?.signal ?? (input instanceof Request ? input.signal : undefined)
     if (!signal) return base(input, req)
     if (signal.aborted) return Promise.reject(abortError(signal))

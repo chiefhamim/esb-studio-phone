@@ -103,7 +103,7 @@ async function sessionFromTokens(t: TokenResponse, fallbackEmail: string, f: Fet
   type ProfileRow = { role?: string | null; status?: string | null; full_name?: string | null }
   let profile: ProfileRow | null = null
   try {
-    const res = await f(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=role,status,full_name`, {
+    const res = await f(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=*`, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${t.access_token}`, Accept: 'application/json' },
     })
     if (res.ok) profile = ((await res.json()) as ProfileRow[])[0] ?? null
@@ -212,5 +212,5 @@ export async function signOut(f: Fetch = fetch): Promise<void> {
     try { window.dispatchEvent(new CustomEvent('esb-session', { detail: null })) } catch { /* no window */ }
   } else await deleteSecret('site-session')
   if (!s) return
-  try { await f(`${SUPABASE_URL}/auth/v1/logout`, { method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${s.token}` } }) } catch { /* already signed out here */ }
+  try { await f(`${SUPABASE_URL}/auth/v1/logout?scope=local`, { method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${s.token}` } }) } catch { /* already signed out here */ }
 }
