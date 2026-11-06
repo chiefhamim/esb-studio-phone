@@ -3067,6 +3067,10 @@ html[data-vt-theme] *, html[data-vt-theme] *::before, html[data-vt-theme] *::aft
   box-shadow: 0 20px 50px -14px rgba(0, 0, 0, .55), 0 0 0 10px color-mix(in srgb, #dc2626 12%, transparent); animation: hp-beat 1s ease-in-out infinite; }
 @keyframes hp-beat { 0%, 100% { transform: scale(1); } 12% { transform: scale(1.05); } 30% { transform: scale(.99); } }
 .hp-dial svg { position: absolute; inset: 10px; }
+/* once the hold completes, the ring becomes a spinning arc while publishing starts: a transform animation, so it keeps
+   turning on the compositor even while the page is busy with the session check, render and upload */
+.hp-dial.is-go svg { animation: m-spin .9s linear infinite; will-change: transform; }
+.hp-dial.is-go .hp-prog { transition: stroke-dashoffset .25s ease-out; }
 .hp-track { fill: none; stroke: color-mix(in srgb, #dc2626 14%, transparent); stroke-width: 7; }
 .hp-prog { fill: none; stroke: #dc2626; stroke-width: 7; stroke-linecap: round; }
 .hp-num { position: relative; display: grid; place-items: center; font: 800 64px/1 var(--font-ui); color: #dc2626; font-variant-numeric: tabular-nums; animation: hp-tick .5s cubic-bezier(.2, .9, .3, 1.3); }

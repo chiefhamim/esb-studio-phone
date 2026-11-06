@@ -34,8 +34,10 @@ export function HoldToPublish({ label, sub, disabled, busy, busyLabel, onFire }:
         fired.current = true
         raf.current = 0
         navigator.vibrate?.([20, 50, 30])
-        window.setTimeout(() => setP(0), 420)
-        onFire()
+        window.setTimeout(() => setP(0), 900)
+        // Paint the spinning "Publishing" dial first, then start the work: the session check, render and upload that
+        // follow keep the page busy, and a frame not painted yet left a frozen full ring on screen.
+        requestAnimationFrame(() => window.setTimeout(onFire, 0))
         return
       }
       raf.current = requestAnimationFrame(tick)
@@ -57,10 +59,10 @@ export function HoldToPublish({ label, sub, disabled, busy, busyLabel, onFire }:
       </button>
       {holding && createPortal(
         <div className="hp-overlay" aria-live="assertive">
-          <div className="hp-dial">
+          <div className={'hp-dial' + (p >= 1 ? ' is-go' : '')}>
             <svg viewBox="0 0 120 120" width="148" height="148" aria-hidden>
               <circle cx="60" cy="60" r={R} className="hp-track" />
-              <circle cx="60" cy="60" r={R} className="hp-prog" strokeDasharray={C} strokeDashoffset={C * (1 - p)} transform="rotate(-90 60 60)" />
+              <circle cx="60" cy="60" r={R} className="hp-prog" strokeDasharray={C} strokeDashoffset={p >= 1 ? C * 0.72 : C * (1 - p)} transform="rotate(-90 60 60)" />
             </svg>
             <span key={p >= 1 ? 'go' : sec} className="hp-num">{p >= 1 ? <Icon name="check" size={44} /> : sec}</span>
           </div>
