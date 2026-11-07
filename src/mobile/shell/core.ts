@@ -78,7 +78,7 @@ export const useUi = create<UiState>((set, get) => ({
 export function snack(text: string, opts: Omit<Snack, 'id' | 'text'> = {}): void {
   const s: Snack = { id: ++snackSeq, text, ...opts }
   useUi.setState((st) => ({ snacks: [...st.snacks.slice(-2), s] }))
-  setTimeout(() => dismissSnack(s.id), s.ms ?? (s.action ? 6000 : 3500))
+  setTimeout(() => dismissSnack(s.id), s.ms ?? (s.action ? 5000 : 3000))
 }
 export function dismissSnack(id: number) { useUi.setState((st) => ({ snacks: st.snacks.filter((x) => x.id !== id) })) }
 

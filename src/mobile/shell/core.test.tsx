@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { backDepth, handleBack, sizeClassOf, unsavedReason, useBackLayer, useUi, useUnsavedGuard } from './core'
+import { backDepth, handleBack, sizeClassOf, unsavedReason, useBackLayer, useUi, useUnsavedGuard, snack, dismissSnack } from './core'
 
 ;(globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -47,5 +47,41 @@ describe('sheets', () => {
     expect(useUi.getState().sheet).toBe('layers')
     useUi.getState().closeSheet()
     expect(useUi.getState().sheet).toBeNull()
+  })
+})
+
+describe('snacks', () => {
+  it('auto-closes in 3 seconds by default', () => {
+    vi.useFakeTimers()
+    useUi.setState({ snacks: [] })
+    snack('Saved to device')
+    expect(useUi.getState().snacks.length).toBe(1)
+    expect(useUi.getState().snacks[0].text).toBe('Saved to device')
+
+    // Advance 2900ms: still there
+    act(() => { vi.advanceTimersByTime(2900) })
+    expect(useUi.getState().snacks.length).toBe(1)
+
+    // Advance past 3000ms: auto-closed
+    act(() => { vi.advanceTimersByTime(200) })
+    expect(useUi.getState().snacks.length).toBe(0)
+    vi.useRealTimers()
+  })
+
+  it('can be dismissed early before auto-close time', () => {
+    vi.useFakeTimers()
+    useUi.setState({ snacks: [] })
+    snack('Quick dismiss')
+    expect(useUi.getState().snacks.length).toBe(1)
+    const id = useUi.getState().snacks[0].id
+
+    // Dismiss early
+    act(() => { dismissSnack(id) })
+    expect(useUi.getState().snacks.length).toBe(0)
+
+    // Advancing timers does not crash or re-dismiss
+    act(() => { vi.advanceTimersByTime(3000) })
+    expect(useUi.getState().snacks.length).toBe(0)
+    vi.useRealTimers()
   })
 })

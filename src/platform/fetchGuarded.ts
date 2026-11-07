@@ -4,10 +4,10 @@
 // so a public page that redirects to a private address cannot be refused AFTER the fact; only the address the editor pasted is
 // checked. The reply goes to the editor's own screen and their chosen AI provider, never to a third party.
 // Link fetching has two modes (Settings > Link fetching):
-//   'site'   (default, owner rule): pages are read by esbpowerline.com's staff route POST /api/staff/fetch-article
-//            (branch phone-bearer-api). Until that route is live the answer is an honest "not connected" error.
-//   'device' the phone's native HTTP stack (CapacitorHttp) fetches the public page itself, the way the PC's own
+//   'device' (default): the phone's native HTTP stack (CapacitorHttp) fetches the public page itself, the way the PC's own
 //            main process does, after the same URL checks as the PC's net-guard.
+//   'site'   pages are read by esbpowerline.com's staff route POST /api/staff/fetch-article
+//            (branch phone-bearer-api). Until that route is live the answer is an honest "not connected" error.
 // esbpowerline.com's own public pages and feeds are always read directly (that is the site, not a third-party link).
 import type { EsbFetchImageDataResult, EsbFetchUrlResult } from '../pc/esb'
 import { ALLOWED_HTML_TYPES, ALLOWED_IMAGE_TYPES, MAX_HTML_BYTES, MAX_IMAGE_BYTES, checkPublicUrl, typeAllowed } from './netGuard'
@@ -16,7 +16,7 @@ import { pinStoryBody } from './storyData'
 
 export type LinkFetchMode = 'site' | 'device'
 const MODE_KEY = 'esb-phone/link-fetch-mode'
-export function getLinkFetchMode(): LinkFetchMode { try { return localStorage.getItem(MODE_KEY) === 'device' ? 'device' : 'site' } catch { return 'site' } }
+export function getLinkFetchMode(): LinkFetchMode { try { return localStorage.getItem(MODE_KEY) === 'site' ? 'site' : 'device' } catch { return 'device' } }
 export function setLinkFetchMode(m: LinkFetchMode) { try { localStorage.setItem(MODE_KEY, m) } catch { /* ignore */ } }
 
 /** The page's own address after redirects, or '' when the response does not tell it (CapacitorHttp's interceptor). */
@@ -28,6 +28,71 @@ export function realUrl(u: string | null | undefined): string {
 const SITE_HOSTS = new Set(['esbpowerline.com', 'www.esbpowerline.com'])
 
 type Fetch = typeof fetch
+
+/** Unwrap Bing News click-through URLs and offline-decodable Google News CBMi... base64url tokens. */
+export function unwrapFeedRedirectUrl(rawUrl: string): string {
+  try {
+    const u = new URL(String(rawUrl).trim())
+    if (/(^|\.)bing\.com$/i.test(u.hostname) && /apiclick/i.test(u.pathname)) {
+      const real = u.searchParams.get('url')
+      if (real && /^https?:\/\//i.test(real)) return real
+    }
+    if (/(^|\.)news\.google\.com$/i.test(u.hostname)) {
+      const m = u.pathname.match(/\/(?:rss\/)?articles\/([A-Za-z0-9_-]+)/)
+      if (m) {
+        const b64 = m[1].replace(/-/g, '+').replace(/_/g, '/')
+        const pad = b64 + '='.repeat((4 - (b64.length % 4)) % 4)
+        const bin = atob(pad)
+        const bytes = new Uint8Array(bin.length)
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+        const decoded = new TextDecoder('latin1').decode(bytes)
+        const urlMatch = decoded.match(/https?:\/\/[^\x00-\x1f\x7f"'\s<>\\]+/)
+        if (urlMatch && !/news\.google\.com/i.test(urlMatch[0])) return urlMatch[0]
+      }
+    }
+  } catch { /* ignore */ }
+  return rawUrl
+}
+
+/** Resolve modern Google News AU_yqL... article tokens via Google's Fbv4je batchexecute endpoint. */
+export async function resolveGoogleNewsUrl(rawUrl: string, f: Fetch = fetch): Promise<string> {
+  const syncUnwrapped = unwrapFeedRedirectUrl(rawUrl)
+  if (syncUnwrapped !== rawUrl) return syncUnwrapped
+  let token = ''
+  try {
+    const u = new URL(String(rawUrl).trim())
+    if (!/(^|\.)news\.google\.com$/i.test(u.hostname)) return rawUrl
+    const m = u.pathname.match(/\/(?:rss\/)?articles\/([A-Za-z0-9_-]+)/)
+    if (!m) return rawUrl
+    token = m[1]
+  } catch {
+    return rawUrl
+  }
+  for (const prefix of ['https://news.google.com/rss/articles/', 'https://news.google.com/articles/']) {
+    try {
+      const res = await f(prefix + token, { headers: { Accept: 'text/html,application/xhtml+xml' } })
+      const html = await res.text()
+      const tsMatch = html.match(/data-n-a-ts=["'](\d+)["']/)
+      const sgMatch = html.match(/data-n-a-sg=["']([^"']+)["']/)
+      if (!tsMatch || !sgMatch) continue
+      const inner = `["garturlreq",[["en-US","US",["FINANCE_TOP_INDICES","WEB_TEST_1_0_0"],null,null,1,1,"US:en",null,180,null,null,null,null,null,0,5],"en-US","US",1,[2,4,8],1,1,null,0,0,null,0],"${token}",${tsMatch[1]},"${sgMatch[1]}"]`
+      const rpcPayload = JSON.stringify([[['Fbv4je', inner, null, 'generic']]])
+      const body = `f.req=${encodeURIComponent(rpcPayload)}&`
+      const postRes = await f('https://news.google.com/_/DotsSplashUi/data/batchexecute?rpcids=Fbv4je', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body,
+      })
+      const postTxt = await postRes.text()
+      const unescaped = postTxt.replace(/\\"/g, '"').replace(/\\\//g, '/')
+      const mUrls = [...unescaped.matchAll(/https?:\/\/[^\s"'<>\\,\]]+/g)]
+        .map((x) => x[0])
+        .filter((u) => !/google\.com|gstatic\.com|googleapis\.com/i.test(u))
+      if (mUrls[0]) return mUrls[0]
+    } catch { /* try next prefix */ }
+  }
+  return rawUrl
+}
 
 async function readCapped(res: Response, max: number): Promise<Uint8Array | null> {
   const len = Number(res.headers.get('content-length') ?? '0')
@@ -47,12 +112,32 @@ function decodeHtml(buf: Uint8Array, contentType: string | null): string {
 }
 
 export async function directFetchUrl(raw: string, opts: { timeoutMs?: number; allowedTypes?: string[] } = {}, f: Fetch = fetch): Promise<EsbFetchUrlResult> {
-  const g = checkPublicUrl(raw)
+  let targetRaw = unwrapFeedRedirectUrl(raw)
+  try {
+    const u0 = new URL(targetRaw)
+    if (/(^|\.)news\.google\.com$/i.test(u0.hostname)) {
+      const resolved = await resolveGoogleNewsUrl(targetRaw, f)
+      if (resolved && resolved !== targetRaw) targetRaw = resolved
+    }
+  } catch { /* ignore */ }
+  const g = checkPublicUrl(targetRaw)
   if (!g.ok) return { ok: false, code: g.code, error: g.error }
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 20000)
   try {
-    const res = await f(g.url.toString(), { signal: ctrl.signal, redirect: 'follow', headers: { Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' } })
+    let res: Response
+    try {
+      res = await f(g.url.toString(), { signal: ctrl.signal, redirect: 'follow', headers: { Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' } })
+    } catch (firstErr) {
+      // Bare-domain fallback when www.<domain> fails TLS hostname verification (e.g. www.sangbad.net.bd)
+      if (/^www\./i.test(g.url.hostname) && (firstErr as Error)?.name !== 'AbortError') {
+        const bare = new URL(g.url.toString())
+        bare.hostname = bare.hostname.replace(/^www\./i, '')
+        res = await f(bare.toString(), { signal: ctrl.signal, redirect: 'follow', headers: { Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' } })
+      } else {
+        throw firstErr
+      }
+    }
     if (!res.ok) return { ok: false, code: 'http_error', error: `HTTP ${res.status}`, url: realUrl(res.url) || g.url.toString() }
     // a redirect may have landed somewhere local: check the final address too
     // (CapacitorHttp reports its own https://localhost/_capacitor_http_interceptor_ address here: that is the app, not

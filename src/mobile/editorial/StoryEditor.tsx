@@ -347,10 +347,12 @@ export function SitePreviewBox({ device, theme, hero, base }: { device: SiteDevi
 }
 
 function PreviewTab() {
+  const appTheme = useStore((s) => s.theme)
   const [what, setWhat] = useState<'site' | 'banners'>('site')
   const [which, setWhich] = useState<'web' | 'fb'>('web')
   const [device, setDevice] = useState<SiteDevice>('mobile')
-  const [theme, setTheme] = useState<SiteTheme>('white')
+  const [theme, setTheme] = useState<SiteTheme>(() => (appTheme === 'dark' ? 'dark' : 'white'))
+  useEffect(() => { setTheme(appTheme === 'dark' ? 'dark' : 'white') }, [appTheme])
   const [hero, setHero] = useHeroMode()
   const base = useBase()
   const photo = useLeadPhoto()
@@ -406,6 +408,7 @@ export function ReadyPill({ compact }: { compact?: boolean } = {}) {
 function Side() {
   const { ready, t } = useReadiness()
   const base = useBase()
+  const appTheme = useStore((s) => s.theme)
   return (
     <aside className="me-side" aria-label="Before publication">
       <section className="me-card">
@@ -416,7 +419,7 @@ function Side() {
       </section>
       <section className="me-card">
         <b>On a phone</b>
-        <SitePreviewBox device="mobile" theme="white" hero="banner" base={base} />
+        <SitePreviewBox device="mobile" theme={appTheme === 'dark' ? 'dark' : 'white'} hero="banner" base={base} />
       </section>
     </aside>
   )

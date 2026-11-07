@@ -14,6 +14,8 @@ import type { ReadyFix } from '../../pc/editorial/readiness'
 import { useJobLog } from '../../pc/editorial/jobLog'
 import { useStoryQueue } from '../../pc/editorial/storyQueue'
 import { SITE_BASE_URL } from '../../pc/editorial/siteApi'
+import { useStore } from '../../pc/store'
+import { useWatch } from '../watch/watchStore'
 import { siteFeatureState } from '../../platform/esbShim'
 import { platform } from '../../platform/platform'
 import { PcHost } from '../PcHost'
@@ -64,16 +66,18 @@ function Checklist({ compact }: { compact?: boolean }) {
         <span>{t.done} of {ready.total} checks done{t.ignored.length ? ` · ${t.ignored.length} ignored` : ''}</span>
       </p>
       {!compact && <p className="me-hint">Worked out from the draft itself. Required: headline ≤104, deck ≤200, at least 40 words, no Bengali left, the site reachable, signed in. Worth a look: figures vs the source, SEO, photo with alt text, three or more tags.</p>}
-      <ul className="me-checks">
-        {todo.map((c) => (
-          <li key={c.id} className={'is-' + c.status}>
-            <i className="me-checks-dot" aria-hidden />
-            <div className="me-checks-t"><b>{c.label}{c.group === 'Required' && <em>Required</em>}</b><span>{detailOf(c)}</span></div>
-            {c.fix && <Button kind="text" onClick={() => fixReady(c.fix!)}>{FIX_LABEL[c.fix]}</Button>}
-            <IconBtn icon="eyeOff" label={`Ignore ${c.label} for this story`} onClick={() => ignore(storyId, [c.id])} />
-          </li>
-        ))}
-      </ul>
+      {todo.length > 0 && (
+        <ul className="me-checks">
+          {todo.map((c) => (
+            <li key={c.id} className={'is-' + c.status}>
+              <i className="me-checks-dot" aria-hidden />
+              <div className="me-checks-t"><b>{c.label}{c.group === 'Required' && <em>Required</em>}</b><span>{detailOf(c)}</span></div>
+              {c.fix && <Button kind="text" onClick={() => fixReady(c.fix!)}>{FIX_LABEL[c.fix]}</Button>}
+              <IconBtn icon="eyeOff" label={`Ignore ${c.label} for this story`} onClick={() => ignore(storyId, [c.id])} />
+            </li>
+          ))}
+        </ul>
+      )}
       {t.ignored.length > 0 && (
         <div className="me-card">
           <div className="me-card-row"><b className="me-grow">Ignored ({t.ignored.length})</b><Button kind="text" onClick={() => restore(storyId)}>Restore all</Button></div>
@@ -152,13 +156,19 @@ export function PublishReview() {
     void runPublish({ status: 'PUBLISHED', heroMode: hero, fbOn: false, fbLink })
   })
   const close = () => { if (P.busy) { snack('Publishing is still running — it continues if you close this'); } slideTo(-1, () => useUi.getState().closeSheet('ed-publish'), 'flow') }
-  // after a successful publish: back to Home, and the story just published leaves the desk (it lives on the site now)
+  // after a successful publish/update: clean the published news item from News, clear the story & cache, and go back to Home
   const doneHome = () => {
+    const ed = useEditorialStore.getState()
+    const srcUrl = ed.source?.url || useDesk.getState().url
+    const srcTitle = ed.source?.title
+    useWatch.getState().cleanPublishedStory(srcUrl, srcTitle)
     const id = useStoryQueue.getState().activeId
     useUi.getState().closeSheet('ed-publish')
     usePublish.setState({ result: null, jobId: null })
     if (id) useStoryQueue.getState().remove(id)
-    useDesk.setState({ view: 'home', homeTab: 'stories' })
+    else ed.clear()
+    useStore.getState().newBanner(true)
+    useDesk.setState({ view: 'home', homeTab: 'stories', url: '', raw: '', doc: null, notice: null, undo: null, seoFixNote: null, error: null, writing: false })
     useNav.getState().go('home')
     snack('Published · the story is cleared from the desk')
   }
@@ -171,7 +181,7 @@ export function PublishReview() {
       primary={<Button kind="text" disabled={blocked} onClick={() => void runPublish({ status: 'DRAFT', heroMode: hero, fbOn: false, fbLink })}>{linked ? 'Save as draft' : 'Save draft'}</Button>}
       footer={
         P.result?.ok && P.result.status === 'PUBLISHED' && !P.busy
-          ? <Button wide kind="filled" icon="home" onClick={doneHome}>Done · back to Home</Button>
+          ? <Button wide kind="filled" icon="home" onClick={doneHome}>Home</Button>
           : <HoldToPublish label={verb} sub={willFb ? 'Website and Facebook' : 'esbpowerline.com'} disabled={blocked} busy={P.busy} busyLabel={linked ? 'Updating' : 'Publishing'}
               onFire={() => void runPublish({ status: 'PUBLISHED', heroMode: hero, fbOn: fbOn && !!fb, fbLink })} />
       }>

@@ -23,9 +23,9 @@
   --m-hair: rgba(0, 0, 0, 0.07);
 }
 :root[data-theme='dark'] {
-  /* the PC's dark selection: a light chip with near-black ink (grey on grey was not distinguishable) */
-  --seg-thumb: #e6e6ec;
-  --seg-ink: #111114;
+  /* dark elevated thumb with crisp light ink — no bright white slab in dark mode */
+  --seg-thumb: #2b2b36;
+  --seg-ink: #f4f4f6;
   --m-hair: rgba(255, 255, 255, 0.07);
 }
 
@@ -3628,3 +3628,179 @@ img.u-avatar { box-shadow: inset 0 0 0 .5px var(--m-hair); }
   .hm-launch > .hm-cell.hm-cell::before, .hm-launch .hm-cell .hm-cell-ico.hm-cell-ico, .hm-launch .hm-cell .hm-cell-ico::before,
   .hm-launch .hm-cell > svg:last-child { animation: none !important; }
 }
+
+/* ====================================================================================================
+ * Dark-Theme Surface Consistency, Native Switch Pill Geometry & Publishing Layout (2026-11-07)
+ * ==================================================================================================== */
+:root[data-theme='dark'] {
+  --seg-thumb: #2b2b36 !important;
+  --seg-ink: #f4f4f6 !important;
+}
+:root[data-theme='dark'] .m-seg:not(.m-seg-compact)::before,
+:root[data-theme='dark'] .seg-ctl::before,
+:root[data-theme='dark'] .gx-dockhost .dock-tabs::after {
+  background: var(--seg-thumb) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 1px 3px rgba(0, 0, 0, 0.45) !important;
+}
+:root[data-theme='dark'] .m-chip.is-on {
+  background: color-mix(in srgb, var(--accent) 24%, #252530) !important;
+  color: #f4f4f6 !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent) !important;
+}
+
+/* 1. Preserve native spring switch physics & colors while restoring true pill track (999px) and circular knob (50%) */
+.m-switch,
+.me-switchrow input[type='checkbox'],
+.me-switch input[type='checkbox'],
+.gx-switch,
+.tgl,
+.tgl.sm {
+  border-radius: 999px !important;
+}
+.m-switch > span,
+.me-switchrow input[type='checkbox']::before,
+.me-switch input[type='checkbox']::before,
+.gx-switch::before,
+.tgl .tgl-thumb {
+  border-radius: 50% !important;
+}
+:root[data-theme='dark'] .m-switch.is-on > span,
+:root[data-theme='dark'] .tgl.on .tgl-thumb {
+  background: #ffffff !important;
+}
+
+/* 2. Segmented controls (.m-seg:not(.m-seg-compact) and .seg-ctl) — concentric 12px outer / 9px inner radii */
+:root .m-seg:not(.m-seg-compact) {
+  box-sizing: border-box !important;
+  padding: 3px !important;
+  gap: 0 !important;
+  border-radius: 12px !important;
+  align-items: stretch !important;
+}
+:root .m-seg:not(.m-seg-compact)::before {
+  top: 3px !important;
+  bottom: 3px !important;
+  left: 3px !important;
+  height: auto !important;
+  width: calc((100% - 6px) / var(--n, 2)) !important;
+  border-radius: 9px !important;
+  transform: translate3d(calc(var(--i, 0) * 100%), 0, 0) !important;
+}
+:root .m-seg:not(.m-seg-compact) > .m-seg-item {
+  margin: 0 !important;
+  border-radius: 9px !important;
+}
+.seg-ctl {
+  box-sizing: border-box !important;
+  padding: 3px !important;
+  gap: 0 !important;
+  border-radius: 12px !important;
+  align-items: stretch !important;
+}
+.seg-ctl::before {
+  top: 3px !important;
+  bottom: 3px !important;
+  left: 3px !important;
+  height: auto !important;
+  width: calc((100% - 6px) / var(--seg-count, 2)) !important;
+  border-radius: 9px !important;
+  transform: translate3d(calc(var(--seg-idx, 0) * 100%), 0, 0) !important;
+}
+.seg-ctl > button {
+  margin: 0 !important;
+  border-radius: 9px !important;
+}
+
+/* 3. Range slider thumb knob — exact 22x22 circle centred on the 6px track */
+input[type='range']::-webkit-slider-thumb {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 50% !important;
+  aspect-ratio: 1 / 1 !important;
+  margin-top: -8px !important;
+}
+
+/* 4. Restore live publishing animations & result card proportions inside PublishReview (.m-fulldialog:has(.me-track5)) */
+.m-fulldialog:has(.me-track5) .jp.is-running .jp-badge { animation-name: jp-breathe !important; }
+.m-fulldialog:has(.me-track5) .jp-bar > i { animation-name: jp-run !important; }
+.m-fulldialog:has(.me-track5) .jp-ring { animation-name: jp-pulse !important; }
+.pb-done { padding: 18px !important; }
+.pb-done-head b { font: 700 19px/1.2 var(--font-ui) !important; }
+.m-fulldialog:has(.me-track5) > .m-actionbar > .m-btn-filled {
+  min-height: 58px !important;
+  border-radius: var(--r-lg) !important;
+  font: 700 var(--fs-l)/1.25 var(--font-ui) !important;
+}
+
+/* 5. Restore padding gap between the Checklist and the bottom publishing container / next card */
+.me-readysum:not(:has(+ .me-checks)) {
+  margin: 0 !important;
+  border-radius: var(--r-lg) !important;
+  clip-path: none !important;
+}
+.me-checks:empty {
+  display: none !important;
+}
+.m-fulldialog:has(.me-track5) .m-wrap.me-stack {
+  gap: var(--sp-l, 16px) !important;
+}
+.m-fulldialog:has(> .m-actionbar) .m-fulldialog-body {
+  padding-bottom: var(--sp-2xl) !important;
+  scroll-padding-bottom: var(--sp-2xl) !important;
+}
+.m-fulldialog:has(> .m-actionbar) .m-fulldialog-body > .m-wrap:last-child {
+  padding-bottom: var(--sp-2xl) !important;
+}
+.me-story:has(> .me-stepbar) .me-scroll {
+  padding-bottom: var(--sp-xl) !important;
+  scroll-padding-bottom: var(--sp-2xl) !important;
+}
+.me-story:has(> .me-stepbar) .me-scroll > .m-wrap {
+  padding-bottom: var(--sp-2xl) !important;
+}
+.jp, .pb-done, .m-note[role='status'], .seo-checks {
+  scroll-margin-bottom: var(--sp-2xl) !important;
+}
+
+/* ====================================================================================================
+ * Snackbars / Popups: Display at top of screen (below status bar) with smooth drop-in animation
+ * ==================================================================================================== */
+.m-snackbars,
+html.kb-open .m-snackbars {
+  position: fixed !important;
+  z-index: 9999 !important;
+  top: calc(var(--m-safe-top, 0px) + var(--sp-m, 12px)) !important;
+  bottom: auto !important;
+  left: calc(var(--m-margin) + var(--m-safe-left)) !important;
+  right: calc(var(--m-margin) + var(--m-safe-right)) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: var(--sp-s, 8px) !important;
+  pointer-events: none !important;
+  align-items: center !important;
+}
+.m-snack {
+  animation: m-snack-drop 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-shadow: 0 10px 28px -4px rgba(24, 24, 27, 0.12), 0 2px 6px -1px rgba(0, 0, 0, 0.04) !important;
+  border-radius: var(--r-lg) !important;
+}
+:root[data-theme='dark'] .m-snack {
+  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.65), 0 2px 8px -1px rgba(0, 0, 0, 0.5) !important;
+}
+.m-snack.is-swiping,
+.m-snack.is-dismissing {
+  animation: none !important;
+}
+@keyframes m-snack-drop {
+  from {
+    transform: translate3d(0, -24px, 0) scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+
+

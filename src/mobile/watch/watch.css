@@ -34,8 +34,9 @@
 .ew-chip.is-on small { background: rgba(255, 255, 255, .18); color: #fff; }
 .ew-chip.is-energy.is-on { background: #ea580c; }
 .ew-chip.is-leadership.is-on { background: #0e7490; }
-:root[data-theme='dark'] .ew-chip.is-on:not(.is-energy):not(.is-leadership) { background: #f4f4f5; color: #111; }
-:root[data-theme='dark'] .ew-chip.is-on:not(.is-energy):not(.is-leadership) small { background: rgba(0, 0, 0, .1); color: #111; }
+.ew-chip.is-press.is-on { background: #059669; }
+:root[data-theme='dark'] .ew-chip.is-on:not(.is-energy):not(.is-leadership):not(.is-press) { background: #2b2b36; color: #f4f4f6; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+:root[data-theme='dark'] .ew-chip.is-on:not(.is-energy):not(.is-leadership):not(.is-press) small { background: rgba(255, 255, 255, .14); color: #f4f4f6; }
 
 /* rows */
 .ew-list { gap: var(--sp-m) !important; }
@@ -139,11 +140,16 @@
 .ew-status > .ew-when.m-btn { margin: 0 !important; max-width: 46vw; }
 .ew-status > .ew-st { justify-content: flex-start; }
 
-/* PM & President: the same people icon on the filter chip and on each row (a word tag would wrap the row) */
+/* PM & President + Official Press: icons on the filter chips and on each row */
 .ew-tag { display: inline-grid; place-items: center; width: 22px; height: 22px; padding: 0; border-radius: 50%; }
+.ew-tag.is-press { background: color-mix(in srgb, #059669 14%, transparent); color: #059669; }
+:root[data-theme='dark'] .ew-tag.is-press { color: #34d399; }
 .ew-chip.is-leadership > svg { color: #0e7490; }
 .ew-chip.is-leadership.is-on > svg { color: #fff; }
 :root[data-theme='dark'] .ew-chip.is-leadership:not(.is-on) > svg { color: #67e8f9; }
+.ew-chip.is-press > svg { color: #059669; }
+.ew-chip.is-press.is-on > svg { color: #fff; }
+:root[data-theme='dark'] .ew-chip.is-press:not(.is-on) > svg { color: #34d399; }
 .ew-meta { flex-wrap: nowrap; min-width: 0; }
 .ew-meta > .ew-src { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ew-meta > .ew-time { flex: none; white-space: nowrap; }
@@ -278,8 +284,9 @@
 .ew-search input::-webkit-search-cancel-button { display: none; }
 .ew-search-x { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: var(--r-sm); background: var(--fill); color: var(--text-secondary); }
 @keyframes ew-drop { from { opacity: 0; transform: translateY(-4px); } }
-.ew-chips { gap: var(--sp-s); }
-.ew-chip { height: 34px; padding: 0 var(--sp-s); font-size: var(--fs-s); gap: var(--sp-xs); }
+.ew-chips { gap: var(--sp-s); overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 1px 1px 2px; margin: -1px -1px -2px; }
+.ew-chips::-webkit-scrollbar { display: none; }
+.ew-chip { flex: 0 0 auto; height: 34px; padding: 0 var(--sp-m); font-size: var(--fs-s); gap: var(--sp-xs); }
 .ew-chip small { min-width: 18px; padding: 2px var(--sp-xs); font-size: var(--fs-xs); }
 .ew-chip > svg { width: 14px; height: 14px; }
 
@@ -324,11 +331,15 @@
 .ew-hl[lang='bn'] { font-family: 'Hind Siliguri', var(--font-ui) !important; line-height: 1.55 !important; letter-spacing: 0 !important; }
 .ew-hl[lang='en'] { line-height: 1.32; }
 
-/* search opens with Trending: the most frequent topics in the headlines, one tap to filter */
-.ew-trend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-s); animation: ew-drop .2s ease-out; }
-.ew-trend-h { display: inline-flex; align-items: center; gap: var(--sp-xs); margin-right: 2px; font: 700 var(--fs-xs)/1.3 var(--font-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--ew-teal); }
-.ew-trend-chip { display: inline-flex; align-items: center; gap: var(--sp-s); height: 32px; padding: 0 var(--sp-m); border: 0; border-radius: 999px; background: var(--surface-panel); box-shadow: var(--e1);
-  color: var(--text-primary); font: 600 var(--fs-s)/1.3 var(--font-ui); }
+/* Trending topics bar: category-scoped canonical topics, one tap to filter & sort by relevance */
+.ew-trend { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; align-items: center; gap: var(--sp-s); padding: 1px 1px 2px; margin: -1px -1px -2px; animation: ew-drop .2s ease-out; }
+.ew-trend::-webkit-scrollbar { display: none; }
+.ew-trend-h { flex: 0 0 auto; white-space: nowrap; display: inline-flex; align-items: center; gap: var(--sp-xs); margin-right: 2px; font: 700 var(--fs-xs)/1.3 var(--font-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--ew-teal); }
+.ew-trend-chip { flex: 0 0 auto; white-space: nowrap; display: inline-flex; align-items: center; gap: var(--sp-s); height: 32px; padding: 0 var(--sp-m); border: 0; border-radius: 999px; background: var(--surface-panel); box-shadow: var(--e1);
+  color: var(--text-primary); font: 600 var(--fs-s)/1.3 var(--font-ui); transition: background .15s, color .15s, transform .12s; }
+.ew-trend-chip:active { transform: scale(.96); }
 .ew-trend-chip small { font: 700 var(--fs-xs)/1 var(--font-ui); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 .ew-trend-chip.is-on { background: var(--ew-teal); color: #fff; box-shadow: none; }
-.ew-trend-chip.is-on small { color: rgba(255, 255, 255, .8); }
+.ew-trend-chip.is-on small { color: rgba(255, 255, 255, .85); }
+:root[data-theme='dark'] .ew-trend-chip.is-on { color: #042f2e; }
+:root[data-theme='dark'] .ew-trend-chip.is-on small { color: rgba(4, 47, 46, .8); }

@@ -194,10 +194,10 @@
   --text-tertiary: #a8a8b3;
   --text-disabled: rgba(244, 244, 245, 0.42);
 
-  --accent: #f4f4f5;
-  --on-accent: #18181b;
-  --accent-soft: rgba(244, 244, 245, 0.08);
-  --focus-ring: rgba(244, 244, 245, 0.28);
+  --accent: #e05638;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(224, 86, 56, 0.16);
+  --focus-ring: rgba(224, 86, 56, 0.32);
 
   --danger: #f2877e;
   --danger-soft: rgba(242, 135, 126, 0.12);

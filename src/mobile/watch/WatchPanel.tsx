@@ -1,21 +1,25 @@
-// Wire → EnergyWatch: the office news watcher, run on the phone (see watchStore.ts), with the editor's own settings.
+// Wire → EnergyWatch: the office news & official government press release watcher, run on the phone (see watchStore.ts).
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Icon, IconBtn, MenuButton, Row, Segmented, Sheet } from '../shell/ui'
 import type { MenuItem } from '../shell/ui'
 import { snack, useUi } from '../shell/core'
 import { platform } from '../../platform/platform'
 import { relTime } from '../../pc/editorial/wire'
-import { PORTALS, isPhoneFeed, useWatch, visibleItems, type WatchCat, type WatchItem } from './watchStore'
-import { EW_FEEDS } from './ewSources'
+import { PORTALS, PRESS_OFFICES, isPhoneFeed, trendingTopics, useWatch, visibleItems, type WatchCat, type WatchItem } from './watchStore'
+import { EW_FEEDS, EW_PRESS_SOURCES } from './ewSources'
 import { MAX_RANGE_DAYS, checkRange, useRange } from './rangeSearch'
 import { PORTAL_BRANDS } from './portalBrands'
 import { YeasinName } from './HoldLink'
 import { usePullRefresh } from './usePullRefresh'
 import './watch.css'
 
-const CAT_LABEL: Record<WatchCat, string> = { energy: 'Energy', leadership: 'PM & President' }
+const CAT_LABEL: Record<WatchCat, string> = {
+  energy: 'Energy & Power',
+  leadership: 'PM & President',
+  press: 'Official Press',
+}
 
-/** A portal's own favicon (its letter on a grey tile when it has none). */
+/** A portal's or government office's own favicon (its letter on a grey tile when it has none). */
 export function PortalIcon({ name, size = 16 }: { name: string; size?: number }) {
   const b = PORTAL_BRANDS[name]
   const tile = Math.round(size * 1.25)
@@ -25,7 +29,7 @@ export function PortalIcon({ name, size = 16 }: { name: string; size?: number })
     </span>
   )
 }
-/** The portal's name in its own brand colour (ink when its mark is black or grey), after its favicon. */
+/** The portal's or office's name in its own brand colour (ink when its mark is black or grey), after its favicon. */
 export function PortalName({ name }: { name: string }) {
   const c = PORTAL_BRANDS[name]?.color
   return <span className={'ew-src' + (c ? '' : ' is-ink')} style={c ? ({ '--src': c } as React.CSSProperties) : undefined}><PortalIcon name={name} /><span className="ew-src-name">{name}</span></span>
@@ -49,7 +53,7 @@ const windowLabel = (h: number) => (h === 1 ? 'Last hour' : `Last ${h} hours`)
 /** Bangla letters: the headline gets lang="bn" so it is set in Hind Siliguri at Bangla line spacing (no clipped marks). */
 const BN = /[ঀ-৿]/
 
-const feedKind =(url: string) => /news\.google\./.test(url) ? 'Google News' : /bing\.com/.test(url) ? 'Bing News' : 'own feed'
+const feedKind = (url: string) => /news\.google\./.test(url) ? 'Google News' : /bing\.com/.test(url) ? 'Bing News' : /\/site\/view\//.test(url) ? 'National Portal' : 'own feed'
 
 function Switch({ on, label, onChange }: { on: boolean; label: string; onChange: (v: boolean) => void }) {
   return <button type="button" role="switch" aria-checked={on} aria-label={label} className={`m-switch${on ? ' is-on' : ''}`} onClick={() => onChange(!on)}><span /></button>
@@ -83,28 +87,39 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
   const [q, setQ] = useState('')
   const [searching, setSearching] = useState(false)
   const searchOpen = searching || !!q
-  // the topics behind the headlines on screen, most frequent first: one tap filters to that topic
-  const trending = useMemo(() => {
-    const c = new Map<string, number>()
-    for (const x of items) for (const m of x.matched) c.set(m, (c.get(m) ?? 0) + 1)
-    return [...c].filter(([t]) => t.length > 1).sort((a, b) => b[1] - a[1]).slice(0, 8)
-  }, [items])
   const [cat, setCat] = useState<'all' | WatchCat>('all')
   const [, tick] = useState(0)
   useAutoCheck(active)
   useEffect(() => { const id = window.setInterval(() => tick((n) => n + 1), 30_000); return () => window.clearInterval(id) }, [])
-  // what is on screen when the editor leaves counts as seen
 
   const range = useRange((s) => s.range)
-  const rangeView = useMemo(() => (range ? visibleItems(range.items, hidden, { ...prefs, maxAgeH: 24 * 365 }, q, 'all') : null), [range, hidden, prefs, q])
-  const liveView = useMemo(() => visibleItems(items, hidden, prefs, q, 'all'), [items, hidden, prefs, q])
-  const base = rangeView ?? liveView
   const isNew = useMemo(() => new Set(range ? [] : newKeys), [newKeys, range])
-  // what the latest refresh added goes first (newest first), so the NEW tags are what the editor sees on top
-  const shown = useMemo(() => {
-    const list = cat === 'all' ? base : base.filter((x) => x.categories.includes(cat))
-    return isNew.size ? [...list.filter((x) => isNew.has(x.key)), ...list.filter((x) => !isNew.has(x.key))] : list
-  }, [base, cat, isNew])
+  const effectivePrefs = useMemo(() => (range ? { ...prefs, maxAgeH: 24 * 365 } : prefs), [range, prefs])
+  const sourcePool = range ? range.items : items
+
+  // Unqueried pool for the active category so Trending pills show the top topics inside the selected category
+  const catPoolNoQuery = useMemo(
+    () => visibleItems(sourcePool, hidden, effectivePrefs, '', cat, isNew),
+    [sourcePool, hidden, effectivePrefs, cat, isNew],
+  )
+  const trending = useMemo(() => trendingTopics(catPoolNoQuery, cat, 8), [catPoolNoQuery, cat])
+
+  // Counts for each category chip (respecting active search/topic filter)
+  const catCounts = useMemo(() => {
+    const allList = visibleItems(sourcePool, hidden, effectivePrefs, q, 'all', isNew)
+    const energyList = visibleItems(sourcePool, hidden, effectivePrefs, q, 'energy', isNew)
+    const leadList = visibleItems(sourcePool, hidden, effectivePrefs, q, 'leadership', isNew)
+    const pressList = visibleItems(sourcePool, hidden, effectivePrefs, q, 'press', isNew)
+    return {
+      all: allList.length,
+      energy: energyList.length,
+      leadership: leadList.length,
+      press: pressList.length,
+      byCat: { all: allList, energy: energyList, leadership: leadList, press: pressList },
+    }
+  }, [sourcePool, hidden, effectivePrefs, q, isNew])
+
+  const shown = catCounts.byCat[cat]
   const now = Date.now()
   const fresh = shown.filter((x) => isNew.has(x.key)).length
   const off = new Set(prefs.portalsOff)
@@ -123,16 +138,19 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
     if (r.failed > r.checked / 2) snack(`Most portals did not answer (${r.failed} of ${r.checked}). Check the connection.`)
     else snack(r.added ? `${r.added} new ${r.added === 1 ? 'headline' : 'headlines'}` : 'No new headlines')
   }
-  const use = (x: WatchItem) => { if (x.google) void platform().openExternal(x.link); else onUse(x.link) }
+  const use = (x: WatchItem) => {
+    useWatch.getState().markRead(x.key)
+    onUse(x.link)
+  }
   const menu = (x: WatchItem): MenuItem[] => [
-    ...(x.google ? [] : [{ label: 'Start a story from it', icon: 'filePlus' as const, onClick: () => onUse(x.link) }]),
+    { label: 'Start a story from it', icon: 'filePlus' as const, onClick: () => use(x) },
     { label: 'Open in the browser', icon: 'externalLink', onClick: () => void platform().openExternal(x.link) },
     { label: 'Copy link', icon: 'copy', onClick: () => { void navigator.clipboard?.writeText(x.link).then(() => snack('Link copied'), () => snack('Could not copy')) } },
     ...(isNew.has(x.key) ? [{ label: 'Mark as read', icon: 'check' as const, onClick: () => useWatch.getState().markRead(x.key) }] : []),
     { label: 'Hide', icon: 'eyeOff', onClick: () => useWatch.getState().hide(x.key) },
   ]
-  const cats: ('all' | WatchCat)[] = ['all', ...(['energy', 'leadership'] as WatchCat[]).filter((c) => prefs.show[c])]
-  const inCat = (c: 'all' | WatchCat) => (c === 'all' ? base.length : base.filter((x) => x.categories.includes(c)).length)
+  const cats: ('all' | WatchCat)[] = ['all', ...(['energy', 'leadership', 'press'] as WatchCat[]).filter((c) => prefs.show[c] !== false)]
+  const inCat = (c: 'all' | WatchCat) => catCounts[c]
   const timeMenu: MenuItem[] = [
     ...WINDOWS.map((h) => ({ label: windowLabel(h), lead: `${h}h`, checked: !range && prefs.maxAgeH === h, onClick: () => { useRange.getState().clear(); useWatch.getState().setPrefs({ maxAgeH: h }) } })),
     { divider: true, label: '', onClick: () => {} },
@@ -160,7 +178,7 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
         </div>
         <div className="ew-bar2" role="status">
           <MenuButton icon="clock" label="Time range" items={timeMenu} className="ew-when">
-            <span>{range ? 'Dates' : prefs.maxAgeH === 1 ? '1 hour' : `${prefs.maxAgeH} hours`}</span><Icon name="chevDown" size={14} />
+            <span>{range ? 'Dates' : cat === 'press' ? 'Official releases' : prefs.maxAgeH === 1 ? '1 hour' : `${prefs.maxAgeH} hours`}</span><Icon name="chevDown" size={14} />
           </MenuButton>
           <span className="ew-grow" />
           {fresh > 0 && !running && !range && <button type="button" className="ew-new" onClick={markAll} aria-label={`${fresh} new: mark all as read`}>{fresh} new<Icon name="checkDouble" size={14} /></button>}
@@ -182,26 +200,36 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
       </section>
 
       <div className="ew-tools">
+        {cats.length > 1 && (
+          <div className="ew-chips" role="group" aria-label="Categories">
+            {cats.map((c) => (
+              <button key={c} type="button" className={'ew-chip' + (cat === c ? ' is-on' : '') + (c !== 'all' ? ` is-${c}` : '')} aria-pressed={cat === c} onClick={() => setCat(c)}>
+                {c === 'leadership' && <Icon name="users" size={14} />}
+                {c === 'press' && <Icon name="shield" size={14} />}
+                {c === 'all' ? 'All headlines' : CAT_LABEL[c]}
+                <small>{inCat(c)}</small>
+              </button>
+            ))}
+          </div>
+        )}
         {searchOpen && (
           <div className="ew-search">
             <Icon name="search" size={17} />
-            <input type="search" autoFocus placeholder="Search headlines or portals" aria-label="Search headlines" value={q} onChange={(e) => setQ(e.target.value)} />
+            <input type="search" autoFocus placeholder="Search headlines, topics or portals" aria-label="Search headlines" value={q} onChange={(e) => setQ(e.target.value)} />
             <button type="button" className="ew-search-x" aria-label="Close search" onClick={() => { setQ(''); setSearching(false) }}><Icon name="x" size={16} /></button>
           </div>
         )}
-        {searchOpen && trending.length > 0 && (
+        {trending.length > 0 && (
           <div className="ew-trend" role="group" aria-label="Trending topics">
-            <span className="ew-trend-h"><Icon name="trendingUp" size={14} />Trending</span>
-            {trending.map(([t, n]) => <button key={t} type="button" className={'ew-trend-chip' + (q.toLowerCase() === t.toLowerCase() ? ' is-on' : '')} onClick={() => setQ(q.toLowerCase() === t.toLowerCase() ? '' : t)}>{t}<small>{n}</small></button>)}
-          </div>
-        )}
-        {cats.length > 2 && (
-          <div className="ew-chips" role="group" aria-label="Show">
-            {cats.map((c) => (
-              <button key={c} type="button" className={'ew-chip' + (cat === c ? ' is-on' : '') + (c !== 'all' ? ` is-${c}` : '')} aria-pressed={cat === c} onClick={() => setCat(c)}>
-                {c === 'leadership' && <Icon name="users" size={15} />}{c === 'all' ? 'All' : CAT_LABEL[c]}<small>{inCat(c)}</small>
-              </button>
-            ))}
+            <span className="ew-trend-h"><Icon name="trendingUp" size={14} />{cat === 'press' ? 'Offices' : 'Trending'}</span>
+            {trending.map(([t, n]) => {
+              const activeChip = q.trim().toLowerCase() === t.toLowerCase()
+              return (
+                <button key={t} type="button" className={'ew-trend-chip' + (activeChip ? ' is-on' : '')} aria-pressed={activeChip} onClick={() => setQ(activeChip ? '' : t)}>
+                  {t}<small>{n}</small>
+                </button>
+              )
+            })}
           </div>
         )}
       </div>
@@ -211,16 +239,23 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
           <div key={x.key} className={'me-listrow' + (isNew.has(x.key) ? ' ew-is-new' : '')}>
             {isNew.has(x.key) && <span className="ew-ribbon" aria-label="New">NEW</span>}
             <Row title={<span className="ew-hl" lang={BN.test(x.title) ? 'bn' : 'en'}>{x.title}</span>} onClick={() => use(x)}
-              meta={<span className="ew-meta"><PortalName name={x.source} /><span className="ew-time">{x.published ? (range ? fmtWhen(Date.parse(x.published)) : relTime(Math.min(Date.parse(x.published), now), now)) : `found ${relTime(Math.min(x.foundAt, now), now)}`}</span>{x.categories.includes('leadership') && <span className="ew-tag" title="PM & President" aria-label="PM & President"><Icon name="users" size={13} /></span>}</span>} />
+              meta={
+                <span className="ew-meta">
+                  <PortalName name={x.source} />
+                  <span className="ew-time">{x.published ? (range || cat === 'press' ? fmtWhen(Date.parse(x.published)) : relTime(Math.min(Date.parse(x.published), now), now)) : `found ${relTime(Math.min(x.foundAt, now), now)}`}</span>
+                  {x.categories.includes('press') && <span className="ew-tag is-press" title="Official Government Press Release" aria-label="Official Press"><Icon name="shield" size={12} /></span>}
+                  {x.categories.includes('leadership') && <span className="ew-tag" title="PM & President" aria-label="PM & President"><Icon name="users" size={13} /></span>}
+                </span>
+              } />
             <MenuButton icon="more" label="More" items={menu(x)} className="ew-more" />
           </div>
         ))}
         {!shown.length && (
           <div className="wr-empty">
             <EwMark size={56} />
-            <h3>{range?.running || (!range && running) ? 'Reading the portals' : base.length || items.length || range ? 'Nothing matches' : <EwName />}</h3>
-            <p>{range ? (range.running ? 'Headlines appear here as each portal answers.' : 'No energy or PM & President headlines in this range. Try a wider one.') : items.length ? 'Try another search, or a longer time range.' : `Energy, power and PM & President headlines from ${PORTALS.length} Bangladeshi portals, picked by EnergyWatch's rules. Runs on this phone, anywhere with internet.`}</p>
-            {!items.length && !running && !range && <Button icon="refresh" wide onClick={() => void check()}>Check now</Button>}
+            <h3>{range?.running || (!range && running) ? 'Reading the portals' : catCounts.all || items.length || range ? 'Nothing matches' : <EwName />}</h3>
+            <p>{range ? (range.running ? 'Headlines appear here as each portal answers.' : 'No Energy & Power or PM & President headlines in this range. Try a wider one.') : cat === 'press' && !items.some((x) => x.categories.includes('press')) ? 'Tap Check now to scan official Bangladesh government ministry & utility press wings.' : items.length ? 'Try another category, topic pill, or a longer time range.' : `Energy & Power, PM & President, and Official Press headlines from ${PORTALS.length} Bangladeshi portals and ${PRESS_OFFICES.length} government offices. Runs on this phone, anywhere with internet.`}</p>
+            {(!items.length || (cat === 'press' && !items.some((x) => x.categories.includes('press')))) && !running && !range && <Button icon="refresh" wide onClick={() => void check()}>Check now</Button>}
           </div>
         )}
       </div>
@@ -279,7 +314,7 @@ function RangeSheet() {
     <Sheet id="ew-range" title="Pick dates and times" initial="full"
       footer={<Button kind="filled" icon="search" wide disabled={!!err} onClick={go}>Find headlines</Button>}>
       <div className="me-stack ew-settings">
-        <p className="ew-help">Every energy and PM & President headline the portals published between these two moments, up to {MAX_RANGE_DAYS} days.</p>
+        <p className="ew-help">Every Energy & Power and PM & President headline the portals published between these two moments, up to {MAX_RANGE_DAYS} days.</p>
         <div className="ew-presets">{presets.map(([l, f]) => <button key={l} type="button" className="ew-chip" onClick={f}>{l}</button>)}</div>
         <h3 className="ew-h">From</h3>
         <div className="ew-dt">
@@ -293,7 +328,7 @@ function RangeSheet() {
         </div>
         {!err && <p className="ew-sum"><Icon name="check" size={16} /><span><b>{fmtWhen(from)}</b> to <b>{fmtWhen(to)}</b></span></p>}
         {err && fd && td && <p className="ew-sum is-bad"><Icon name="alert" size={16} /><span>{err}</span></p>}
-        <p className="ew-help">Older headlines are searched on Google News, portal by portal. They open in the browser; headlines this phone already collected can start a story directly.</p>
+        <p className="ew-help">Older headlines are searched on Google News, portal by portal, and can start a story directly when tapped.</p>
       </div>
     </Sheet>
   )
@@ -317,16 +352,24 @@ function SettingsSheet() {
     const why = badFeeds.map((f) => `${feedKind(f.url)}: ${feeds[f.id].error}`).join(' · ')
     return bad === st.length ? `Not answering · ${why}` : bad ? `${fs.length - bad} of ${fs.length} feeds answer · ${why}` : `${fs.length} ${fs.length === 1 ? 'feed' : 'feeds'} · fine`
   }
+  const pressState = (name: string, office: string) => {
+    const ps = EW_PRESS_SOURCES.filter((s) => s.on && s.name === name)
+    const st = ps.map((s) => feeds[s.id]).filter(Boolean)
+    if (!st.length) return office
+    const ok = st.filter((s) => s.ok).length
+    return ok > 0 ? `${office} · active` : `${office} · waiting`
+  }
   return (
     <Sheet id="ew-settings" title="EnergyWatch" initial="full">
       <div className="me-stack ew-settings">
         <div className="ew-credit"><EwMark /><span><b><EwName /></b><small>Made by <YeasinName /> for ESB Power Line</small></span></div>
-        <p className="ew-help">The office news watcher, running on this phone. Its portals and keyword rules come from EnergyWatch; your changes here stay on this phone.</p>
+        <p className="ew-help">The office news and official government press release watcher, running on this phone. Its portals, ministry press wings and keyword rules come from EnergyWatch; your changes here stay on this phone.</p>
 
         <h3 className="ew-h">Show</h3>
         <div className="ew-card">
-          <Row title="Energy and power" meta="Electricity, gas, fuel, LNG, LPG, power plants and the companies" trail={<Switch on={prefs.show.energy} label="Energy and power" onChange={(v) => setPrefs({ show: { ...prefs.show, energy: v } })} />} />
-          <Row title="PM & President" meta="Bangladesh's Prime Minister and President (foreign leaders are left out)" trail={<Switch on={prefs.show.leadership} label="PM and President" onChange={(v) => setPrefs({ show: { ...prefs.show, leadership: v } })} />} />
+          <Row title="Energy & Power" meta="Electricity, gas, fuel, LNG, LPG, power plants and utilities" trail={<Switch on={prefs.show.energy !== false} label="Energy & Power" onChange={(v) => setPrefs({ show: { ...prefs.show, energy: v } })} />} />
+          <Row title="PM & President" meta="Bangladesh's Prime Minister and President (foreign leaders are left out)" trail={<Switch on={prefs.show.leadership !== false} label="PM and President" onChange={(v) => setPrefs({ show: { ...prefs.show, leadership: v } })} />} />
+          <Row title="Official Press Releases" meta="Official press wings & notices from Power Division, EMRD, BERC, SREDA, PMO, Bangabhaban, BPDB, Petrobangla, BPC, BREB, PGCB & state offices" trail={<Switch on={prefs.show.press !== false} label="Official Press Releases" onChange={(v) => setPrefs({ show: { ...prefs.show, press: v } })} />} />
         </div>
 
         <h3 className="ew-h">Headlines from the last</h3>
@@ -342,7 +385,15 @@ function SettingsSheet() {
         <WordList title="Never show headlines with" help="A headline with any of these is left out, whatever else it says."
           words={prefs.never} onChange={(never) => setPrefs({ never })} placeholder="e.g. cricket" />
 
-        <h3 className="ew-h">Portals <small>{PORTALS.length - prefs.portalsOff.length} of {PORTALS.length} on</small></h3>
+        <h3 className="ew-h">Official Government Press Wings <small>{PRESS_OFFICES.filter((p) => !off.has(p.name)).length} of {PRESS_OFFICES.length} on</small></h3>
+        <div className="ew-card">
+          {PRESS_OFFICES.map((p) => (
+            <Row key={p.name} lead={<PortalIcon name={p.name} size={24} />} title={p.name} meta={pressState(p.name, p.office)}
+              trail={<Switch on={!off.has(p.name)} label={p.name} onChange={(v) => setPrefs({ portalsOff: v ? prefs.portalsOff.filter((n) => n !== p.name) : [...prefs.portalsOff, p.name] })} />} />
+          ))}
+        </div>
+
+        <h3 className="ew-h">Media Portals <small>{PORTALS.filter((p) => !off.has(p.name)).length} of {PORTALS.length} on</small></h3>
         <div className="ew-card">
           {PORTALS.map((p) => (
             <Row key={p.name} lead={<PortalIcon name={p.name} size={24} />} title={p.name} meta={portalState(p.name)}
@@ -350,7 +401,6 @@ function SettingsSheet() {
           ))}
         </div>
         <Button kind="text" icon="reset" onClick={() => { useWatch.getState().resetPrefs(); snack('EnergyWatch settings restored') }}>Restore EnergyWatch's settings</Button>
-        <p className="ew-help">Tenders, press releases and research stay on the office EnergyWatch: they need a computer that is always on.</p>
       </div>
     </Sheet>
   )

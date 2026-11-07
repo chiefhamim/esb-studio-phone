@@ -176,7 +176,8 @@ export default function HomeScreen({ active }: ScreenProps) {
   }, [stories.length])
 
   const open = (id: string) => { if (id !== activeId && storyLocked()) return; useStoryQueue.getState().switchTo(id); nav.intendEditorial('open') }
-  const name = session ? (session.name || session.email).split(/[\s@]/)[0] : ''
+  const nameParts = session ? (session.name || '').trim().split(/\s+/).filter(Boolean) : []
+  const name = nameParts.length > 0 ? nameParts[nameParts.length - 1] : session ? (session.email || '').split(/[\s@]/)[0] : ''
   const siteState = !online ? { dot: 'off', text: 'Offline' } : !session ? { dot: 'warn', text: 'Not signed in' } : site.connected ? { dot: 'ok', text: 'Site connected' } : site.sessionEnded ? { dot: 'warn', text: 'Sign in again' } : { dot: 'warn', text: 'Site unreachable' }
   const ai = loadAiSettings()
   const aiOk = !ai.paused && !!aiFor('main')
