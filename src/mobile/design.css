@@ -3791,7 +3791,7 @@ html.kb-open .m-snackbars {
 
 
 
-=======
+/* ==================================================================================================
  * Publish: the progress and the result never sit on the button (2026-11-06). The page scrolls the running checklist
  * into view with block:'end', which lined its bottom up with the button's top edge; now it stops a section gap short.
  * ==================================================================================================== */
