@@ -1416,6 +1416,7 @@ input, textarea, [contenteditable='true'], [contenteditable=''] { -webkit-user-s
 .m-screens { position: relative; overflow: hidden; }
 /* kept painted (but invisible and inert) so its layers are already rasterised when the slide starts */
 .m-screens > .m-screen.is-off { position: absolute; inset: 0; opacity: .001; z-index: 0; pointer-events: none; }
+.m-screens > .m-screen.is-off * { animation-play-state: paused !important; }
 /* the screen underneath dims through a pseudo layer instead of animating its own opacity */
 @keyframes m-in-right { from { transform: translate3d(100%, 0, 0); } }
 @keyframes m-out-left { to { transform: translate3d(-24%, 0, 0); } }
@@ -2807,9 +2808,9 @@ html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-n
 .m-view-fwd, .m-view-back { animation-duration: 400ms !important; animation-timing-function: cubic-bezier(.42, 0, .12, 1) !important; }
 
 /* ---- Tab pages (Stories, Published, Wire and the rest with a big title): one proportional rhythm, less dead space ----
-   Title bar: 8 above the stripe, 8 under it, the title, 6 below. Page: 12 to the first block, 14 between blocks.
+   Title bar: safe top handled by .m-topbar, 8 under it, the title, 6 below. Page: 12 to the first block, 14 between blocks.
    Same styles as before; only the spacing is tightened so more of the list is on screen. */
-.m-topbar-row:has(> .m-topbar-title:first-child) { min-height: 0 !important; padding-top: var(--sp-s) !important; padding-bottom: var(--sp-s) !important; }
+.m-topbar-row:has(> .m-topbar-title:first-child) { min-height: 0 !important; padding-bottom: var(--sp-s) !important; }
 .m-topbar-row > .m-topbar-title:first-child::before { margin-bottom: var(--sp-s) !important; }
 .m-wrap.me-home { padding-top: var(--sp-m) !important; gap: var(--sp-l) !important; }
 .me-home > .me-h2:first-child, .me-home .me-h2 { margin-top: var(--sp-s); }
@@ -2823,6 +2824,10 @@ html[data-slide]::view-transition-old(page), html[data-slide]::view-transition-n
 .pb-row { padding: var(--sp-s) var(--sp-m) var(--sp-s) var(--sp-m) !important; }
 .pb-txt { gap: 2px !important; }
 .m-wrap.me-home { padding-top: var(--sp-s) !important; }
+.m-app:not(.has-rail) .me-pane .m-wrap.me-home,
+.m-app:not(.has-rail) .me-list:has(.pb-row) {
+  padding-bottom: calc(var(--m-navbar) + var(--m-safe-bottom) + 32px) !important;
+}
 .m-topbar-row:has(> .m-topbar-title:first-child) { padding-bottom: var(--sp-xs) !important; }
 /* Published: "1 h ago" first, in its own small chip, then the exact date and time */
 .pb-time { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-xs) var(--sp-s); }

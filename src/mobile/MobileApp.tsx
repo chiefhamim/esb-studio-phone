@@ -191,7 +191,17 @@ export default function MobileApp() {
   }, [])
 
   // shared into the app from other apps
-  useEffect(() => listenForIncoming((inc) => {
+  useEffect(() => listenForIncoming(async (inc) => {
+    const why = unsavedReason()
+    if (why) {
+      const ok = await confirmAsk({
+        title: 'Open shared item?',
+        body: `${why} Load incoming item anyway?`,
+        confirm: 'Open',
+        cancel: 'Keep Current',
+      })
+      if (!ok) return
+    }
     const nav = useNav.getState()
     if (inc.action === 'new-story') { nav.intendEditorial('new'); return }
     if (inc.action === 'paste-link') { nav.intendEditorial('paste-link'); return }

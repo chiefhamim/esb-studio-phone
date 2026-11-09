@@ -24,8 +24,8 @@
   --m-t-input: 400 16px/1.5 var(--font-ui);
   /* motion: short, interruptible */
   /* safe areas (Capacitor SystemBars publishes --safe-area-inset-*; env() in a browser) */
-  --m-safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
-  --m-safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --m-safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 44px));
+  --m-safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 16px));
   --m-safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
   --m-safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
   --m-kb: 0px; /* keyboard height, set by src/mobile/shell/keyboard.ts */

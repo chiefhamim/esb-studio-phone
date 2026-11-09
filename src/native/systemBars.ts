@@ -17,6 +17,15 @@ export function syncSystemBars(): void {
   if (!Capacitor.isNativePlatform()) return
   const dark = document.documentElement.getAttribute('data-theme') === 'dark'
   void AppChrome.apply({ dark, color: colourNow(dark) }).catch(() => {})
+  // Ensure safe-area-inset CSS custom properties have reliable values on Android native
+  const top = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top').trim()
+  if (!top || top === '0px' || top === '0') {
+    document.documentElement.style.setProperty('--safe-area-inset-top', '44px')
+  }
+  const bottom = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom').trim()
+  if (!bottom || bottom === '0px' || bottom === '0') {
+    document.documentElement.style.setProperty('--safe-area-inset-bottom', '16px')
+  }
 }
 
 let started = false
