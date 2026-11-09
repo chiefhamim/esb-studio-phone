@@ -28,3 +28,4 @@ dist-v
 tools/out/
 update-host/public/
 update-host/.wrangler/
+scratch-phone*
