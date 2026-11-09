@@ -343,3 +343,6 @@
 .ew-trend-chip.is-on small { color: rgba(255, 255, 255, .85); }
 :root[data-theme='dark'] .ew-trend-chip.is-on { color: #042f2e; }
 :root[data-theme='dark'] .ew-trend-chip.is-on small { color: rgba(4, 47, 46, .8); }
+
+/* English line under a Bangla headline (the PC's .nw-title-en): quieter than the headline itself */
+.ew-title-en { display: block; margin-top: 3px; font: 500 13.5px/1.4 var(--font-ui, Inter, sans-serif); color: var(--text-2); overflow-wrap: anywhere; text-wrap: pretty; }

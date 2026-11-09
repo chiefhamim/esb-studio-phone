@@ -476,7 +476,7 @@ export const useWatch = create<WatchState>((set, get) => {
       const prev = get().items
       const { items, addedKeys } = mergeFound(prev, found, started, { hidden: get().hidden, itemCap: ITEM_CAP, pressRetentionMs: PRESS_RETENTION_MS })
       const added = addedKeys.length
-      set({ items, feeds: states, lastRun: started, running: false, seenAt: prev.length ? get().seenAt : started, newKeys: prev.length ? addedKeys : [] })
+      set({ items: applyHeadlineCache(items, titleEnCache), feeds: states, lastRun: started, running: false, seenAt: prev.length ? get().seenAt : started, newKeys: prev.length ? addedKeys : [] })
       persist()
       void get().translateTitles()
       return { checked: feeds.length + pressSources.length, added, failed }
