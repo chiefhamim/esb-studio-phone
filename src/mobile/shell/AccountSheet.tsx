@@ -26,18 +26,6 @@ function switchTheme(v: ThemePref) {
 
 export function openAccount() { useUi.getState().openSheet('account') }
 
-/** The account avatar in every desk's header (top right, as on Home): opens this sheet. Signed out: a generic avatar. */
-export function AccountButton() {
-  const session = useEditorialStore((s) => s.staffSession)
-  const parts = session ? (session.name || '').trim().split(/\s+/).filter(Boolean) : []
-  const name = parts.length ? parts[parts.length - 1] : session ? (session.email || '').split(/[\s@]/)[0] : ''
-  return (
-    <button type="button" className="m-iconbtn m-acct" aria-label={session ? `Account: ${session.name || session.email}` : 'Account'} onClick={openAccount}>
-      {session ? <UserAvatar name={name} /> : <span className="m-acct-empty"><Icon name="user" size={20} /></span>}
-    </button>
-  )
-}
-
 function Tile({ icon, title, meta, trail, onClick }: { icon: IconName; title: string; meta?: string; trail?: React.ReactNode; onClick?: () => void }) {
   const inner = (
     <>
@@ -98,7 +86,6 @@ export default function AccountSheet() {
             <button type="button" className="ac-check" disabled={checking || !online} onClick={() => void runCheck()}>{checking ? 'Checking' : checks ? 'Run again' : 'Check'}</button>
           </div>
           <Tile icon="sparkle" title={`AI engine · ${engine}`} meta={aiState} onClick={go(() => nav.openSettings('ai'))} />
-          <Tile icon="brandFacebook" title="Facebook Page" meta="The Page stories are posted to" onClick={go(() => nav.openSettings('facebook'))} />
         </div>
 
         {checks && (

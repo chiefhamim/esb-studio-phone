@@ -11,10 +11,9 @@ import { Banner, Button, IconBtn, Icon, TopBar } from '../shell/ui'
 import { useNav } from '../shell/nav'
 import { FileTypeIcon, FileTypePair, ProviderMark } from '../shell/marks'
 import { useOnline } from '../shell/core'
-import { cancelJob, canCancel, fetchLink, newStory, readClipboardText, readFile, translatePasted, useDesk } from './deskStore'
+import { cancelJob, canCancel, fetchLink, readClipboardText, readFile, translatePasted, useDesk } from './deskStore'
 import { JobProgress } from './JobProgress'
-import { sharedTools } from './Landing'
-import { AccountButton } from '../shell/AccountSheet'
+import { homeMenu } from './Landing'
 import { FlowTrack, StepSub } from './Pipeline'
 import { afterSlide, slideTo } from '../shell/slide'
 
@@ -40,14 +39,7 @@ export function Intake() {
   return (
     <>
       <TopBar leading={<IconBtn icon="chevLeft" label="Back to stories" onClick={() => slideTo(-1, () => d.set({ view: 'home', error: null }))} />} title="Editorial"
-        sub={<StepSub extra={main ? providerMeta(main.provider).name : 'Free translation'} />} under={<FlowTrack />} trailing={<AccountButton />}
-        overflow={[
-          // Editorial's own: the story list (also on Home) and a blank story; then the tools every desk shares
-          { label: 'All stories', icon: 'newspaper', onClick: () => slideTo(-1, () => d.set({ view: 'home', homeTab: 'stories', error: null })) },
-          { label: 'Write a blank story', icon: 'plus', onClick: () => newStory('story') },
-          { divider: true, label: '', onClick: () => {} },
-          ...sharedTools(),
-        ]} />
+        sub={<StepSub extra={main ? providerMeta(main.provider).name : 'Free translation'} />} under={<FlowTrack />} overflow={homeMenu()} />
       <div className="m-scroll">
         <div className="m-wrap me-intake">
           {!online && <Banner tone="warn">You are offline. Links and translation need the network.</Banner>}

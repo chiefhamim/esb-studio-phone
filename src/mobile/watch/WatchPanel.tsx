@@ -13,13 +13,6 @@ import { YeasinName } from './HoldLink'
 import { usePullRefresh } from './usePullRefresh'
 import './watch.css'
 
-/** Mark every new headline as read, with Undo (the "n new" pill, the time menu and News' ⋮ menu). */
-export function markAllNewsRead() {
-  const before = useWatch.getState().newKeys
-  useWatch.getState().markAllRead()
-  snack(`${before.length} marked as read`, { action: { label: 'Undo', run: () => useWatch.setState({ newKeys: before }) }, tone: 'success' })
-}
-
 const CAT_LABEL: Record<WatchCat, string> = {
   energy: 'Energy & Power',
   leadership: 'PM & President',
@@ -133,7 +126,11 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
   const live = EW_FEEDS.filter((f) => isPhoneFeed(f) && !off.has(f.name))
   const failed = live.filter((f) => feeds[f.id] && !feeds[f.id].ok).length
 
-  const markAll = markAllNewsRead
+  const markAll = () => {
+    const before = useWatch.getState().newKeys
+    useWatch.getState().markAllRead()
+    snack(`${before.length} marked as read`, { action: { label: 'Undo', run: () => useWatch.setState({ newKeys: before }) }, tone: 'success' })
+  }
   const ptr = usePullRefresh(() => (range ? useRange.getState().search(range.from, range.to) : check()), active)
   const check = async () => {
     const r = await useWatch.getState().run()
@@ -182,10 +179,9 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
   return (
     <div className="ew" ref={ptr.host}>
       <section className="ew-head" aria-label="EnergyWatch">
-        {/* the brand is one quiet line (mark, name, credit, status); its settings live in News' ⋮ menu */}
-        <div className="ew-head-top ew-brandline">
-          <EwMark size={22} />
-          <span className="ew-title"><span className="ew-title-row"><b><EwName /></b><small>by <YeasinName /></small>
+        <div className="ew-head-top">
+          <EwMark />
+          <span className="ew-title"><span className="ew-title-row"><b><EwName /></b>
             {range ? (
               range.running ? <span className="ew-st"><i className="ew-live is-busy" aria-hidden />Searching {pct}%</span> : <span className="ew-st"><i className="ew-live" aria-hidden />{range.items.length} found{range.failed ? <> · <b className="ew-warn">{range.failed} failed</b></> : null}</span>
             ) : (
@@ -193,7 +189,8 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
                 {running ? <>Reading</> : lastRun ? <>{relTime(Math.min(lastRun, now), now)}{failed ? <> · <b className="ew-warn">{failed} down</b></> : null}</> : <>Not checked yet</>}
               </span>
             )}
-            </span></span>
+            </span><small>by <YeasinName /></small></span>
+          <IconBtn icon="sliders" label="EnergyWatch settings" onClick={() => useUi.getState().openSheet('ew-settings')} className="ew-ibtn" />
         </div>
         <div className="ew-bar2" role="status">
           <MenuButton icon="clock" label="Time range" items={timeMenu} className="ew-when">
