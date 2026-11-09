@@ -39,8 +39,6 @@ interface DeskState {
   tab: Tab
   intakeTab: IntakeTab
   homeTab: HomeTab
-  /** The Editorial segment last shown (Stories or Published): the Editorial tab returns to it after a visit to News. */
-  edTab: Exclude<HomeTab, 'wire'>
   url: string
   raw: string
   doc: DocInfo | null
@@ -64,12 +62,10 @@ interface DeskState {
 }
 
 export const useDesk = create<DeskState>((set) => ({
-  view: 'home', tab: 'story', intakeTab: 'link', homeTab: 'stories', edTab: 'stories', url: '', raw: '', doc: null, busy: null, status: null,
+  view: 'home', tab: 'story', intakeTab: 'link', homeTab: 'stories', url: '', raw: '', doc: null, busy: null, status: null,
   error: null, notice: null, seoFixNote: null, undo: null, editing: false, writing: false, bodyMode: 'edit', focusUrlAt: 0, chartIdea: null,
   set: (p) => set(p),
 }))
-// whichever way Stories or Published is opened (the segment, Home's "See all", after a publish), the Editorial tab remembers it
-useDesk.subscribe((s) => { if (s.homeTab !== 'wire' && s.edTab !== s.homeTab) useDesk.setState({ edTab: s.homeTab }) })
 
 const ed = () => useEditorialStore.getState()
 const desk = () => useDesk.getState()

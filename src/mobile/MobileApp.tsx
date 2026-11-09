@@ -1,5 +1,5 @@
 // ESB Studio Phone: the Android shell around the vendored PC engine and editor.
-// Home · News · Editorial · Graphics, the PC's desks (bottom bar on phones, navigation rail from 600 dp). Screens stay mounted so the editor,
+// Home · News · Editorial · Graphics · Published (bottom bar on phones, navigation rail from 600 dp). Screens stay mounted so the editor,
 // the canvas and their undo history survive switching. Android back: menu -> sheet -> dialog -> screen -> home ->
 // minimise (never exits; work is autosaved, and an unfinished job asks first).
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -34,14 +34,16 @@ import GraphicsScreen from './graphics/GraphicsScreen'
 const SettingsScreen = lazy(() => import('./settings/SettingsScreen'))
 import './design.css' // last: the one design file (scales, look, motion, controls) every screen follows
 
-// The bar mirrors the PC's desks: Home · News · Editorial · Graphics. Stories and Published are segments inside Editorial
-// (as on the PC's Editorial launcher); News is the Editorial screen's news pane, so both keep their state and scroll.
-// Graphics is the banner workspace (full screen, its own Back), also reached from a story's Banner step.
+// The bar: Home · News · Editorial · Graphics · Published (owner's order, 2026-11-10). Editorial opens the story flow's
+// step 1 (the intake: link / text / file); the story list stays on Home and in Editorial's ⋮ ("All stories"). News,
+// Published and the story list are panes of the Editorial screen, so each keeps its state and scroll. Graphics is the
+// banner workspace (full screen, its own Back), also reached from a story's Banner step.
 const NAV: NavItem[] = [
   { id: 'home', label: 'Home', icon: 'home' },
   { id: 'news', label: 'News', icon: 'inbox' },
   { id: 'editorial', label: 'Editorial', icon: 'power' },
   { id: 'graphics', label: 'Graphics', icon: 'layers' },
+  { id: 'published', label: 'Published', icon: 'globe' },
 ]
 const RAIL: NavItem[] = NAV
 
@@ -56,7 +58,8 @@ export default function MobileApp() {
   // a story open on the Editorial desk, and the Graphics workspace, are detail screens: the bottom bar steps aside (Back and the system gesture return)
   const deskView = useDesk((s) => s.view)
   const homeTab = useDesk((s) => s.homeTab)
-  const navValue = route === 'editorial' ? (deskView === 'home' && homeTab === 'wire' ? 'news' : 'editorial') : route
+  const paneTab = (): string => (deskView === 'home' && homeTab === 'wire' ? 'news' : deskView === 'home' && homeTab === 'published' ? 'published' : 'editorial')
+  const navValue = route === 'editorial' ? paneTab() : route
   // page transitions: the screen you leave slides away while the new one slides in like a card (sideways between destinations, up/down into and out of a detail)
   const ORDER: Route[] = ['home', 'editorial', 'graphics']
   const prevRoute = useRef(route)
@@ -106,21 +109,23 @@ export default function MobileApp() {
   }, [route]) // eslint-disable-line react-hooks/exhaustive-deps
   const onNav = (id: string) => {
     // the whole page shifts toward the tab you tapped: right of where you are slides in from the right, left from the left
-    const here = route === 'editorial' ? (deskView === 'home' && homeTab === 'wire' ? 'news' : 'editorial') : route
+    const here = route === 'editorial' ? paneTab() : route
     const run = () => {
       const desk = useDesk.getState()
       if (id === 'news') { desk.set({ homeTab: 'wire', view: 'home', writing: false }); go('editorial'); return }
-      if (id === 'editorial') { desk.set({ homeTab: desk.edTab, view: 'home', writing: false }); go('editorial'); return }
+      if (id === 'published') { desk.set({ homeTab: 'published', view: 'home', writing: false }); go('editorial'); return }
+      // Editorial: step 1 of the story flow (the intake), from anywhere, also from inside a story
+      if (id === 'editorial') { useNav.getState().intendEditorial('paste-link'); return }
       // Graphics from the bar is the workspace itself, not a story's Banner step (that one is entered from the story)
       if (id === 'graphics') { useNav.setState({ route: 'graphics', backTo: null, editorialFromHome: false }); return }
       go(id as Route)
     }
     // News tapped again while it is open: refresh it, as a pull-down would (the list scrolls back to the top first)
     if (id === here && id === 'news') { window.dispatchEvent(new Event('esb:news-refresh')); return }
-    if (id === here) { if (id === 'editorial' && deskView !== 'home') run(); return } // same tab: Editorial returns to its landing
-    // News and Editorial's Stories / Published are panes of one page: they slide as live panes (Landing), not through a
+    if (id === here) { if (id === 'editorial') run(); return } // same tab: Editorial goes back to step 1 (link field)
+    // News, Published and the story list are panes of one page: they slide as live panes (Landing), not through a
     // screenshot View Transition, which cost ~3 frames on every switch while it captured the screen
-    if (route === 'editorial' && deskView === 'home' && (id === 'news' || id === 'editorial')) { run(); return }
+    if (route === 'editorial' && deskView === 'home' && (id === 'news' || id === 'published')) { run(); return }
     slideTo(dirOf(NAV.map((n) => n.id), here, id), run)
   }
   const detail = (route === 'editorial' && deskView !== 'home') || route === 'graphics'
