@@ -38,7 +38,7 @@ function AboutCard() {
 
       <section className="ab2-grid" aria-label="What it does">
         <div className="ab2-tile is-engine"><i><Icon name="power" size={20} /></i><b>Editorial</b><small>Bangla or English link in, newsroom English out</small></div>
-        <div className="ab2-tile is-banner"><i><Icon name="layers" size={20} /></i><b>Banner</b><small>Facebook and web banners, on brand</small></div>
+        <div className="ab2-tile is-banner"><i><Icon name="layers" size={20} /></i><b>Graphics</b><small>Facebook and web banners, on brand</small></div>
         <div className="ab2-tile is-wire"><i><Icon name="inbox" size={20} /></i><b>News</b><small>EnergyWatch by <em className="ab2-yeasin">Yeasin Fiyaz</em></small></div>
         <div className="ab2-tile is-pub"><i><Icon name="globe" size={20} /></i><b>Publish</b><small>esbpowerline.com and Facebook</small></div>
       </section>
