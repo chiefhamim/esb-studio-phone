@@ -1918,26 +1918,12 @@ p, li, small, .m-note-text, .me-desk-head p, .m-field-hint, .me-hint { text-wrap
 @font-face { font-family: 'ESB Serif'; font-weight: 500; font-display: block; src: url('../pc/assets/fonts/serif-500.woff2') format('woff2'); }
 @font-face { font-family: 'ESB Serif'; font-weight: 700; font-display: block; src: url('../pc/assets/fonts/serif-700.woff2') format('woff2'); }
 
+/* Newsroom identity: paper, ink and brand colours come from the shared tokens (src/pc/styles/tokens.css = the PC's
+   src/styles/tokens.css, one source for both apps). Only phone-only names are mapped here. */
 :root {
-  --font-head: 'ESB Serif', 'Source Serif 4', Georgia, serif;
-  --brand-green: #1e9b4a; --brand-red: #e52d2d; --brand-orange: #ec8e3c;
-  --stripe: linear-gradient(90deg, var(--brand-green) 0 33.3%, var(--brand-red) 33.3% 66.6%, var(--brand-orange) 66.6% 100%);
-}
-:root:not([data-theme='dark']) {
-  --surface-app: #f1eee8;        /* newsprint */
-  --surface-sunken: #f7f5f1;
-  --surface-hover: #ece8e1;
-  --fill: rgba(60, 40, 20, .05);
-  --fill-hover: rgba(60, 40, 20, .075);
-  --text-primary: #211a18;       /* warm ink, a step from the banners' #2e1f1f */
-  --text-secondary: #5c534e;
-  --text-tertiary: #7a706a;
-  --border-subtle: #ebe6de; --border-default: #ddd6cc;
-}
-:root[data-theme='dark'] {
-  --surface-app: #0f0e0d;
-  --text-primary: #f5f2ee;
-  --text-secondary: #b3aca5;
+  --font-head: 'ESB Serif', var(--font-display);
+  --brand-green: var(--brand-g); --brand-red: var(--brand-r); --brand-orange: var(--brand-o);
+  --stripe: var(--brand-stripe);
 }
 
 /* ---- headlines speak in the banner serif ---- */
