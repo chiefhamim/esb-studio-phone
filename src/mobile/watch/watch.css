@@ -344,3 +344,18 @@
 :root[data-theme='dark'] .ew-trend-chip.is-on { color: #042f2e; }
 :root[data-theme='dark'] .ew-trend-chip.is-on small { color: rgba(4, 47, 46, .8); }
 
+
+/* ---- one main-button colour: ink, like the PC (2026-11-10). News' teal stays only for what it means: NEW items and the
+   EnergyWatch mark. Refresh (button and pull ring), Add, chosen tools and trend chips, the range pill, progress and
+   focus rings are the app's ink action colour (--action / --on-action in design.css). ---- */
+.ew-refresh:disabled { color: var(--text-secondary); }
+.ew-refresh.is-armed, .ew-refresh.is-busy, :root[data-theme='dark'] .ew-refresh.is-armed, :root[data-theme='dark'] .ew-refresh.is-busy { background: var(--action); color: var(--on-action); }
+.ew-ptr.is-armed .ew-ptr-ring, .ew-ptr.is-armed, .ew-ptr.is-busy { background: var(--action); color: var(--on-action); }
+.ew-addbtn { background: var(--action); color: var(--on-action); }
+.ew-tool.is-on { color: var(--text-primary); }
+.ew-trend-chip.is-on, :root[data-theme='dark'] .ew-trend-chip.is-on { background: var(--action); color: var(--on-action); }
+.ew-trend-chip.is-on small, :root[data-theme='dark'] .ew-trend-chip.is-on small { color: color-mix(in srgb, var(--on-action) 80%, transparent); }
+.ew-when.m-btn { background: var(--fill) !important; color: var(--text-primary) !important; }
+.ew-bar2 > .ew-when.m-btn > svg:first-child, .ew-range-txt > svg, .ew-sum > svg, .ew-word > svg { color: var(--text-secondary); }
+.ew-bar { background: var(--action); }
+.ew-field:focus-within, .ew-addfield:focus-within { box-shadow: 0 0 0 2px color-mix(in srgb, var(--action) 45%, transparent); }

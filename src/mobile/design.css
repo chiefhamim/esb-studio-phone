@@ -2669,9 +2669,11 @@ section > .me-h2 + .me-stack > .me-readysum:first-child { margin-top: 0 !importa
 .me-track5 li.has-fix.is-bad:not(.is-now):not(.is-done) i { background: color-mix(in srgb, #e5484d 60%, transparent); }
 
 /* ---- one action tint (Apple: the tint is for "tap here", colour is for meaning). The story's desk colour stays as identity
-        (step track, step label, category, keyword chips); every primary action is the brand indigo, so Publish is never red. ---- */
-:root { --action: #4f46e5; --on-action: #fff; }
-:root[data-theme='dark'] { --action: #5b53f0; }
+        (step track, step label, category, keyword chips); every primary action is ink (as on the PC), so Publish is never red. ---- */
+/* 2026-11-10: the action tint is the PC's ink (.btn.primary = --ink / --on-ink, src/pc/styles/tokens.css). Literal values,
+   not var(--ink): --ink is var(--accent), which turns into the desk colour while a story is open. */
+:root { --action: #1c1916; --on-action: #ffffff; }
+:root[data-theme='dark'] { --action: #f3efe8; --on-action: #191816; }
 :root .m-btn-filled:not(:disabled), :root .me-stepbar .m-btn-filled:not(:disabled), :root .gx-tools > .m-btn.m-btn-filled:not(:disabled),
 :root .me-go:not(:disabled), :root [data-provider] .me-go:not(:disabled), :root .m-actionbar .m-btn-filled:not(:disabled) {
   background: var(--action) !important; background-image: none !important; color: var(--on-action) !important;
@@ -3929,3 +3931,17 @@ html.kb-open .m-snackbars { bottom: auto !important; }
 @media (prefers-reduced-motion: reduce) { .gx-panel .pnl.open > :not(header), .popover.menu.gx-portal { animation: none !important; } }
 /* the category / size dropdown at the top of the Banner editor: no `transition: all`, a quicker drop from its button */
 .gx-droppanel { transition: none !important; transform-origin: top center; animation: gx-drop-in .26s cubic-bezier(.16, 1, .3, 1) both !important; }
+
+/* ---- one main-button colour: ink, like the PC (2026-11-10). Colour is kept only where it means something (story
+   categories, status, News' teal for new items and the EnergyWatch mark); every start / main action is ink. ---- */
+.m-nav-item.is-primary .m-nav-pill { color: var(--on-action) !important; }
+/* Home's Editorial and Graphics tiles: an ink icon square (the drifting lights are neutral, so the square reads as ink) */
+.hm-launch .hm-cell:nth-child(1), .hm-launch .hm-cell:nth-child(2) { --t: var(--action); --ico-a: rgba(255, 255, 255, .16); --ico-b: rgba(255, 255, 255, .08); }
+:root[data-theme='dark'] .hm-launch .hm-cell:nth-child(1), :root[data-theme='dark'] .hm-launch .hm-cell:nth-child(2) { --ico-a: rgba(0, 0, 0, .06); --ico-b: rgba(0, 0, 0, .03); }
+.hm-launch .hm-cell .hm-cell-ico, .hm-launch .hm-cell .hm-cell-ico.hm-cell-ico { color: var(--on-action) !important; }
+.hm-launch .hm-cell .hm-cell-ico svg { filter: none !important; }
+.hm-launch .hm-cell > svg:last-child, :root[data-theme='dark'] .hm-launch .hm-cell > svg:last-child { color: var(--text-tertiary) !important; }
+/* empty states: the icon tile is ink on a faint ink wash (it was indigo) */
+.m-empty-icon, .wr-empty-ico, :root[data-theme='dark'] :is(.m-empty-icon, .wr-empty-ico) {
+  background: color-mix(in srgb, var(--action) 8%, var(--surface-panel)) !important; color: var(--action) !important; }
+.m-empty-error .m-empty-icon, :root[data-theme='dark'] .m-empty-error .m-empty-icon { background: var(--danger-soft) !important; color: var(--danger) !important; }
