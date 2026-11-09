@@ -187,17 +187,8 @@ function WireList({ onUse }: { onUse: (url: string) => void }) {
       </div>
       {note && <p className="me-hint" role="status">{note}</p>}
       {!sources.length ? (
-        <div className="wr-empty">
-          <span className="wr-empty-ico"><Icon name="inbox" size={28} /></span>
-          <h3>No feed sources yet</h3>
-          <p>Follow the sites you watch. New stories from them appear here.</p>
-          <ol className="wr-steps">
-            <li><i>1</i><span><b>Add a feed</b><small>RSS, Atom or a news sitemap address</small></span></li>
-            <li><i>2</i><span><b>Check now</b><small>New stories are listed, newest first</small></span></li>
-            <li><i>3</i><span><b>Tap a story</b><small>It opens as a new story to translate</small></span></li>
-          </ol>
-          <Button icon="plus" wide onClick={() => useUi.getState().openSheet('ed-wire-sources')}>Add a source</Button>
-        </div>
+        <Empty icon="inbox" title="No feed sources yet" body="Add the RSS, Atom or news-sitemap address of a site you follow. Its new stories are listed here, newest first; tap one to start a story."
+          action={<Button icon="plus" onClick={() => useUi.getState().openSheet('ed-wire-sources')}>Add a source</Button>} />
       ) : (
         <div className="me-list">
           {shown.map((it) => (
@@ -316,12 +307,12 @@ export function Landing({ active }: { active: boolean }) {
           <div className={'m-wrap me-home'}>
               {onDesk && storyCount > 1 && (
                 <section className="me-continue" aria-label="Continue editing">
-                  <h2 className="me-h2">Continue editing</h2>
+                  <h2 className="me-h2 has-icon"><Icon name="edit" size={15} />Continue editing</h2>
                   <Row tall onClick={() => set({ view: 'story' })} lead={<Thumb src={source?.images?.[0]?.src} />} title={draft.headline.trim() || source?.title || 'Untitled story'}
                     meta={<>{story && <StatusChip s={story.status} />}<span>{hostOf(source?.url)}{story ? ` · ${ago(story.updatedAt)}` : ''}</span></>} trail={<Icon name="chevRight" size={20} />} />
                 </section>
               )}
-              <h2 className="me-h2">All stories</h2>
+              <h2 className="me-h2 has-icon"><Icon name="newspaper" size={15} />All stories</h2>
               <StoriesList key={activeId ?? 'none'} />
               <Button kind="tonal" icon="plus" onClick={() => newStory('story')}>Write a blank story</Button>
           </div>

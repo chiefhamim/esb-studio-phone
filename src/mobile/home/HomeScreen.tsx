@@ -262,7 +262,7 @@ export default function HomeScreen({ active }: ScreenProps) {
           {(stories.length === 0 || others.length > 0) && <section className="hm-sec hm-sec-list" aria-labelledby="home-recent">
             {stories.length === 0
               ? (
-                <Empty title="No stories yet" body="Paste a link from any Bengali or English news site and it becomes an English story, ready for review."
+                <Empty icon="newspaper" title="No stories yet" body="Paste a link from any Bengali or English news site and it becomes an English story, ready for review."
                   action={<Button icon="link" onClick={() => nav.intendEditorial('paste-link')}>Paste a news link</Button>} />
               )
               : <div className="m-list hm-glass">{others.map((s) => <StoryRow key={s.id} s={s} active={s.id === activeId} onOpen={() => open(s.id)} />)}</div>}

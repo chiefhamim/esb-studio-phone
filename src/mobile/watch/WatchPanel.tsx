@@ -271,7 +271,7 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
             <EwMark size={56} />
             <h3>{range?.running || (!range && running) ? 'Reading the portals' : catCounts.all || items.length || range ? 'Nothing matches' : <EwName />}</h3>
             <p>{range ? (range.running ? 'Headlines appear here as each portal answers.' : 'No Energy & Power or PM & President headlines in this range. Try a wider one.') : cat === 'press' && !items.some((x) => x.categories.includes('press')) ? 'Tap Check now to scan official Bangladesh government ministry & utility press wings.' : items.length ? 'Try another category, topic pill, or a longer time range.' : `Energy & Power, PM & President, and Official Press headlines from ${PORTALS.length} Bangladeshi portals and ${PRESS_OFFICES.length} government offices. Runs on this phone, anywhere with internet.`}</p>
-            {(!items.length || (cat === 'press' && !items.some((x) => x.categories.includes('press')))) && !running && !range && <Button icon="refresh" wide onClick={() => void check()}>Check now</Button>}
+            {(!items.length || (cat === 'press' && !items.some((x) => x.categories.includes('press')))) && !running && !range && <Button icon="refresh" onClick={() => void check()}>Check now</Button>}
           </div>
         )}
       </div>

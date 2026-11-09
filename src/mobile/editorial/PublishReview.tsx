@@ -206,7 +206,7 @@ export function PublishReview() {
         </section>
 
         <section>
-          <h2 className="me-h2">Checklist</h2>
+          <h2 className="me-h2 has-icon"><Icon name="checkDouble" size={15} />Checklist</h2>
           <Checklist compact />
         </section>
 

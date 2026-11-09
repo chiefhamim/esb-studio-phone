@@ -3945,3 +3945,9 @@ html.kb-open .m-snackbars { bottom: auto !important; }
 .m-empty-icon, .wr-empty-ico, :root[data-theme='dark'] :is(.m-empty-icon, .wr-empty-ico) {
   background: color-mix(in srgb, var(--action) 8%, var(--surface-panel)) !important; color: var(--action) !important; }
 .m-empty-error .m-empty-icon, :root[data-theme='dark'] .m-empty-error .m-empty-icon { background: var(--danger-soft) !important; color: var(--danger) !important; }
+/* ---- section labels: one style on every tab (2026-11-10), Home's RECENT STORIES: small caps in the secondary ink with a
+   brand-red icon. Editorial's labels (Continue editing, All stories, Checklist) and News' settings labels follow it. ---- */
+.hm-h, .me-h2, .ew-h { font: 600 var(--fs-s)/1.3 var(--font-ui) !important; letter-spacing: .07em !important; text-transform: uppercase; color: var(--text-secondary) !important; opacity: 1 !important; }
+.me-h2.has-icon::before { content: none; }
+.me-h2.has-icon > svg { flex: none; color: var(--brand-red); }
+.ew-trend-h, .ew-trend-h > svg { color: var(--text-secondary) !important; }
