@@ -214,7 +214,7 @@ export default function HomeScreen({ active }: ScreenProps) {
           {session ? <UserAvatar name={name} className="hm-me-badge" /> : <Icon name="user" size={22} />}
         </button>
       </header>
-      {/* the top of Home (lockup, tagline, status chips, Editorial / Banner, the Recent stories heading) stays put; the stories scroll beneath it */}
+      {/* the top of Home (lockup, tagline, status chips, Editorial / Graphics, the Recent stories heading) stays put; the stories scroll beneath it */}
       <div className="m-wrap hm-brand">
         <div className="hm-hero">
           <h1 className="hm-title" aria-label="ESB Power Line Ai Studio">
@@ -237,8 +237,8 @@ export default function HomeScreen({ active }: ScreenProps) {
           </button>
           <button type="button" className="hm-cell" onClick={() => nav.go('graphics')}>
             <span className="hm-cell-ico"><Icon name="layers" size={22} /></span>
-            <span className="hm-cell-name">Banner</span>
-            <span className="hm-cell-note">Design in Graphics</span>
+            <span className="hm-cell-name">Graphics</span>
+            <span className="hm-cell-note">Design a banner</span>
             <Icon name="chevRight" size={20} />
           </button>
         </nav>

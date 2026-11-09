@@ -1,6 +1,7 @@
-// The Editorial landing: start a story (link, text/file, blank), continue the one on the desk, and the three lists the
-// PC desk keeps — the story queue (Draft / Needs check / Approved / Published), the articles live on esbpowerline.com
-// (open one to update it, never a duplicate) and the Wire inbox of followed feeds.
+// The Editorial landing: start a story (link, text/file, blank), continue the one on the desk, and the lists the PC desk
+// keeps. Editorial shows Stories | Published as segments at the top (the PC's Editorial launcher tabs): the story queue
+// (Draft / Needs check / Approved / Published) and the articles live on esbpowerline.com (open one to update it, never a
+// duplicate). The News tab is this screen's third pane: EnergyWatch and the followed feeds.
 import { useSnapTail } from '../shell/snap'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { StepTrack } from './Pipeline'
@@ -83,9 +84,11 @@ function StoriesList() {
   const [f, setF] = useState<'all' | StoryStatus>('all')
   const counts = useMemo(() => Object.fromEntries(STORY_STATUSES.map((s) => [s, stories.filter((x) => x.status === s).length])) as Record<StoryStatus, number>, [stories])
   const shown = stories.filter((s) => (f === 'all' || s.status === f) && (!q.trim() || storyTitle(s.snapshot).toLowerCase().includes(q.trim().toLowerCase()) || hostOf(s.snapshot.source?.url).includes(q.trim().toLowerCase())))
-  if (!stories.length) return <Empty icon="newspaper" title="No stories yet" body="Start one from Editorial (a link, a file or pasted text). Every story is kept here with its draft." />
+  if (!stories.length) return <Empty icon="newspaper" title="No stories yet" body="Paste a news link, a file or text to start one. Every story is kept here with its draft."
+    action={<Button icon="link" onClick={() => useNav.getState().intendEditorial('paste-link')}>Paste a news link</Button>} />
   return (
     <>
+      <Button icon="link" wide onClick={() => useNav.getState().intendEditorial('paste-link')}>Paste a news link</Button>
       <label className="me-search"><Icon name="search" size={18} /><input type="search" className="m-input" placeholder="Search stories" aria-label="Search stories" value={q} onChange={(e) => setQ(e.target.value)} /></label>
       <div className="m-chips is-scroll" role="group" aria-label="Filter by status">
         <Chip on={f === 'all'} onClick={() => setF('all')}>All <small>{stories.length}</small></Chip>
@@ -178,7 +181,7 @@ function WireList({ onUse }: { onUse: (url: string) => void }) {
         </Banner>
       )}
       <div className="me-searchrow">
-        <label className="me-search"><Icon name="search" size={18} /><input type="search" className="m-input" placeholder="Filter wire stories" aria-label="Filter wire stories" value={q} onChange={(e) => setQ(e.target.value)} /></label>
+        <label className="me-search"><Icon name="search" size={18} /><input type="search" className="m-input" placeholder="Filter news" aria-label="Filter news" value={q} onChange={(e) => setQ(e.target.value)} /></label>
         <IconBtn icon="refresh" label="Check now" onClick={() => void check()} disabled={polling || !sources.length} className={polling ? 'me-spin' : ''} />
         <IconBtn icon="sliders" label="Feed sources" onClick={() => useUi.getState().openSheet('ed-wire-sources')} />
       </div>
@@ -262,7 +265,8 @@ function WireTab({ onUse, active }: { onUse: (url: string) => void; active: bool
   )
 }
 
-const TAB_TITLE: Record<HomeTab, string> = { stories: 'Stories', published: 'Published', wire: 'News' }
+const TAB_TITLE: Record<HomeTab, string> = { stories: 'Editorial', published: 'Editorial', wire: 'News' }
+const ED_SEGMENTS: { value: Exclude<HomeTab, 'wire'>; label: string; icon: IconName }[] = [{ value: 'stories', label: 'Stories', icon: 'newspaper' }, { value: 'published', label: 'Published', icon: 'globe' }]
 
 export function Landing({ active }: { active: boolean }) {
   const homeTab = useDesk((s) => s.homeTab)
@@ -304,7 +308,8 @@ export function Landing({ active }: { active: boolean }) {
   return (
     <>
       <TopBar title={TAB_TITLE[homeTab]} sub={site.connected ? undefined : <><i className="me-dot" aria-hidden />esbpowerline.com not reachable</>}
-        overflow={homeMenu()} />
+        overflow={homeMenu()}
+        under={homeTab === 'wire' ? undefined : <div className="me-edtabs"><Segmented label="Editorial" value={homeTab} onChange={(v) => set({ homeTab: v })} options={ED_SEGMENTS} /></div>} />
       <div className="me-stage">
       {opened.has('stories') && (
         <div {...pane('stories')}>

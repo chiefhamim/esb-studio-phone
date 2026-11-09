@@ -272,3 +272,6 @@ html:not(.kb-open) .me-toolbar { padding-bottom: calc(4px + var(--m-safe-bottom)
 /* story bar: one line title; Publish in the top bar on phones (bottom bar keeps readiness + a second Publish only from 600 dp) */
 .me-root .m-topbar-title { padding-inline: var(--s-2); }
 .me-root .m-topbar-title h1 { -webkit-line-clamp: 1; }
+/* Editorial's Stories | Published segments (the PC's Editorial launcher tabs): fixed under the title, same gutter as the page */
+.me-edtabs { padding: 0 calc(var(--m-margin) + var(--m-safe-right)) var(--sp-s) calc(var(--m-margin) + var(--m-safe-left)); }
+.me-edtabs .m-seg { min-height: 44px; }
