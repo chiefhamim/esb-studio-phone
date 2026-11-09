@@ -7,10 +7,8 @@ import { parseFeed, parseDate } from './feedparse'
 import { itemTimeMs, olderThan, sortTimeMs } from './dates'
 import { mergeFound, norm } from './dedupe'
 import { NOT_PRESS, parseGovPressTable, resolveGovOfficeName } from './pressParse'
-import { applyHeadlineCache, headlinesToTranslate, translateHeadlines, trimHeadlineCache, type HeadlineCache } from './headlineEn'
-import { raceTranslate } from '../../pc/editorial/translateNet'
 
-// the shared engine (identical to the PC's src/news): matcher, feedparse, dates, dedupe, pressParse, headlineEn, rangeSearch
+// the shared engine (identical to the PC's src/news): matcher, feedparse, dates, dedupe, pressParse, rangeSearch
 export { itemTimeMs, norm, parseGovPressTable, resolveGovOfficeName }
 import { unwrapFeedRedirectUrl } from '../../platform/fetchGuarded'
 
@@ -29,8 +27,6 @@ export interface WatchItem {
   matched: string[]
   /** the feed gave no readable date: shown as "time not given", aged from when it was first found */
   timeUnknown?: boolean
-  /** English line under a Bangla headline (free machine translation, see headlineEn.ts) */
-  titleEn?: string
 }
 export interface FeedState { ok: boolean; at: number; count: number; error?: string }
 export interface WatchPrefs {
@@ -45,7 +41,6 @@ export interface WatchPrefs {
   /** minutes between automatic checks while Wire is open; 0 = only Check now */
   autoMin: number
   /** show an English line under Bangla headlines (free translation, in the background); default on */
-  titleEn?: boolean
 }
 
 export const DEFAULT_PREFS: WatchPrefs = {
@@ -55,7 +50,6 @@ export const DEFAULT_PREFS: WatchPrefs = {
   show: { energy: true, leadership: true, press: true },
   maxAgeH: 24,
   autoMin: 10,
-  titleEn: true,
 }
 const PREFS_KEY = 'esb-phone/watch/prefs/v1'
 const DATA_KEY = 'esb-phone/watch/data/v1'
@@ -329,17 +323,10 @@ interface WatchState {
   markRead: (key: string) => void
   markAllRead: () => void
   run: () => Promise<{ checked: number; added: number; failed: number } | null>
-  /** fill English lines under Bangla headlines in the background (free translation; prefs.titleEn turns it off) */
-  translateTitles: () => Promise<void>
 }
 
 const initial = load(DATA_KEY, { items: [] as WatchItem[], hidden: [] as string[], feeds: {} as Record<number, FeedState>, lastRun: null as number | null, seenAt: 0, newKeys: [] as string[] })
 
-const TITLE_EN_KEY = 'esb-phone/watch/title-en/v1'
-let titleEnCache: HeadlineCache = load(TITLE_EN_KEY, {} as HeadlineCache)
-let titlesRunning = false
-/** The free translation of one headline (or one batch, a headline per line); null when no service answered. */
-const freeTranslate = (text: string) => (typeof navigator !== 'undefined' && navigator.onLine === false ? Promise.resolve(null) : raceTranslate(text, 8000))
 
 export const useWatch = create<WatchState>((set, get) => {
   const persist = () => { const s = get(); save(DATA_KEY, { items: s.items, hidden: s.hidden, feeds: s.feeds, lastRun: s.lastRun, seenAt: s.seenAt, newKeys: s.newKeys }) }
@@ -476,26 +463,9 @@ export const useWatch = create<WatchState>((set, get) => {
       const prev = get().items
       const { items, addedKeys } = mergeFound(prev, found, started, { hidden: get().hidden, itemCap: ITEM_CAP, pressRetentionMs: PRESS_RETENTION_MS })
       const added = addedKeys.length
-      set({ items: applyHeadlineCache(items, titleEnCache), feeds: states, lastRun: started, running: false, seenAt: prev.length ? get().seenAt : started, newKeys: prev.length ? addedKeys : [] })
+      set({ items, feeds: states, lastRun: started, running: false, seenAt: prev.length ? get().seenAt : started, newKeys: prev.length ? addedKeys : [] })
       persist()
-      void get().translateTitles()
       return { checked: feeds.length + pressSources.length, added, failed }
-    },
-    translateTitles: async () => {
-      if (titlesRunning || get().prefs.titleEn === false) return
-      titlesRunning = true
-      try {
-        set({ items: applyHeadlineCache(get().items, titleEnCache) })
-        const want = headlinesToTranslate(visibleItems(get().items, get().hidden, get().prefs, '', 'all'), titleEnCache)
-        if (!want.length) return
-        const got = await translateHeadlines(want, freeTranslate, { concurrency: 2 })
-        titleEnCache = trimHeadlineCache({ ...titleEnCache, ...got }, get().items.map((x) => x.key))
-        save(TITLE_EN_KEY, titleEnCache)
-        set({ items: applyHeadlineCache(get().items, titleEnCache) })
-        persist()
-      } finally {
-        titlesRunning = false
-      }
     },
   }
 })

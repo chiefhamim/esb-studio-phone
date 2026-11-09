@@ -189,7 +189,7 @@ function only(files) {
 export const NEWS_ENGINE = [
   'matcher.ts', 'matcher.test.ts', 'feedparse.ts', 'feedparse.test.ts', 'ewSources.ts', 'portalBrands.ts',
   'rangeSearch.ts', 'rangeSearch.test.ts', 'dates.ts', 'dates.test.ts', 'dedupe.ts', 'dedupe.test.ts',
-  'pressParse.ts', 'pressParse.test.ts', 'headlineEn.ts', 'headlineEn.test.ts',
+  'pressParse.ts', 'pressParse.test.ts',
 ]
 const WATCH = path.join(PHONE, 'src', 'mobile', 'watch')
 const ENGINE_MANIFEST = path.join(WATCH, 'ENGINE_MANIFEST.json')
