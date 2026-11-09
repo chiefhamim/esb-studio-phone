@@ -51,19 +51,19 @@ describe('sheets', () => {
 })
 
 describe('snacks', () => {
-  it('auto-closes in 3 seconds by default', () => {
+  it('auto-closes after 3.5 seconds by default (plus the 220 ms exit)', () => {
     vi.useFakeTimers()
     useUi.setState({ snacks: [] })
     snack('Saved to device')
     expect(useUi.getState().snacks.length).toBe(1)
     expect(useUi.getState().snacks[0].text).toBe('Saved to device')
 
-    // Advance 2900ms: still there
-    act(() => { vi.advanceTimersByTime(2900) })
+    // Advance 3400ms: still there
+    act(() => { vi.advanceTimersByTime(3400) })
     expect(useUi.getState().snacks.length).toBe(1)
 
-    // Advance past 3000ms: auto-closed
-    act(() => { vi.advanceTimersByTime(200) })
+    // Past 3500ms + the exit animation: gone
+    act(() => { vi.advanceTimersByTime(400) })
     expect(useUi.getState().snacks.length).toBe(0)
     vi.useRealTimers()
   })
@@ -77,6 +77,8 @@ describe('snacks', () => {
 
     // Dismiss early
     act(() => { dismissSnack(id) })
+    expect(useUi.getState().snacks[0].leaving).toBe(true)
+    act(() => { vi.advanceTimersByTime(250) })
     expect(useUi.getState().snacks.length).toBe(0)
 
     // Advancing timers does not crash or re-dismiss
