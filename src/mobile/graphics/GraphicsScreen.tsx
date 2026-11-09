@@ -23,6 +23,7 @@ import { getThemePref, nextPref, setThemePref } from '../../shell/theme'
 import { PcHost } from '../PcHost'
 import { confirmAsk, snack, useSizeClass, useUi } from '../shell/core'
 import { useIncoming } from '../shell/incoming'
+import { AccountButton } from '../shell/AccountSheet'
 import { useNav } from '../shell/nav'
 import { SelectionTray } from './SelectionTray'
 import { LivePreview } from './LivePreview'
@@ -358,6 +359,7 @@ export default function GraphicsScreen({ active }: ScreenProps) {
           {size === 'medium' && <IconBtn icon="sliders" label={sideOpen ? 'Hide the Inspector panel' : 'Show the Inspector panel'} active={sideOpen} onClick={toggleSide} />}
           <IconBtn icon="more" label="More: File, Edit, Insert, Arrange, View" onClick={() => openSheet('gx-more')} />
         </>}
+        trailing={<AccountButton />}
       />
       <FormatStrip />
 

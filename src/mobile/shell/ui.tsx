@@ -30,7 +30,7 @@ export function IconBtn({ icon, label, onClick, active, disabled, badge, classNa
 }
 
 // ---------------------------------------------------------------- top app bar (one row)
-export function TopBar({ title, sub, leading, actions, overflow, under }: { title: ReactNode; sub?: ReactNode; leading?: ReactNode; actions?: ReactNode; overflow?: MenuItem[]; under?: ReactNode }) {
+export function TopBar({ title, sub, leading, actions, overflow, under, trailing }: { title: ReactNode; sub?: ReactNode; leading?: ReactNode; actions?: ReactNode; overflow?: MenuItem[]; under?: ReactNode; /** after ⋮: the account avatar */ trailing?: ReactNode }) {
   return (
     <header className="m-topbar">
       <div className="m-topbar-row">
@@ -42,6 +42,7 @@ export function TopBar({ title, sub, leading, actions, overflow, under }: { titl
         <div className="m-topbar-actions">
           {actions}
           {overflow && overflow.length > 0 && <MenuButton icon="more" label="More options" items={overflow} />}
+          {trailing}
         </div>
       </div>
       {under}

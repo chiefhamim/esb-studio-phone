@@ -359,3 +359,24 @@
 .ew-bar2 > .ew-when.m-btn > svg:first-child, .ew-range-txt > svg, .ew-sum > svg, .ew-word > svg { color: var(--text-secondary); }
 .ew-bar { background: var(--action); }
 .ew-field:focus-within, .ew-addfield:focus-within { box-shadow: 0 0 0 2px color-mix(in srgb, var(--action) 45%, transparent); }
+
+/* ---- News top, fewer shells (2026-11-10): the segmented control stays; the brand is one quiet line (no card), range,
+   search and refresh are one plain toolbar row (no inner pill shell, 44 px targets), chip counts are plain tabular numbers
+   and the chip rows fade at the right edge instead of cutting. ---- */
+.ew-head, .ew .ew-head { gap: var(--sp-xs); padding: 0; border-radius: 0; background: none; box-shadow: none; }
+.ew-brandline { gap: var(--sp-s); min-height: 28px; }
+.ew-head .ew-brandline .ew-mark { width: 22px !important; height: 22px !important; border-radius: 6px !important; box-shadow: none !important; }
+.ew-head .ew-brandline .ew-mark svg { width: 13px; height: 13px; filter: none; }
+.ew-brandline .ew-title-row { gap: var(--sp-s); }
+.ew-brandline .ew-title-row > b { font: 700 var(--fs-m)/1.3 var(--font-ui); }
+.ew-brandline .ew-title-row > small { flex: none; font: 500 var(--fs-s)/1.3 var(--font-ui); color: var(--text-secondary); }
+.ew-brandline .ew-title-row > .ew-st { margin-top: 0; }
+.ew-bar2 { height: 44px; padding: 0; border-radius: 0; background: none; gap: 0; }
+.ew-bar2 > .ew-when.m-btn { height: 44px; min-height: 44px !important; padding: 0 var(--sp-s) 0 0 !important; background: none !important; }
+.ew-bar2 > .ew-when.m-btn:active { background: var(--fill) !important; }
+.ew-tool, .ew-refresh { width: 44px !important; height: 44px !important; margin: 0; border-radius: var(--r-md) !important; background: transparent; color: var(--text-secondary); }
+.ew-tool.is-on { background: var(--fill); color: var(--text-primary); }
+.ew-refresh:active, .ew-tool:active { background: var(--fill); }
+.ew-chip small, .ew-chip.is-on small, :root[data-theme='dark'] .ew-chip.is-on:not(.is-energy):not(.is-leadership):not(.is-press) small {
+  min-width: 0; padding: 0; border-radius: 0; background: none; color: inherit; opacity: .62; font: 600 var(--fs-xs)/1 var(--font-ui); font-variant-numeric: tabular-nums; }
+.ew-chips, .ew-trend { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); padding-right: 24px; }

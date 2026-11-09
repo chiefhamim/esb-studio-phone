@@ -3951,3 +3951,32 @@ html.kb-open .m-snackbars { bottom: auto !important; }
 .me-h2.has-icon::before { content: none; }
 .me-h2.has-icon > svg { flex: none; color: var(--brand-red); }
 .ew-trend-h, .ew-trend-h > svg { color: var(--text-secondary) !important; }
+/* ---- ⋮ and other dropdown menus, plain rows (2026-11-10): no grey tile behind each icon; a 20 px icon in the secondary ink,
+   the label, and hairline dividers between groups. Rows stay 48 px tall. ---- */
+.m-menu-item { grid-template-columns: 24px minmax(0, 1fr) auto; min-height: 48px; }
+.m-menu-item > svg:first-child, .m-menu-item.is-danger > svg:first-child { box-sizing: border-box; width: 20px; height: 20px; padding: 0; border-radius: 0; background: none; color: var(--text-secondary); }
+.m-menu-item.is-danger > svg:first-child { color: var(--danger); }
+.m-menu-item:has(> .m-menu-lead:first-child) { grid-template-columns: 32px minmax(0, 1fr) auto; }
+.m-menu-lead, .m-menu-lead.is-on { width: auto; height: auto; place-items: center start; border-radius: 0; background: none; color: var(--text-secondary); }
+.m-menu-lead.is-on { color: #15803d; } :root[data-theme='dark'] .m-menu-lead.is-on { color: #4ade80; }
+.m-menu-div { margin: var(--sp-xs) 0; height: 0; background: none; border-top: .5px solid var(--border-default); }
+/* the account avatar, top right of every desk's header (the PC rule: one avatar in the same spot on every desk) */
+.m-acct { padding: 0 !important; background: transparent !important; }
+.m-acct .u-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.m-acct .u-avatar.is-initial { display: grid; place-items: center; background: var(--action); color: var(--on-action); font: 700 var(--fs-s)/1 var(--font-ui); }
+.m-acct > .m-acct-empty { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--fill); color: var(--text-secondary); }
+/* Published cards: "1 h ago" is plain text in the date line, not a pill */
+.pb-time { gap: 0 !important; }
+.pb-ago { height: auto !important; padding: 0 !important; border-radius: 0 !important; background: none !important; color: inherit !important; font: inherit !important; }
+.pb-ago::after { content: '\00a0·\00a0'; }
+/* Home status (2026-11-10): one quiet row of two tappable items (dot or mark + text), no card shell, so the two desk
+   tiles are the only big containers. Each item is still a 44 px target and still opens what fixes it. */
+.hm-chips { justify-content: flex-start; gap: var(--sp-l) !important; margin-top: var(--sp-m) !important; }
+.hm-chips .hm-chip, .hm-chips .hm-chip.hm-chip-ok, .hm-chips .hm-chip.hm-chip-bad, .hm-chips .hm-chip.hm-chip-ai, .hm-chips .hm-chip.hm-chip-ai.is-ok,
+:root[data-theme='dark'] .hm-chips .hm-chip {
+  flex: 0 1 auto !important; min-height: 44px; padding: 0 var(--sp-xs) !important; border-radius: var(--r-sm) !important;
+  background: none !important; box-shadow: none !important; color: var(--text-secondary) !important; font-weight: 600; }
+.hm-chips .hm-chip:active { background: var(--fill) !important; box-shadow: none !important; }
+/* Graphics' header also carries the account avatar: the banner name stays on one line (ellipsis) instead of wrapping */
+.gx .m-topbar-title { min-width: 0; }
+.gx .m-topbar-title h1 { display: block !important; font-size: 20px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

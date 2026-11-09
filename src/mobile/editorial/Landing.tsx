@@ -1,7 +1,7 @@
 // The Editorial landing: start a story (link, text/file, blank), continue the one on the desk, and the lists the PC desk
-// keeps. Editorial shows Stories | Published as segments at the top (the PC's Editorial launcher tabs): the story queue
-// (Draft / Needs check / Approved / Published) and the articles live on esbpowerline.com (open one to update it, never a
-// duplicate). The News tab is this screen's third pane: EnergyWatch and the followed feeds.
+// keeps, one pane each: the story queue (Draft / Needs check / Approved / Published; Home's "See all" and Editorial's ⋮
+// "All stories"), the Published tab (articles live on esbpowerline.com: open one to update it, never a duplicate) and the
+// News tab (EnergyWatch and the followed feeds).
 import { useSnapTail } from '../shell/snap'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { StepTrack } from './Pipeline'
@@ -24,7 +24,9 @@ import { PublishedSheet, openPublishedItem } from './PublishedSheet'
 import { matchFbPosts, type FbPost } from './fbLookup'
 import { afterSlide } from '../shell/slide'
 import { publishedParts } from './publishedDate'
-import { WatchList, WatchSettingsSheet } from '../watch/WatchPanel'
+import { WatchList, WatchSettingsSheet, markAllNewsRead } from '../watch/WatchPanel'
+import { useWatch } from '../watch/watchStore'
+import { AccountButton } from '../shell/AccountSheet'
 
 export function StatusChip({ s }: { s: StoryStatus }) {
   return <span className={'me-status s-' + s}>{STATUS_LABEL[s]}</span>
@@ -42,17 +44,14 @@ function Thumb({ src, cat, portrait }: { src?: string | null; cat?: string; port
   return <span className="me-thumb me-thumb-empty" style={c ? ({ '--thumb-c': c.accent } as React.CSSProperties) : undefined} aria-hidden><Icon name="newspaper" size={20} /></span>
 }
 
-export function homeMenu(): MenuItem[] {
-  const nav = useNav.getState()
+/** The tools every desk shares (they follow the tab's own actions in its ⋮ menu). */
+export function sharedTools(): MenuItem[] {
   return [
     { label: 'Activity', icon: 'activity', onClick: () => useUi.getState().openSheet('ed-activity') },
     { label: 'Quote & figure library', icon: 'quote', onClick: () => useUi.getState().openSheet('ed-library') },
-    { divider: true, label: '', onClick: () => {} },
-    { label: 'AI keys and providers', icon: 'sparkle', onClick: () => nav.openSettings('ai') },
-    { label: 'Site sign-in', icon: 'user', onClick: () => nav.openSettings('site') },
-    { label: 'Facebook Page', icon: 'brandFacebook', onClick: () => nav.openSettings('facebook') },
   ]
 }
+const DIVIDER: MenuItem = { divider: true, label: '', onClick: () => {} }
 
 /** Each status has its own icon in the story menu (the current one also gets a tick). */
 const STATUS_ICON: Record<string, IconName> = { draft: 'filePencil', review: 'eyeCheck', approved: 'checkDouble', published: 'globe' }
@@ -85,10 +84,12 @@ function StoriesList() {
   const counts = useMemo(() => Object.fromEntries(STORY_STATUSES.map((s) => [s, stories.filter((x) => x.status === s).length])) as Record<StoryStatus, number>, [stories])
   const shown = stories.filter((s) => (f === 'all' || s.status === f) && (!q.trim() || storyTitle(s.snapshot).toLowerCase().includes(q.trim().toLowerCase()) || hostOf(s.snapshot.source?.url).includes(q.trim().toLowerCase())))
   if (!stories.length) return <Empty icon="newspaper" title="No stories yet" body="Paste a news link, a file or text to start one. Every story is kept here with its draft."
-    action={<Button icon="link" onClick={() => useNav.getState().intendEditorial('paste-link')}>Paste a news link</Button>} />
+    action={<div className="me-empty-acts">
+      <Button icon="link" onClick={() => useNav.getState().intendEditorial('paste-link')}>Paste a news link</Button>
+      <Button kind="text" icon="plus" onClick={() => newStory('story')}>Write a blank story</Button>
+    </div>} />
   return (
     <>
-      <Button icon="link" wide onClick={() => useNav.getState().intendEditorial('paste-link')}>Paste a news link</Button>
       <label className="me-search"><Icon name="search" size={18} /><input type="search" className="m-input" placeholder="Search stories" aria-label="Search stories" value={q} onChange={(e) => setQ(e.target.value)} /></label>
       <div className="m-chips is-scroll" role="group" aria-label="Filter by status">
         <Chip on={f === 'all'} onClick={() => setF('all')}>All <small>{stories.length}</small></Chip>
@@ -119,6 +120,12 @@ function PublishedList({ active }: { active: boolean }) {
   const [q, setQ] = useState('')
   // quiet on the automatic first load; a tap on sync always says what happened
   const load = async (said = false) => { setState('loading'); try { const r = await syncPublished(); if (said) snack(r.message, r.ok ? undefined : { tone: 'error' }) } finally { setState('done') } }
+  // the ⋮ menu's "Sync from esbpowerline.com" runs the same sync as the button beside the search field
+  useEffect(() => {
+    const on = () => { if (state !== 'loading') void load(true) }
+    window.addEventListener('esb:published-sync', on)
+    return () => window.removeEventListener('esb:published-sync', on)
+  }, [state]) // eslint-disable-line react-hooks/exhaustive-deps
   // every visit refreshes quietly (at most every 20 s), so a story just published is there when you come back
   const lastLoad = useRef(0)
   useEffect(() => { if (active && online && state !== 'loading' && Date.now() - lastLoad.current > 20_000) { lastLoad.current = Date.now(); afterSlide(() => { window.setTimeout(() => void load(), 120) }) } }, [active, online]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -173,6 +180,12 @@ function WireList({ onUse }: { onUse: (url: string) => void }) {
     if (r.failed) parts.push(`${r.failed} failed`)
     setNote(parts.join(' · ') + '.')
   }
+  // News' ⋮ "Check now" and a second tap on the News tab check the feeds while My feeds is showing
+  useEffect(() => {
+    const on = () => { if (!useWire.getState().polling && useWire.getState().sources.length) void check() }
+    window.addEventListener('esb:news-refresh', on)
+    return () => window.removeEventListener('esb:news-refresh', on)
+  }) // re-bound each render: check() closes over this render's state setters
   return (
     <>
       {!phoneMode && (
@@ -243,9 +256,12 @@ export function WireSourcesSheet() {
 
 type WireSource = 'watch' | 'feeds'
 const WIRE_SRC_KEY = 'esb-phone/wire/source'
-function WireTab({ onUse, active }: { onUse: (url: string) => void; active: boolean }) {
+function useWireSource() {
   const [src, setSrc] = useState<WireSource>(() => { try { return localStorage.getItem(WIRE_SRC_KEY) === 'feeds' ? 'feeds' : 'watch' } catch { return 'watch' } })
   const pick = (v: WireSource) => { setSrc(v); try { localStorage.setItem(WIRE_SRC_KEY, v) } catch { /* not kept */ } }
+  return [src, pick] as const
+}
+function WireTab({ onUse, active, src, pick }: { onUse: (url: string) => void; active: boolean; src: WireSource; pick: (v: WireSource) => void }) {
   return (
     <div className="ew-tab">
       <div className="ew-source">
@@ -256,8 +272,7 @@ function WireTab({ onUse, active }: { onUse: (url: string) => void; active: bool
   )
 }
 
-const TAB_TITLE: Record<HomeTab, string> = { stories: 'Editorial', published: 'Editorial', wire: 'News' }
-const ED_SEGMENTS: { value: Exclude<HomeTab, 'wire'>; label: string; icon: IconName }[] = [{ value: 'stories', label: 'Stories', icon: 'newspaper' }, { value: 'published', label: 'Published', icon: 'globe' }]
+const TAB_TITLE: Record<HomeTab, string> = { stories: 'Stories', published: 'Published', wire: 'News' }
 
 export function Landing({ active }: { active: boolean }) {
   const homeTab = useDesk((s) => s.homeTab)
@@ -268,6 +283,27 @@ export function Landing({ active }: { active: boolean }) {
   const story = useStoryQueue((s) => s.stories.find((x) => x.id === s.activeId))
   const storyCount = useStoryQueue((s) => s.stories.length)
   const site = useEditorialStore((s) => s.siteStatus)
+  const [wireSrc, pickWireSrc] = useWireSource()
+  const newCount = useWatch((s) => s.newKeys.length)
+  // ⋮ is about this tab: its own actions first, then the tools every desk shares (account settings sit behind the avatar)
+  const tabMenu: MenuItem[] = homeTab === 'wire'
+    ? (wireSrc === 'watch'
+      ? [
+          { label: 'Check now', icon: 'refresh', onClick: () => window.dispatchEvent(new Event('esb:news-refresh')) },
+          { label: 'Mark all as read', icon: 'checkDouble', disabled: !newCount, onClick: markAllNewsRead },
+          { label: 'Pick dates and times', icon: 'calendar', onClick: () => useUi.getState().openSheet('ew-range') },
+          { label: 'Sources and settings', icon: 'sliders', onClick: () => useUi.getState().openSheet('ew-settings') },
+        ]
+      : [
+          { label: 'Check now', icon: 'refresh', onClick: () => window.dispatchEvent(new Event('esb:news-refresh')) },
+          { label: 'Feed sources', icon: 'sliders', onClick: () => useUi.getState().openSheet('ed-wire-sources') },
+        ])
+    : homeTab === 'published'
+      ? [{ label: 'Sync from esbpowerline.com', icon: 'refresh', onClick: () => window.dispatchEvent(new Event('esb:published-sync')) }]
+      : [
+          { label: 'Paste a news link', icon: 'link', onClick: () => useNav.getState().intendEditorial('paste-link') },
+          { label: 'Write a blank story', icon: 'plus', onClick: () => newStory('story') },
+        ]
   const onDesk = hasStoryContent({ source, draft })
   const TABS3 = ['stories', 'published', 'wire']
   // Each tab stays alive once opened (hidden when another is showing), with its own scroll position. Switching used to
@@ -299,8 +335,7 @@ export function Landing({ active }: { active: boolean }) {
   return (
     <>
       <TopBar title={TAB_TITLE[homeTab]} sub={site.connected ? undefined : <><i className="me-dot" aria-hidden />esbpowerline.com not reachable</>}
-        overflow={homeMenu()}
-        under={homeTab === 'wire' ? undefined : <div className="me-edtabs"><Segmented label="Editorial" value={homeTab} onChange={(v) => set({ homeTab: v })} options={ED_SEGMENTS} /></div>} />
+        overflow={[...tabMenu, DIVIDER, ...sharedTools()]} trailing={<AccountButton />} />
       <div className="me-stage">
       {opened.has('stories') && (
         <div {...pane('stories')}>
@@ -312,9 +347,9 @@ export function Landing({ active }: { active: boolean }) {
                     meta={<>{story && <StatusChip s={story.status} />}<span>{hostOf(source?.url)}{story ? ` · ${ago(story.updatedAt)}` : ''}</span></>} trail={<Icon name="chevRight" size={20} />} />
                 </section>
               )}
-              <h2 className="me-h2 has-icon"><Icon name="newspaper" size={15} />All stories</h2>
+              {storyCount > 0 && <h2 className="me-h2 has-icon"><Icon name="newspaper" size={15} />All stories</h2>}
               <StoriesList key={activeId ?? 'none'} />
-              <Button kind="tonal" icon="plus" onClick={() => newStory('story')}>Write a blank story</Button>
+              {storyCount > 0 && <Button kind="tonal" icon="plus" onClick={() => newStory('story')}>Write a blank story</Button>}
           </div>
         </div>
       )}
@@ -328,7 +363,7 @@ export function Landing({ active }: { active: boolean }) {
       {opened.has('wire') && (
         <div {...pane('wire')}>
           <div className={'m-wrap me-home'}>
-            <WireTab active={active && homeTab === 'wire'} onUse={(u) => { newStory('intake'); set({ intakeTab: 'link', url: u }) }} />
+            <WireTab active={active && homeTab === 'wire'} src={wireSrc} pick={pickWireSrc} onUse={(u) => { newStory('intake'); set({ intakeTab: 'link', url: u }) }} />
           </div>
         </div>
       )}
