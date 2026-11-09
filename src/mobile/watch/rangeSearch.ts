@@ -1,3 +1,5 @@
+// News engine (shared, identical in ESB Studio PC src/news and ESB Studio Phone src/mobile/watch; tools/sync-pc.mjs news).
+// Bing News feeds name their portal in a site: query too (the PC reads them; the phone leaves them out in isPhoneFeed).
 // EnergyWatch for a chosen time range ("1 Nov 9 AM to 3 Nov 4 PM"): every energy and PM & President headline the portals
 // published in between.
 //
@@ -32,7 +34,8 @@ export function portalSites(): { name: string; sites: string[]; lang: 'bn' | 'en
     by.set(f.name, e)
     try {
       const u = new URL(f.url)
-      if (/news\.google\./.test(u.hostname)) {
+      // Google News and Bing News feeds name the portal in their site: query (the desktop reads Bing feeds too)
+      if (/news\.google\.|(^|\.)bing\.com$/.test(u.hostname)) {
         const site = (u.searchParams.get('q') ?? '').match(/site:(\S+)/)?.[1]
         if (site) e.sites.add(site.replace(/^www\./, ''))
         const hl = u.searchParams.get('hl')

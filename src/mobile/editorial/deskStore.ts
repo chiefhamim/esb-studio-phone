@@ -8,7 +8,7 @@ import { useEditorialStore } from '../../pc/editorial/editorialStore'
 import type { EditorialDraft } from '../../pc/editorial/editorialStore'
 import { useStoryQueue } from '../../pc/editorial/storyQueue'
 import { automateNewsFromUrl, describeIntakeError, IntakeError } from '../../pc/editorial/automation'
-import { alignKeywords, seoFields, translateNewsArticle } from '../../pc/editorial/translator'
+import { alignKeywords, seoFields, translateNewsArticle, translationNoticeFor } from '../../pc/editorial/translator'
 import { DocumentImportError, documentKind, readDocument, readPdfWithAi } from '../../pc/editorial/importDocument'
 import { aiFor, providerMeta } from '../../pc/editorial/aiProviders'
 import { aiCaptions, aiSeo, storyCaptions } from '../../pc/editorial/aiDesk'
@@ -184,7 +184,7 @@ export async function translatePasted() {
     s.setDeskAuto(true)
     autoDesk(() => useStore.getState().setContent({ categoryId: cat, highlight: hl || useStore.getState().doc.content.highlight }))
     status(null)
-    useDesk.setState({ notice: t.translationFailed ? 'Part of the story could not be translated — the Bengali is left in place for you to translate.' : t.coverageWarning ?? null, view: 'story', tab: 'story', raw: '', doc: null })
+    useDesk.setState({ notice: translationNoticeFor(t), view: 'story', tab: 'story', raw: '', doc: null })
     snack(t.translationFailed ? 'No translation service reachable — Bengali is still in the draft' : 'Story translated — check it against the source')
   } catch (err) {
     if (!isLive(run)) return
@@ -259,7 +259,7 @@ export async function retranslate(linkedLive: boolean) {
       if (res.facebook) s.setSocialCaption('facebook', res.facebook)
     }
     status(null)
-    useDesk.setState({ notice: res.translationFailed ? 'Part of the story could not be translated — the Bengali is left in place for you to translate.' : res.coverageWarning ?? null })
+    useDesk.setState({ notice: translationNoticeFor(res) })
     offerUndo('New translation applied', snap)
   } catch (err) {
     if (!isLive(run)) return

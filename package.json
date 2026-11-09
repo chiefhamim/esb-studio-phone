@@ -11,6 +11,8 @@
     "test": "vitest run",
     "sync:pc": "node tools/sync-pc.mjs sync",
     "check:pc": "node tools/sync-pc.mjs check",
+    "sync:news": "node tools/sync-pc.mjs news",
+    "check:news": "node tools/sync-pc.mjs check-news",
     "test:parity": "node tools/parity/parity.mjs",
     "test:geometry": "node tools/e2e/geometry.mjs"
   },

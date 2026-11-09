@@ -63,6 +63,7 @@ function useAutoCheck(active: boolean) {
   const autoMin = useWatch((s) => s.prefs.autoMin)
   useEffect(() => {
     if (!active) return
+    void useWatch.getState().translateTitles() // English lines for headlines kept from the last session
     const tick = () => {
       const { lastRun, running, run } = useWatch.getState()
       if (document.visibilityState !== 'visible' || running) return
@@ -254,11 +255,11 @@ export function WatchList({ onUse, active }: { onUse: (url: string) => void; act
         {shown.map((x) => (
           <div key={x.key} className={'me-listrow' + (isNew.has(x.key) ? ' ew-is-new' : '')}>
             {isNew.has(x.key) && <span className="ew-ribbon" aria-label="New">NEW</span>}
-            <Row title={<span className="ew-hl" lang={BN.test(x.title) ? 'bn' : 'en'}>{x.title}</span>} onClick={() => use(x)}
+            <Row title={<><span className="ew-hl" lang={BN.test(x.title) ? 'bn' : 'en'}>{x.title}</span>{x.titleEn && prefs.titleEn !== false && <span className="ew-title-en" lang="en">{x.titleEn}</span>}</>} onClick={() => use(x)}
               meta={
                 <span className="ew-meta">
                   <PortalName name={x.source} />
-                  <span className="ew-time">{x.published ? (range || cat === 'press' ? fmtWhen(Date.parse(x.published)) : relTime(Math.min(Date.parse(x.published), now), now)) : `found ${relTime(Math.min(x.foundAt, now), now)}`}</span>
+                  <span className="ew-time">{x.published ? (range || cat === 'press' ? fmtWhen(Date.parse(x.published)) : relTime(Math.min(Date.parse(x.published), now), now)) : `time not given · found ${relTime(Math.min(x.foundAt, now), now)}`}</span>
                   {x.categories.includes('press') && <span className="ew-tag is-press" title="Official Government Press Release" aria-label="Official Press"><Icon name="shield" size={12} /></span>}
                   {x.categories.includes('leadership') && <span className="ew-tag" title="PM & President" aria-label="PM & President"><Icon name="users" size={13} /></span>}
                 </span>
@@ -385,6 +386,7 @@ function SettingsSheet() {
         <div className="ew-card">
           <Row title="Energy & Power" meta="Electricity, gas, fuel, LNG, LPG, power plants and utilities" trail={<Switch on={prefs.show.energy !== false} label="Energy & Power" onChange={(v) => setPrefs({ show: { ...prefs.show, energy: v } })} />} />
           <Row title="PM & President" meta="Bangladesh's Prime Minister and President (foreign leaders are left out)" trail={<Switch on={prefs.show.leadership !== false} label="PM and President" onChange={(v) => setPrefs({ show: { ...prefs.show, leadership: v } })} />} />
+          <Row title="English line under Bangla headlines" meta="Free machine translation, filled in the background; never holds up the list" trail={<Switch on={prefs.titleEn !== false} label="English line under Bangla headlines" onChange={(v) => { setPrefs({ titleEn: v }); if (v) void useWatch.getState().translateTitles() }} />} />
           <Row title="Official Press Releases" meta="Official press wings & notices from Power Division, EMRD, BERC, SREDA, PMO, Bangabhaban, BPDB, Petrobangla, BPC, BREB, PGCB & state offices" trail={<Switch on={prefs.show.press !== false} label="Official Press Releases" onChange={(v) => setPrefs({ show: { ...prefs.show, press: v } })} />} />
         </div>
 

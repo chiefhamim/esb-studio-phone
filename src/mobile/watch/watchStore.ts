@@ -4,6 +4,14 @@ import { create } from 'zustand'
 import { buildMatcher, type EwKeyword } from './matcher'
 import { EW_FEEDS, EW_KEYWORDS, EW_PRESS_SOURCES, type EwPressSource } from './ewSources'
 import { parseFeed, parseDate } from './feedparse'
+import { itemTimeMs, olderThan, sortTimeMs } from './dates'
+import { mergeFound, norm } from './dedupe'
+import { NOT_PRESS, parseGovPressTable, resolveGovOfficeName } from './pressParse'
+import { applyHeadlineCache, headlinesToTranslate, translateHeadlines, trimHeadlineCache, type HeadlineCache } from './headlineEn'
+import { raceTranslate } from '../../pc/editorial/translateNet'
+
+// the shared engine (identical to the PC's src/news): matcher, feedparse, dates, dedupe, pressParse, headlineEn, rangeSearch
+export { itemTimeMs, norm, parseGovPressTable, resolveGovOfficeName }
 import { unwrapFeedRedirectUrl } from '../../platform/fetchGuarded'
 
 export type WatchCat = 'energy' | 'leadership' | 'press'
@@ -19,6 +27,10 @@ export interface WatchItem {
   foundAt: number
   categories: string[]
   matched: string[]
+  /** the feed gave no readable date: shown as "time not given", aged from when it was first found */
+  timeUnknown?: boolean
+  /** English line under a Bangla headline (free machine translation, see headlineEn.ts) */
+  titleEn?: string
 }
 export interface FeedState { ok: boolean; at: number; count: number; error?: string }
 export interface WatchPrefs {
@@ -32,6 +44,8 @@ export interface WatchPrefs {
   maxAgeH: number
   /** minutes between automatic checks while Wire is open; 0 = only Check now */
   autoMin: number
+  /** show an English line under Bangla headlines (free translation, in the background); default on */
+  titleEn?: boolean
 }
 
 export const DEFAULT_PREFS: WatchPrefs = {
@@ -41,6 +55,7 @@ export const DEFAULT_PREFS: WatchPrefs = {
   show: { energy: true, leadership: true, press: true },
   maxAgeH: 24,
   autoMin: 10,
+  titleEn: true,
 }
 const PREFS_KEY = 'esb-phone/watch/prefs/v1'
 const DATA_KEY = 'esb-phone/watch/data/v1'
@@ -100,16 +115,6 @@ export function unwrapLink(link: string): { link: string; google: boolean } {
   return { link: unwrapped, google: false }
 }
 
-export const norm = (t: string) => t.toLowerCase().replace(/[\s"'‘’“”()[\],:;.!?–—|-]+/g, ' ').trim()
-
-/** Numeric timestamp (ms) for chronological sorting: published date when valid, else foundAt. */
-export function itemTimeMs(x: WatchItem): number {
-  if (x.published) {
-    const t = Date.parse(x.published)
-    if (Number.isFinite(t) && t > 0) return t
-  }
-  return x.foundAt || 0
-}
 
 export function keywordsFor(p: WatchPrefs): EwKeyword[] {
   return [
@@ -263,139 +268,6 @@ export function matchQueryScore(x: WatchItem, rawQuery: string): number {
 // Official Government Press Release Parser (National Portal *.gov.bd / *.org.bd)
 // ============================================================================
 
-const BN_DIGITS: Record<string, string> = { '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9' }
-const toAsciiDigits = (s: string) => String(s || '').replace(/[০-৯]/g, (d) => BN_DIGITS[d] || d)
-
-const NOT_PRESS = new RegExp([
-  'দরপত্র', 'কোটেশন', 'নিলাম', 'টেন্ডার',
-  '\\btender\\b', '\\bquotation\\b', '\\brfq\\b', '\\be-?gp\\b', '\\bprocurement\\b',
-  '\\biem\\b', 'corrigendum', 'addendum', '\\bnoa\\b', 'notification of award',
-  'অনাপত্তি', '\\bnoc\\b', 'পাসপোর্ট', 'passport',
-  'সরকারি আদেশ', 'অফিস আদেশ', 'office order', '\\bg\\.?o\\.?\\b',
-  'বদলি', 'পদোন্নতি', 'পদায়ন', 'যোগদান', 'অবমুক্তি', 'ছুটি মঞ্জুর',
-  'নিয়োগ বিজ্ঞপ্তি', 'চাকরির বিজ্ঞপ্তি', 'লিখিত পরীক্ষা', 'মৌখিক পরীক্ষা', 'ব্যবহারিক পরীক্ষা',
-  'উত্তীর্ণ প্রার্থী', 'ফলাফল প্রকাশ', 'প্রবেশপত্র',
-  'বার্ষিক কর্মসম্পাদন', '\\bapa\\b', 'শুদ্ধাচার', '\\bnis\\b', 'সিটিজেন চার্টার',
-].join('|'), 'i')
-
-const stripTags = (s: string) =>
-  String(s || '')
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/\s+/g, ' ')
-    .trim()
-
-function parsePressDate(raw: string): string | null {
-  const s = toAsciiDigits(raw).trim()
-  if (!s) return null
-  let m = s.match(/\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/)
-  if (m) {
-    const iso = `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}T06:00:00Z`
-    if (Number.isFinite(Date.parse(iso))) return iso
-  }
-  m = s.match(/\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2})\b/)
-  if (m) {
-    const iso = `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}T06:00:00Z`
-    if (Number.isFinite(Date.parse(iso))) return iso
-  }
-  return parseDate(s)
-}
-
-const GOV_HOST_TO_OFFICE: Record<string, string> = {
-  'powerdivision.gov.bd': 'Power Division',
-  'emrd.gov.bd': 'EMRD',
-  'berc.org.bd': 'BERC',
-  'sreda.gov.bd': 'SREDA',
-  'pmo.gov.bd': 'PMO Press Wing',
-  'bangabhaban.gov.bd': 'Bangabhaban Press Wing',
-  'pressinform.gov.bd': 'PID (Press Information Dept)',
-  'bpdb.gov.bd': 'BPDB',
-  'petrobangla.org.bd': 'Petrobangla',
-  'bpc.gov.bd': 'BPC',
-  'reb.gov.bd': 'BREB',
-  'pgcb.gov.bd': 'PGCB',
-  'gtcl.gov.bd': 'GTCL',
-  'bapex.com.bd': 'BAPEX',
-  'rpgcl.org.bd': 'RPGCL',
-  'desco.gov.bd': 'DESCO',
-  'dpdc.gov.bd': 'DPDC',
-  'nesco.gov.bd': 'NESCO',
-  'wzpdcl.gov.bd': 'WZPDCL',
-  'titasgas.org.bd': 'Titas Gas',
-  'bgdcl.gov.bd': 'BGDCL',
-  'jalalabadgas.org.bd': 'Jalalabad Gas',
-  'pgcl.org.bd': 'PGCL',
-  'sgfl.org.bd': 'SGFL',
-  'gsb.gov.bd': 'GSB',
-  'erl.gov.bd': 'ERL',
-  'pocl.gov.bd': 'Padma Oil',
-  'mpl.gov.bd': 'Meghna Petroleum',
-  'jocl.gov.bd': 'Jamuna Oil',
-}
-
-export function resolveGovOfficeName(link: string, fallback: string): string | null {
-  try {
-    const host = new URL(link).hostname.replace(/^www\./i, '').toLowerCase()
-    for (const [domain, name] of Object.entries(GOV_HOST_TO_OFFICE)) {
-      if (host === domain || host.endsWith('.' + domain)) return name
-    }
-    if (/\.(?:gov|org)\.bd$/i.test(host)) return fallback
-  } catch { /* ignore */ }
-  return null
-}
-
-/** Parse a Bangladesh Government National Portal press_release / news HTML table. */
-export function parseGovPressTable(html: string, pageUrl: string): { title: string; link: string; published: string | null }[] {
-  const out: { title: string; link: string; published: string | null }[] = []
-  const tbody = html.match(/<tbody[^>]*>([\s\S]*?)<\/tbody>/i)?.[1] || html
-  const rows = tbody.match(/<tr[\s\S]*?<\/tr>/gi) || []
-  for (const tr of rows) {
-    if (/<th[\s>]/i.test(tr)) continue
-    const cells = tr.match(/<td[\s\S]*?<\/td>/gi) || []
-    if (cells.length < 2) continue
-    let title = stripTags(cells[1])
-      .replace(/\s*\(?(?:নতুন|new)\)?\s*$/i, '')
-      .trim()
-    if (!title || title.length < 10) continue
-    if (NOT_PRESS.test(title)) continue
-
-    let href: string | null = null
-    const detailCellLinks = [...cells[1].matchAll(/href\s*=\s*["']([^"'#]+)["']/gi)].map((m) => m[1])
-    for (const h of detailCellLinks) {
-      if (!/\.(?:pdf|doc|docx|xls|xlsx|jpg|png)(?:\?|$)/i.test(h)) {
-        href = h
-        break
-      }
-    }
-    if (!href) {
-      const allLinks = [...tr.matchAll(/href\s*=\s*["']([^"'#]+)["']/gi)].map((m) => m[1])
-      href = allLinks.find((h) => !/\.(?:pdf|doc|docx|xls|xlsx)(?:\?|$)/i.test(h)) || allLinks[0] || null
-    }
-    if (!href) continue
-    try {
-      href = new URL(href.replace(/&amp;/g, '&').trim(), pageUrl).href
-      if (/^http:\/\//i.test(href)) href = 'https://' + href.slice(7)
-    } catch {
-      continue
-    }
-
-    let published: string | null = null
-    for (let i = 2; i < cells.length; i++) {
-      const d = parsePressDate(stripTags(cells[i]))
-      if (d) { published = d; break }
-    }
-    out.push({ title, link: href, published })
-  }
-  return out
-}
-
 export async function fetchText(url: string): Promise<string> {
   let last: unknown
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -457,9 +329,17 @@ interface WatchState {
   markRead: (key: string) => void
   markAllRead: () => void
   run: () => Promise<{ checked: number; added: number; failed: number } | null>
+  /** fill English lines under Bangla headlines in the background (free translation; prefs.titleEn turns it off) */
+  translateTitles: () => Promise<void>
 }
 
 const initial = load(DATA_KEY, { items: [] as WatchItem[], hidden: [] as string[], feeds: {} as Record<number, FeedState>, lastRun: null as number | null, seenAt: 0, newKeys: [] as string[] })
+
+const TITLE_EN_KEY = 'esb-phone/watch/title-en/v1'
+let titleEnCache: HeadlineCache = load(TITLE_EN_KEY, {} as HeadlineCache)
+let titlesRunning = false
+/** The free translation of one headline (or one batch, a headline per line); null when no service answered. */
+const freeTranslate = (text: string) => (typeof navigator !== 'undefined' && navigator.onLine === false ? Promise.resolve(null) : raceTranslate(text, 8000))
 
 export const useWatch = create<WatchState>((set, get) => {
   const persist = () => { const s = get(); save(DATA_KEY, { items: s.items, hidden: s.hidden, feeds: s.feeds, lastRun: s.lastRun, seenAt: s.seenAt, newKeys: s.newKeys }) }
@@ -525,7 +405,7 @@ export const useWatch = create<WatchState>((set, get) => {
             if (!m) continue
             const { link, google } = unwrapLink(it.link || '')
             if (!/^https?:\/\//i.test(link)) continue
-            found.push({ key: it.key, title: it.title, link, google, source: f.name, feedId: f.id, published, foundAt: started, categories: m.categories, matched: m.matched })
+            found.push({ key: it.key, title: it.title, link, google, source: f.name, feedId: f.id, published, timeUnknown: !published || undefined, foundAt: started, categories: m.categories, matched: m.matched })
           }
         } catch (e) {
           failed++
@@ -545,13 +425,14 @@ export const useWatch = create<WatchState>((set, get) => {
               const m = match(r.title)
               const matched = m ? m.matched : [ps.name]
               found.push({
-                key: r.link,
+                key: r.key,
                 title: r.title,
                 link: r.link,
                 google: false,
                 source: ps.name,
                 feedId: ps.id,
                 published: r.published,
+                timeUnknown: !r.published || undefined,
                 foundAt: started,
                 categories: ['press'],
                 matched,
@@ -578,6 +459,7 @@ export const useWatch = create<WatchState>((set, get) => {
                 source: officeName,
                 feedId: ps.id,
                 published,
+                timeUnknown: !published || undefined,
                 foundAt: started,
                 categories: ['press'],
                 matched: m ? m.matched : [officeName],
@@ -589,46 +471,31 @@ export const useWatch = create<WatchState>((set, get) => {
         }
       })
 
-      // Merge: one row per headline per portal/office. A direct link beats a Google one for the same story.
+      // Merge: one row per story across feeds (dedupe.ts: same address, or same portal and near-identical headline); a
+      // direct link beats a Google one; the editor's hidden rows never come back.
       const prev = get().items
-      const hiddenSet = new Set(get().hidden)
-      const byTwin = new Map<string, WatchItem>()
-      const keys = new Set<string>()
-      for (const x of prev) {
-        if (hiddenSet.has(x.key)) continue
-        byTwin.set(x.source + '\n' + norm(x.title), x)
-        keys.add(x.key)
-      }
-      let added = 0
-      const addedKeys: string[] = []
-      for (const x of found.sort((a, b) => itemTimeMs(a) - itemTimeMs(b))) {
-        if (hiddenSet.has(x.key)) continue
-        const twin = x.source + '\n' + norm(x.title)
-        const had = byTwin.get(twin)
-        if (had) {
-          const mergedCats = [...new Set([...had.categories, ...x.categories])].sort()
-          if (had.google && !x.google) byTwin.set(twin, { ...had, link: x.link, google: false, categories: mergedCats })
-          else if (mergedCats.length !== had.categories.length) byTwin.set(twin, { ...had, categories: mergedCats })
-          continue
-        }
-        if (keys.has(x.key)) continue
-        keys.add(x.key)
-        byTwin.set(twin, x)
-        addedKeys.push(x.key)
-        added++
-      }
-      const mediaCutoff = started - 7 * 24 * 3600_000
-      const pressCutoff = started - PRESS_RETENTION_MS
-      const items = [...byTwin.values()]
-        .filter((x) => {
-          const t = itemTimeMs(x)
-          return x.categories.includes('press') ? t >= pressCutoff : t >= mediaCutoff
-        })
-        .sort((a, b) => itemTimeMs(b) - itemTimeMs(a) || b.foundAt - a.foundAt)
-        .slice(0, ITEM_CAP)
+      const { items, addedKeys } = mergeFound(prev, found, started, { hidden: get().hidden, itemCap: ITEM_CAP, pressRetentionMs: PRESS_RETENTION_MS })
+      const added = addedKeys.length
       set({ items, feeds: states, lastRun: started, running: false, seenAt: prev.length ? get().seenAt : started, newKeys: prev.length ? addedKeys : [] })
       persist()
+      void get().translateTitles()
       return { checked: feeds.length + pressSources.length, added, failed }
+    },
+    translateTitles: async () => {
+      if (titlesRunning || get().prefs.titleEn === false) return
+      titlesRunning = true
+      try {
+        set({ items: applyHeadlineCache(get().items, titleEnCache) })
+        const want = headlinesToTranslate(visibleItems(get().items, get().hidden, get().prefs, '', 'all'), titleEnCache)
+        if (!want.length) return
+        const got = await translateHeadlines(want, freeTranslate, { concurrency: 2 })
+        titleEnCache = trimHeadlineCache({ ...titleEnCache, ...got }, get().items.map((x) => x.key))
+        save(TITLE_EN_KEY, titleEnCache)
+        set({ items: applyHeadlineCache(get().items, titleEnCache) })
+        persist()
+      } finally {
+        titlesRunning = false
+      }
     },
   }
 })
@@ -646,7 +513,6 @@ export function visibleItems(
   const isNew = newKeys ? new Set(newKeys) : new Set<string>()
   const now = Date.now()
   const mediaMinTime = now - prefs.maxAgeH * 3600_000
-  const pressMinTime = now - Math.max(prefs.maxAgeH * 3600_000, PRESS_RETENTION_MS)
   const hasQuery = q.trim().length > 0
 
   const scored: { item: WatchItem; score: number; time: number; fresh: boolean }[] = []
@@ -656,16 +522,13 @@ export function visibleItems(
     if (!x.categories.some((c) => prefs.show[c as WatchCat] !== false)) continue
     if (cat !== 'all' && !x.categories.includes(cat)) continue
 
-    const isPressOnly = x.categories.length === 1 && x.categories[0] === 'press'
-    const minTime = cat === 'press' || (isPressOnly && prefs.maxAgeH >= 24) ? pressMinTime : mediaMinTime
-    if (x.published) {
-      const pubMs = Date.parse(x.published)
-      if (Number.isFinite(pubMs) && pubMs < minTime) continue
-    }
+    // the chosen window applies to every row, official press too (the 60-day press retention is storage, not "last 24 hours");
+    // a row without a date counts from when it was first found
+    if (olderThan(x, now, now - mediaMinTime)) continue
 
     const score = hasQuery ? matchQueryScore(x, q) : 1
     if (score <= 0) continue
-    scored.push({ item: x, score, time: itemTimeMs(x), fresh: isNew.has(x.key) })
+    scored.push({ item: x, score, time: sortTimeMs(x), fresh: isNew.has(x.key) })
   }
 
   scored.sort((a, b) => {
