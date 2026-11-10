@@ -13,7 +13,7 @@ import { siteFeatureState, type SiteFeatureState } from '../../platform/esbShim'
 import { isAppLockEnabled, isBiometricAvailable, setAppLockEnabled } from '../../native/biometric'
 import { useNav } from '../shell/nav'
 import { snack, useOnline } from '../shell/core'
-import { checkForUpdate, getCurrentBundle } from '../../platform/ota'
+import { checkForUpdate, getCurrentBundle, lastCheckNote, type CheckNote } from '../../platform/ota'
 import { Banner, Button, Collapse, Dropdown, FullDialog, Icon, Row, Section, Segmented } from '../shell/ui'
 import { ProviderMark, brandColor } from '../shell/marks'
 import { HoldButton } from '../shell/HoldButton'
@@ -56,6 +56,7 @@ function AboutCard() {
 /** About: shows the running version and looks for a newer release on our own update host on request. */
 function UpdateCheck() {
   const [state, setState] = useState<'idle' | 'checking' | 'latest' | 'found' | 'failed'>('idle')
+  const [note, setNote] = useState<CheckNote>('latest')
   const [found, setFound] = useState('')
   const [running, setRunning] = useState('')
   useEffect(() => { void getCurrentBundle().then((b) => setRunning(/^\d/.test(b.version) ? b.version : '')) }, [])
@@ -63,13 +64,17 @@ function UpdateCheck() {
     setState('checking')
     try {
       const up = await checkForUpdate()
-      if (up) { setFound(up.version); setState('found'); window.dispatchEvent(new CustomEvent('esb-update-found', { detail: up })) } else setState('latest')
+      if (up) { setFound(up.version); setState('found'); window.dispatchEvent(new CustomEvent('esb-update-found', { detail: up })) }
+      else { const n = lastCheckNote(); setNote(n); setState(n === 'latest' ? 'latest' : 'failed') }
     } catch { setState('failed') }
   }
   const meta = state === 'checking' ? 'Looking for a newer version'
     : state === 'found' ? `Version ${found} is ready. Tap Update now in the box that opened.`
     : state === 'latest' ? 'You have the latest version.'
-    : state === 'failed' ? 'Could not reach the update server. Check the connection and try again.'
+    : state === 'failed' ? (note === 'bad-signature' ? 'The update server has a release this app cannot verify (it was signed with an older key), so it was not installed. A new release from the PC fixes this.'
+      : note === 'no-ota' ? 'This build updates by reinstalling, not over the internet.'
+      : note === 'bad-manifest' ? 'The update server answered with a release it could not read.'
+      : 'Could not reach the update server. Check the connection and try again.')
     : 'Updates download over the internet; your drafts and keys stay.'
   return (
     <div className="ab-update">

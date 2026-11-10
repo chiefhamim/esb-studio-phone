@@ -93,14 +93,20 @@ function raiseOtaFloor(v: string) {
   try { if (isNewer(v, otaFloor())) localStorage.setItem(OTA_FLOOR_KEY, v) } catch { /* not kept */ }
 }
 
+/** Why the last check found nothing, in words the About screen can show (a refused update used to look like "latest"). */
+export type CheckNote = 'latest' | 'offline' | 'bad-signature' | 'no-ota' | 'bad-manifest'
+let lastNote: CheckNote = 'latest'
+export const lastCheckNote = () => lastNote
+
 /** Look for a newer release on our own update host. */
 export async function checkForUpdate(): Promise<AvailableUpdate | null> {
-  if (!Capacitor.isNativePlatform() || import.meta.env.VITE_NO_OTA) return null // cable builds (VITE_NO_OTA=1) never offer the web bundle
+  lastNote = 'latest'
+  if (!Capacitor.isNativePlatform() || import.meta.env.VITE_NO_OTA) { lastNote = 'no-ota'; return null } // cable builds (VITE_NO_OTA=1) never offer the web bundle
   try {
     const res = await fetch(`${UPDATE_HOST}/latest.json?t=${Date.now()}`, { cache: 'no-store' })
-    if (!res.ok) return null
+    if (!res.ok) { lastNote = 'offline'; return null }
     const m = (await res.json()) as Manifest
-    if (!m.version || !/^\d/.test(m.version)) return null
+    if (!m.version || !/^\d/.test(m.version)) { lastNote = 'bad-manifest'; return null }
     const cur = await getCurrentBundle()
     // Never offer a release that is not newer than what is running or than the installed app itself.
     const native = (await App.getInfo().catch(() => null))?.version ?? '0.0.0'
@@ -113,11 +119,13 @@ export async function checkForUpdate(): Promise<AvailableUpdate | null> {
     // an unsigned or wrongly signed release is never offered (see OTA_PUBLIC_KEY)
     if (!/^[0-9a-f]{64}$/.test(file.sha256) || !(await signatureOk(signedText(m.version, file), file.sig))) {
       console.warn('Update refused: the release signature did not verify')
+      lastNote = 'bad-signature'
       return null
     }
     return { version: m.version, url: `${UPDATE_HOST}/${file.file}`, checksum: file.sha256, message: m.message, needsApk }
   } catch (err) {
     console.warn('Update check failed:', err)
+    lastNote = 'offline'
     return null
   }
 }
