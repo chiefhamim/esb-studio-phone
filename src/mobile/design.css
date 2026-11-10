@@ -3960,3 +3960,6 @@ html.kb-open .m-snackbars { bottom: auto !important; }
 .me-h2.has-icon::before { content: none; }
 .me-h2.has-icon > svg { flex: none; color: var(--brand-red); }
 .ew-trend-h, .ew-trend-h > svg { color: var(--text-secondary) !important; }
+
+/* snackbars swipe away sideways like Android notifications (SnackCard): the page must not take the horizontal drag */
+.m-snack { touch-action: none; user-select: none; -webkit-user-select: none; }

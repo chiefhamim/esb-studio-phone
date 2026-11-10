@@ -185,25 +185,49 @@ export function FullDialog({ open, title, onClose, primary, children, footer, un
 
 // ---------------------------------------------------------------- one snackbar: a capsule at the top of the screen
 // Tone glyph, message, optional action. Only a snack with an action has a close button, ringed by the time left.
-// A plain snack goes on a tap; any snack goes on a flick upwards.
+// A plain snack goes on a tap. Any snack is swiped away like an Android notification: sideways (it follows the finger,
+// fades as it goes, and flies off past a third of its width or on a quick flick, else springs back) or flicked up.
 const SNACK_ICON: Record<NonNullable<Snack['tone']>, IconName> = { info: 'info', success: 'check', error: 'alert' }
 function SnackCard({ s }: { s: Snack }) {
   const tone = s.tone ?? 'info'
-  const drag = useRef<{ y: number; id: number } | null>(null)
-  const [dy, setDy] = useState(0)
-  const down = (e: React.PointerEvent) => { if ((e.target as HTMLElement).closest('button')) return; drag.current = { y: e.clientY, id: e.pointerId }; e.currentTarget.setPointerCapture?.(e.pointerId) }
-  const move = (e: React.PointerEvent) => { if (drag.current?.id === e.pointerId) setDy(Math.min(0, e.clientY - drag.current.y)) }
-  const up = (e: React.PointerEvent) => {
-    if (!drag.current) return
-    const moved = Math.abs(e.clientY - drag.current.y)
-    drag.current = null
-    if (dy < -24 || (!s.action && moved < 6 && e.type === 'pointerup')) dismissSnack(s.id)
-    setDy(0)
+  const drag = useRef<{ x: number; y: number; t: number; id: number; axis: 'x' | 'y' | null; w: number } | null>(null)
+  const [off, setOff] = useState<{ dx: number; dy: number }>({ dx: 0, dy: 0 })
+  const [fly, setFly] = useState<number | null>(null) // set while it flies off sideways (+1 right, -1 left)
+  const down = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return
+    drag.current = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId, axis: null, w: (e.currentTarget as HTMLElement).offsetWidth || 300 }
+    e.currentTarget.setPointerCapture?.(e.pointerId)
   }
+  const move = (e: React.PointerEvent) => {
+    const d = drag.current
+    if (!d || d.id !== e.pointerId) return
+    const dx = e.clientX - d.x, dy = e.clientY - d.y
+    if (!d.axis && Math.hypot(dx, dy) > 6) d.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+    if (d.axis === 'x') setOff({ dx, dy: 0 })
+    else if (d.axis === 'y') setOff({ dx: 0, dy: Math.min(0, dy) })
+  }
+  const up = (e: React.PointerEvent) => {
+    const d = drag.current
+    if (!d) return
+    drag.current = null
+    const dx = e.clientX - d.x, dy = e.clientY - d.y
+    const v = Math.abs(dx) / Math.max(1, performance.now() - d.t) // px per ms
+    if (d.axis === 'x' && e.type === 'pointerup' && (Math.abs(dx) > d.w / 3 || (v > 0.6 && Math.abs(dx) > 24))) {
+      setFly(dx > 0 ? 1 : -1)
+      window.setTimeout(() => dismissSnack(s.id), 180)
+      return
+    }
+    if (d.axis === 'y' && dy < -24) dismissSnack(s.id)
+    else if (!d.axis && !s.action && e.type === 'pointerup') dismissSnack(s.id)
+    setOff({ dx: 0, dy: 0 })
+  }
+  const style: React.CSSProperties = { '--snk-ms': `${snackMs(s)}ms` } as React.CSSProperties
+  if (fly) Object.assign(style, { transform: `translateX(${fly * 120}%)`, opacity: 0, transition: 'transform .18s cubic-bezier(.4, 0, 1, 1), opacity .18s ease-in' })
+  else if (off.dx) Object.assign(style, { transform: `translateX(${off.dx}px) rotate(${off.dx / 60}deg)`, opacity: Math.max(0.25, 1 - Math.abs(off.dx) / 320), transition: 'none' })
+  else if (off.dy) Object.assign(style, { transform: `translateY(${off.dy}px)`, opacity: Math.max(0.3, 1 + off.dy / 120), transition: 'none' })
   return (
     <div className={`m-snack m-snack-${tone}${s.action ? ' has-action' : ''}${s.leaving ? ' is-out' : ''}`} role={tone === 'error' ? 'alert' : 'status'}
-      style={{ '--snk-ms': `${snackMs(s)}ms`, ...(dy ? { transform: `translateY(${dy}px)`, opacity: Math.max(0.3, 1 + dy / 120), transition: 'none' } : null) } as React.CSSProperties}
-      onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+      style={style} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
       <span className="m-snack-ico" aria-hidden><Icon name={s.icon ?? SNACK_ICON[tone]} size={20} strokeWidth={2} /></span>
       <span className="m-snack-text">{s.text}</span>
       {s.action && <>
