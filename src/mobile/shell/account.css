@@ -1,13 +1,18 @@
 /* Account sheet */
 .ac { display: flex; flex-direction: column; gap: var(--sp-s); padding-bottom: var(--sp-s); }
-.ac-me { display: flex; gap: var(--sp-l); padding: var(--sp-l); background: var(--surface-sunken); }
+.ac-me { display: flex; align-items: center; gap: var(--sp-l); padding: var(--sp-l); background: var(--surface-sunken); }
 :root[data-theme='dark'] .ac-me { background: var(--surface-raised); }
+/* the card itself opens Manage account / Sign in; the avatar stays its own button (the picture picker) */
+.ac-me-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--sp-l); min-height: 44px; margin: calc(-1 * var(--sp-l)) calc(-1 * var(--sp-l)) calc(-1 * var(--sp-l)) 0; padding: var(--sp-l) var(--sp-l) var(--sp-l) 0; border: 0; background: none; text-align: left; color: inherit; cursor: pointer; }
+.ac-me-open:active .ac-me-act { transform: translateX(2px); }
+.ac-me-act { flex: none; display: inline-flex; align-items: center; gap: var(--sp-xs); color: var(--text-secondary); font: 650 var(--fs-m)/1 var(--font-ui); transition: transform .16s var(--m-spring); }
+.ac-me-act > svg { color: var(--text-tertiary); }
 .ac-avatar { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font: 700 var(--fs-xl)/1 var(--font-ui); }
 .ac-avatar.is-empty { background: var(--fill-active); color: var(--text-secondary); }
 .ac-me-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .ac-me-txt small { font: 500 var(--fs-s)/1.3 var(--font-ui); color: var(--text-secondary); }
 .ac-pill, .ac-check { flex: none; min-height: 40px; padding: 0 var(--sp-l); border: 0; border-radius: var(--r-md); background: var(--accent); color: var(--on-accent); font: 650 var(--fs-m)/1 var(--font-ui); cursor: pointer; transition: transform .14s var(--m-spring); }
-.ac-check { background: var(--fill-hover); color: var(--text-primary); }
+.ac-check { background: transparent; box-shadow: inset 0 0 0 1px var(--border-default); color: var(--text-primary); font-size: var(--fs-s); min-height: 36px; padding: 0 var(--sp-m); }
 .ac-check:disabled { opacity: .5; }
 .ac-check:active { transform: scale(.95); }
 .ac-h { margin: var(--sp-xl) var(--sp-xs) var(--sp-xs); }

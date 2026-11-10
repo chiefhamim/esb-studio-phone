@@ -102,7 +102,8 @@ export function HoldToPublish({ label, sub, items, disabled, busy, busyLabel, on
               <div className="hp-rule" aria-hidden><i /></div>
               <header className="hp-head">
                 <span key={phase ? 'go' : 'hold'} className={'hp-badge' + (phase ? ' is-go' : '')} aria-hidden>
-                  {phase ? <Icon name="check" size={20} strokeWidth={2.6} /> : <b>{left}</b>}
+                  <i className="hp-badge-ring" />
+                  {phase ? <Icon name="check" size={20} strokeWidth={2.6} /> : <b key={left}>{left}</b>}
                 </span>
                 <span className="hp-head-t">
                   <b>{phase ? `${busyLabel}…` : 'Going to press'}</b>

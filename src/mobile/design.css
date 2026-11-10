@@ -862,9 +862,7 @@ body:has(.gx-dropscrim) .gx-live-top { display: none; }
 
 /* ================================================================ Account sheet: nothing truncated, a green Connected container, the full connection check */
 .ac-me-txt strong { font: 700 var(--fs-l)/1.3 var(--font-ui); }
-.ac-manage { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 52px; padding: 0 var(--sp-l); border: 0; border-radius: var(--r-lg); background: var(--fill-hover); color: var(--text-primary); font: 650 var(--fs-m)/1 var(--font-ui); cursor: pointer; transition: transform .14s var(--m-spring), background .15s; }
-.ac-manage:active { transform: scale(.985); background: var(--fill-active); }
-.ac-manage > svg { color: var(--text-tertiary); }
+/* .ac-manage was merged into the identity card (.ac-me-open) on 2026-11-10 */
 .ac-site .ac-txt { gap: var(--sp-s); }
 .ac-status { display: inline-flex; align-items: center; align-self: flex-start; gap: var(--sp-s); min-height: 28px; padding: var(--sp-xs) var(--sp-m) var(--sp-xs) var(--sp-m); border-radius: var(--r-md); font: 650 var(--fs-s)/1.3 var(--font-ui); font-variant-numeric: tabular-nums; }
 .ac-status i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
@@ -3806,17 +3804,28 @@ html.kb-open .m-snackbars {
 .hp-v2 { gap: 0; }
 .hp-v2::before { background: rgba(14, 12, 20, .42) !important; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .hp-press {
-  width: min(344px, calc(100vw - 48px)); overflow: hidden; border-radius: var(--r-lg); background: var(--surface-panel); color: var(--text-primary);
-  box-shadow: 0 0 0 .5px rgba(0, 0, 0, .06), 0 28px 64px -20px rgba(0, 0, 0, .6);
+  position: relative; width: min(344px, calc(100vw - 48px)); overflow: hidden; border-radius: 20px; background: var(--surface-panel); color: var(--text-primary);
+  box-shadow: 0 0 0 .5px var(--m-hair, rgba(255, 255, 255, .08)), 0 1px 0 rgba(255, 255, 255, .06) inset, 0 34px 80px -22px rgba(0, 0, 0, .65), 0 8px 24px -12px rgba(0, 0, 0, .4);
   animation: hp-press-in .34s cubic-bezier(.2, .9, .3, 1.12) both;
 }
 @keyframes hp-press-in { from { opacity: 0; transform: translate3d(0, 28px, 0) scale(.94); } }
 .hp-rule { position: relative; height: 5px; background: var(--fill); }
 .hp-rule i { position: absolute; inset: 0; background: linear-gradient(90deg, #16a34a 0 33.34%, #dc2626 33.34% 66.67%, #f97316 66.67% 100%);
   clip-path: inset(0 calc((1 - var(--hold, 0)) * 100%) 0 0); }
+/* a soft light rides the stripe's leading edge while the hold advances */
+.hp-rule::after { content: ''; position: absolute; top: -3px; bottom: -3px; left: calc(var(--hold, 0) * 100%); width: 14px; margin-left: -7px;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, .8), transparent); opacity: calc(var(--hold, 0) * 1.6 - .06); pointer-events: none; }
+.hp-overlay.hp-v2:is(.is-go, .is-out) .hp-rule::after { opacity: 0; transition: opacity .2s ease; }
 .hp-head { display: flex; align-items: center; gap: var(--sp-m); padding: var(--shell-pad) var(--shell-pad) var(--sp-m); }
-.hp-badge { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
-  background: color-mix(in srgb, #dc2626 12%, transparent); color: #dc2626; font: 800 var(--fs-l)/1 var(--font-ui); font-variant-numeric: tabular-nums; }
+.hp-badge { position: relative; flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  background: color-mix(in srgb, #dc2626 10%, transparent); color: #dc2626; font: 800 var(--fs-l)/1 var(--font-ui); font-variant-numeric: tabular-nums; }
+.hp-badge > b { grid-area: 1 / 1; animation: hp-num-tick .4s cubic-bezier(.2, .9, .3, 1.3); }
+@keyframes hp-num-tick { from { transform: scale(.6); opacity: 0; } }
+/* the exact hold progress, drawn as a thin ring around the seconds */
+.hp-badge-ring { position: absolute; inset: -1px; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(#dc2626 calc(var(--hold, 0) * 100%), color-mix(in srgb, #dc2626 18%, transparent) 0);
+  -webkit-mask: radial-gradient(circle at 50% 50%, transparent calc(50% - 3.5px), #000 calc(50% - 2.5px)); mask: radial-gradient(circle at 50% 50%, transparent calc(50% - 3.5px), #000 calc(50% - 2.5px)); }
+.hp-badge.is-go .hp-badge-ring { background: #16a34a; }
 .hp-badge.is-go { background: #16a34a; color: #fff; animation: hp-badge-go .42s cubic-bezier(.25, 1.35, .5, 1); }
 @keyframes hp-badge-go { 0% { transform: scale(.5); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
 .hp-head-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }

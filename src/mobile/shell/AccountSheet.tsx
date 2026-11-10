@@ -59,21 +59,24 @@ export default function AccountSheet() {
   const aiState = ai.paused ? 'Paused' : aiFor('main') ? 'Ready' : 'Needs a key'
   const name = session ? session.name || session.email : 'Not signed in'
   const go = (fn: () => void) => () => { useUi.getState().closeSheet('account'); fn() }
-  const siteMeta = !online ? 'Offline · work is saved on the phone' : !session ? 'Sign in to save and publish' : site.connected ? `Connected${site.latencyMs ? ` · ${site.latencyMs} ms` : ''}` : site.sessionEnded ? 'Session ended · sign in again' : 'Not reachable'
+  const siteMeta = !online ? 'Offline · work is saved on the phone' : !session ? 'Sign in to publish' : site.connected ? `Connected${site.latencyMs ? ` · ${site.latencyMs} ms` : ''}` : site.sessionEnded ? 'Session ended · sign in again' : 'Not reachable'
 
   return (
     <Sheet id="account" title="Account" initial="half">
       <div className="ac">
+        {/* one identity card: the avatar changes the picture, the rest of the card opens Manage account / Sign in */}
         <section className="ac-me">
           {session
             ? <button type="button" className="ac-avatar ac-avatar-btn" aria-label="Change profile picture" onClick={go(openAvatarPicker)}><UserAvatar name={name} /><span className="ac-avatar-edit" aria-hidden><Icon name="edit" size={13} strokeWidth={2.4} /></span></button>
             : <span className="ac-avatar is-empty" aria-hidden><Icon name="user" size={28} /></span>}
-          <span className="ac-me-txt">
-            <span className="ac-name"><strong>{name}</strong>{session?.role && <RoleChip role={session.role} />}</span>
-            <small>{session ? session.email : 'esbpowerline.com editor account'}</small>
-          </span>
+          <button type="button" className="ac-me-open" onClick={go(() => nav.openSettings('site'))}>
+            <span className="ac-me-txt">
+              <span className="ac-name"><strong>{name}</strong>{session?.role && <RoleChip role={session.role} />}</span>
+              <small>{session ? session.email : 'Sign in with your esbpowerline.com editor account'}</small>
+            </span>
+            <span className="ac-me-act">{session ? undefined : 'Sign in'}<Icon name="chevRight" size={20} /></span>
+          </button>
         </section>
-        <button type="button" className="ac-manage" onClick={go(() => nav.openSettings('site'))}>{session ? 'Manage account' : 'Sign in'}<Icon name="chevRight" size={18} /></button>
 
         <h3 className="ac-h">Connections</h3>
         <div className="ac-card">
