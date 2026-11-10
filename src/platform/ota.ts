@@ -8,7 +8,7 @@ export const UPDATE_HOST = 'https://esb-studio-updates.hamim2964.workers.dev'
 /** The release signing key (Ed25519, public half). The private half lives only on the release PC
  *  (~/.esb-ota/ed25519-private.pem, tools/release.mjs), never on the update host: whoever controls the host can swap a
  *  file and its sha256, but cannot sign it, so a swapped update is refused. */
-const OTA_PUBLIC_KEY = '4OXe45T/O6IbbBYk++MoFqCEOG2rwbAKqa/xzJOdhnA='
+const OTA_PUBLIC_KEY = 'Fh84p2dkhoGxhgK2s/69SBHFGmfq5+5+pl6d7Cg+6So=' // rotated 2026-11-10: the first key was lost with its PC
 
 /** The exact text a release signs (tools/release.mjs builds the same). */
 export const signedText = (version: string, file: { file: string; sha256: string }) => `esb-ota-v1\n${version}\n${file.file}\n${file.sha256}`
