@@ -142,7 +142,7 @@ export function ExportSheet({ open, onClose, base, settings, setSettings }: { op
         <section className="gx-ex-sec">
           <h3 className="gx-ex-title">After export</h3>
           <Segmented label="After export" value={then} onChange={setThen} options={[{ value: 'save', label: 'Save to phone', icon: 'download' }, { value: 'share', label: 'Share', icon: 'send' }]} />
-          <p className="gx-help">{then === 'save' ? 'Pictures go to Pictures/ESB Studio, a ZIP to Download/ESB Studio.' : 'Opens the Android share sheet (WhatsApp, Facebook, Drive…).'}</p>
+          <p className="gx-help">{then === 'save' ? 'Pictures go to Pictures/ESB Studio, a ZIP to Download/ESB Studio.' : 'Opens the Android share sheet (WhatsApp, Facebook, Drive and more).'}</p>
         </section>
 
         <section className="gx-ex-sec">

@@ -106,7 +106,7 @@ export function HoldToPublish({ label, sub, items, disabled, busy, busyLabel, on
                   {phase ? <Icon name="check" size={20} strokeWidth={2.6} /> : <b key={left}>{left}</b>}
                 </span>
                 <span className="hp-head-t">
-                  <b>{phase ? `${busyLabel}…` : 'Going to press'}</b>
+                  <b>{phase ? busyLabel : 'Going to press'}</b>
                   <small>{phase ? sub : 'Release to cancel'}</small>
                 </span>
               </header>

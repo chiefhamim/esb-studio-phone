@@ -22,7 +22,7 @@ export function phoneStoryTitle(s: StoryItem): string {
   const t = storyTitle(s.snapshot)
   if (t !== 'Untitled story') return t
   const raw = (s.snapshot.source?.rawText || s.snapshot.source?.paragraphs?.[0] || '').trim().replace(/\s+/g, ' ')
-  return raw ? (raw.length > 90 ? raw.slice(0, 88).trimEnd() + '…' : raw) : t
+  return raw ? (raw.length > 90 ? raw.slice(0, 88).trimEnd() : raw) : t
 }
 
 /** Press opens; hold (500 ms, finger still) offers Remove, like a launcher shortcut. */

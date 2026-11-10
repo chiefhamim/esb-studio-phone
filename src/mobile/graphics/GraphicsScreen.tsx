@@ -363,7 +363,7 @@ export default function GraphicsScreen({ active }: ScreenProps) {
 
       <div className="gx-body">
         <main className="gx-main">
-          {assets.kind === 'loading' && <div className="gx-loading"><div className="gx-skel-art" aria-hidden /><Skeleton rows={2} /><p className="gx-help">Loading fonts and artwork…</p></div>}
+          {assets.kind === 'loading' && <div className="gx-loading"><div className="gx-skel-art" aria-hidden /><Skeleton rows={2} /><p className="gx-help">Loading fonts and artwork</p></div>}
           {assets.kind === 'error' && <ErrorState title="The banner engine could not start" body={`Fonts or the logo did not load: ${assets.message}`} onRetry={retry} />}
           {base && <PcHost className="gx-stagehost"><TouchStage base={base} /></PcHost>}
           {base && <SelectionTray />}

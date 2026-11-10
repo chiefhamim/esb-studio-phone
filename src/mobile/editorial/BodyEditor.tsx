@@ -222,8 +222,8 @@ function PictureSheet({ ed }: { ed: Editor }) {
         {msg && <p className="me-hint" role="status">{msg}</p>}
         {err && <Banner tone={/Planned/i.test(err) ? 'planned' : 'error'}>{err}</Banner>}
         <p className="me-hint">A picture from the phone is uploaded to the site's media library first, so the story only ever holds an https link.</p>
-        <label className="m-field"><span className="m-field-label">…or a picture link</span>
-          <input type="url" inputMode="url" className="m-input" placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} spellCheck={false} /></label>
+        <label className="m-field"><span className="m-field-label">Or a picture link</span>
+          <input type="url" inputMode="url" className="m-input" placeholder="https://" value={url} onChange={(e) => setUrl(e.target.value)} spellCheck={false} /></label>
         <Button kind="outlined" disabled={!/^https?:\/\//i.test(url.trim())} onClick={() => { insertPictureUrl(ed, url); setUrl(''); useUi.getState().closeSheet('ed-pic') }}>Add the link</Button>
       </div>
     </Sheet>
@@ -293,7 +293,7 @@ function FindSheet({ ed }: { ed: Editor }) {
       <div className="me-stack">
         <label className="m-field"><span className="m-field-label"><span>Find</span><span className="m-field-count">{q ? `${ranges.length ? Math.min(i, ranges.length - 1) + 1 : 0} of ${ranges.length}` : ''}</span></span>
           <input type="search" className="m-input" value={q} onChange={(e) => { setQ(e.target.value); setI(0) }} /></label>
-        {cur && <p className="me-snippet">…{snippet}…</p>}
+        {cur && <p className="me-snippet">{snippet}</p>}
         <div className="me-start-row">
           <Button kind="tonal" icon="chevUp" disabled={!ranges.length} onClick={() => { const n = (i - 1 + ranges.length) % ranges.length; setI(n); show(ranges[n]) }}>Previous</Button>
           <Button kind="tonal" icon="chevDown" disabled={!ranges.length} onClick={() => { const n = (i + 1) % ranges.length; setI(n); show(ranges[n]) }}>Next</Button>

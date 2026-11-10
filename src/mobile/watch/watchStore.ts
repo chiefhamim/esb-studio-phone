@@ -375,7 +375,9 @@ export const useWatch = create<WatchState>((set, get) => {
       const off = new Set(prefs.portalsOff)
       const feeds = EW_FEEDS.filter((f) => isPhoneFeed(f) && !off.has(f.name))
       const pressSources: EwPressSource[] = prefs.show.press !== false ? EW_PRESS_SOURCES.filter((s) => s.on && !off.has(s.name)) : []
-      const maxAge = prefs.maxAgeH * 3600_000
+      // always collect the longest window the desk offers (24 h): the window choice only FILTERS what was found, so
+      // widening it from 1 h to 24 h shows the whole day at once instead of only what the last 1-hour check kept
+      const maxAge = Math.max(24, prefs.maxAgeH) * 3600_000
       const states: Record<number, FeedState> = { ...get().feeds }
       const found: WatchItem[] = []
       let failed = 0
